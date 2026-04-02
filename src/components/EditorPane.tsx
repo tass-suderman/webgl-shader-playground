@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -10,13 +10,11 @@ interface EditorPaneProps {
   onRun: (code: string) => void
   pendingSource: string
   onCodeChange: (code: string) => void
+  shaderError: string | null
 }
 
-export default function EditorPane({ initialCode, onRun, pendingSource, onCodeChange }: EditorPaneProps) {
-  const [error, setError] = useState<string | null>(null)
-
+export default function EditorPane({ initialCode, onRun, pendingSource, onCodeChange, shaderError }: EditorPaneProps) {
   const handleRun = useCallback(() => {
-    setError(null)
     onRun(pendingSource)
   }, [pendingSource, onRun])
 
@@ -64,7 +62,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
       </Box>
 
       {/* Error display */}
-      {error && (
+      {shaderError && (
         <Box
           sx={{
             px: 2,
@@ -78,7 +76,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
             variant="caption"
             sx={{ color: '#ff8080', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
           >
-            {error}
+            {shaderError}
           </Typography>
         </Box>
       )}

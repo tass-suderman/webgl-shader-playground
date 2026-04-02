@@ -44,13 +44,14 @@ interface UseWebGLOptions {
   webcamEnabled: boolean
   micEnabled: boolean
   isPlaying: boolean
+  onError?: (error: string | null) => void
 }
 
 export function useWebGL(
   canvasRef: RefObject<HTMLCanvasElement>,
   options: UseWebGLOptions
 ) {
-  const { shaderSource, mediaStream, webcamEnabled, micEnabled, isPlaying } = options
+  const { shaderSource, mediaStream, webcamEnabled, micEnabled, isPlaying, onError } = options
   const glRef = useRef<WebGLRenderingContext | null>(null)
   const programRef = useRef<WebGLProgram | null>(null)
   const rafRef = useRef<number>(0)
@@ -64,6 +65,9 @@ export function useWebGL(
   const analyserRef = useRef<AnalyserNode | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
+  const onErrorRef = useRef(onError)
+  onErrorRef.current = onError
+
   const compileProgram = useCallback((gl: WebGLRenderingContext, fragSrc: string) => {
     if (programRef.current) {
       gl.deleteProgram(programRef.current)
@@ -73,6 +77,7 @@ export function useWebGL(
       const program = createProgram(gl, VERTEX_SHADER_SRC, fragSrc)
       if (!program) throw new Error('Failed to create program')
       programRef.current = program
+      onErrorRef.current?.(null)
 
       // Set up geometry (fullscreen quad)
       const buf = gl.createBuffer()
@@ -87,6 +92,7 @@ export function useWebGL(
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       console.error('Shader error:', msg)
+      onErrorRef.current?.(msg)
     }
   }, [])
 

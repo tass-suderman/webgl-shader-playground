@@ -20,6 +20,7 @@ interface ShaderPaneProps {
   micEnabled: boolean
   onToggleWebcam: () => void
   onToggleMic: () => void
+  onShaderError?: (error: string | null) => void
 }
 
 export default function ShaderPane({
@@ -29,6 +30,7 @@ export default function ShaderPane({
   micEnabled,
   onToggleWebcam,
   onToggleMic,
+  onShaderError,
 }: ShaderPaneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -41,6 +43,7 @@ export default function ShaderPane({
     webcamEnabled,
     micEnabled,
     isPlaying,
+    onError: onShaderError,
   })
 
   const handleFullscreen = useCallback(() => {

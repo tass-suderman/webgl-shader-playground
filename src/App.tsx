@@ -10,6 +10,7 @@ export default function App() {
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [micEnabled, setMicEnabled] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+  const [shaderError, setShaderError] = useState<string | null>(null)
 
   const handleRun = useCallback((code: string) => {
     setShaderSource(code)
@@ -37,7 +38,7 @@ export default function App() {
         console.error('Failed to get webcam:', e)
       }
     }
-  }, [webcamEnabled, micEnabled, mediaStream])
+  }, [webcamEnabled, mediaStream])
 
   const handleToggleMic = useCallback(async () => {
     if (micEnabled) {
@@ -61,7 +62,7 @@ export default function App() {
         console.error('Failed to get mic:', e)
       }
     }
-  }, [micEnabled, webcamEnabled, mediaStream])
+  }, [micEnabled, mediaStream])
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#1a1a2e' }}>
@@ -73,6 +74,7 @@ export default function App() {
           micEnabled={micEnabled}
           onToggleWebcam={handleToggleWebcam}
           onToggleMic={handleToggleMic}
+          onShaderError={setShaderError}
         />
       </Box>
       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -81,6 +83,7 @@ export default function App() {
           onRun={handleRun}
           pendingSource={pendingSource}
           onCodeChange={setPendingSource}
+          shaderError={shaderError}
         />
       </Box>
     </Box>
