@@ -9,7 +9,9 @@ export default function App() {
   const [pendingSource, setPendingSource] = useState<string>(DEFAULT_SHADER)
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [micEnabled, setMicEnabled] = useState(false)
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+  const [systemAudioEnabled, setSystemAudioEnabled] = useState(false)
+  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null)
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
   const [shaderError, setShaderError] = useState<string | null>(null)
 
   const handleRun = useCallback((code: string) => {
@@ -18,62 +20,118 @@ export default function App() {
 
   const handleToggleWebcam = useCallback(async () => {
     if (webcamEnabled) {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(t => t.stop())
-        setMediaStream(null)
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(t => t.stop())
+        setWebcamStream(null)
       }
       setWebcamEnabled(false)
     } else {
-      // Stop any existing stream (e.g. mic) before requesting webcam
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(t => t.stop())
-        setMediaStream(null)
-      }
-      setMicEnabled(false)
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        setMediaStream(stream)
+        // Stop webcam when the track ends (e.g. user revokes permission)
+        stream.getVideoTracks().forEach(track => {
+          track.onended = () => {
+            setWebcamStream(null)
+            setWebcamEnabled(false)
+          }
+        })
+        setWebcamStream(stream)
         setWebcamEnabled(true)
       } catch (e) {
         console.error('Failed to get webcam:', e)
       }
     }
-  }, [webcamEnabled, mediaStream])
+  }, [webcamEnabled, webcamStream])
+
+  const stopAudio = useCallback(() => {
+    if (audioStream) {
+      audioStream.getTracks().forEach(t => t.stop())
+      setAudioStream(null)
+    }
+    setMicEnabled(false)
+    setSystemAudioEnabled(false)
+  }, [audioStream])
 
   const handleToggleMic = useCallback(async () => {
     if (micEnabled) {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(t => t.stop())
-        setMediaStream(null)
-      }
-      setMicEnabled(false)
+      stopAudio()
     } else {
-      // Stop any existing stream (e.g. webcam) before requesting mic
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(t => t.stop())
-        setMediaStream(null)
+      // Stop any existing audio source first
+      if (audioStream) {
+        audioStream.getTracks().forEach(t => t.stop())
+        setAudioStream(null)
       }
-      setWebcamEnabled(false)
+      setSystemAudioEnabled(false)
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        setMediaStream(stream)
+        stream.getAudioTracks().forEach(track => {
+          track.onended = () => {
+            setAudioStream(null)
+            setMicEnabled(false)
+          }
+        })
+        setAudioStream(stream)
         setMicEnabled(true)
       } catch (e) {
         console.error('Failed to get mic:', e)
       }
     }
-  }, [micEnabled, mediaStream])
+  }, [micEnabled, audioStream, stopAudio])
+
+  const handleToggleSystemAudio = useCallback(async () => {
+    if (systemAudioEnabled) {
+      stopAudio()
+    } else {
+      // Stop any existing audio source first
+      if (audioStream) {
+        audioStream.getTracks().forEach(t => t.stop())
+        setAudioStream(null)
+      }
+      setMicEnabled(false)
+      try {
+        // getDisplayMedia is the only browser API that can capture system audio output.
+        // Most browsers require video:true even when only audio is needed.
+        // Note: browser support and user-facing dialogs vary – Chrome shows a tab/window
+        // picker with an "also share audio" checkbox, Firefox may not support system audio.
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+        const audioTracks = displayStream.getAudioTracks()
+        if (audioTracks.length === 0) {
+          // No audio was shared – stop everything and bail out
+          displayStream.getTracks().forEach(t => t.stop())
+          console.warn('No system audio track found. Make sure to enable audio sharing in the dialog.')
+          return
+        }
+        // Stop the video capture immediately – we only need the audio
+        displayStream.getVideoTracks().forEach(t => t.stop())
+        // Build a new stream that contains only the audio tracks
+        const audioOnlyStream = new MediaStream(audioTracks)
+        audioTracks.forEach(track => {
+          track.onended = () => {
+            setAudioStream(null)
+            setSystemAudioEnabled(false)
+          }
+        })
+        setAudioStream(audioOnlyStream)
+        setSystemAudioEnabled(true)
+      } catch (e) {
+        console.error('Failed to get system audio:', e)
+      }
+    }
+  }, [systemAudioEnabled, audioStream, stopAudio])
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#1a1a2e' }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <ShaderPane
           shaderSource={shaderSource}
-          mediaStream={mediaStream}
+          webcamStream={webcamStream}
+          audioStream={audioStream}
           webcamEnabled={webcamEnabled}
           micEnabled={micEnabled}
+          systemAudioEnabled={systemAudioEnabled}
           onToggleWebcam={handleToggleWebcam}
           onToggleMic={handleToggleMic}
+          onToggleSystemAudio={handleToggleSystemAudio}
           onShaderError={setShaderError}
         />
       </Box>
