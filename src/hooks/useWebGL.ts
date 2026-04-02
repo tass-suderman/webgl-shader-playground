@@ -40,9 +40,10 @@ function createProgram(gl: WebGLRenderingContext, vertSrc: string, fragSrc: stri
 
 interface UseWebGLOptions {
   shaderSource: string
-  mediaStream: MediaStream | null
-  webcamEnabled: boolean
-  micEnabled: boolean
+  /** Video stream for iChannel0 (webcam) */
+  webcamStream: MediaStream | null
+  /** Audio stream for iChannel1 (microphone or system audio) */
+  audioStream: MediaStream | null
   isPlaying: boolean
   onError?: (error: string | null) => void
 }
@@ -51,7 +52,7 @@ export function useWebGL(
   canvasRef: RefObject<HTMLCanvasElement>,
   options: UseWebGLOptions
 ) {
-  const { shaderSource, mediaStream, webcamEnabled, micEnabled, isPlaying, onError } = options
+  const { shaderSource, webcamStream, audioStream, isPlaying, onError } = options
   const glRef = useRef<WebGLRenderingContext | null>(null)
   const programRef = useRef<WebGLProgram | null>(null)
   const rafRef = useRef<number>(0)
@@ -62,6 +63,7 @@ export function useWebGL(
   const mouseRef = useRef<[number, number, number, number]>([0, 0, 0, 0])
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const textureRef = useRef<WebGLTexture | null>(null)
+  const texture1Ref = useRef<WebGLTexture | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
@@ -107,7 +109,7 @@ export function useWebGL(
     }
     glRef.current = gl
 
-    // Create texture for webcam/mic
+    // Create texture for webcam (iChannel0)
     const tex = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, tex)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -115,6 +117,15 @@ export function useWebGL(
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     textureRef.current = tex
+
+    // Create texture for audio (iChannel1)
+    const tex1 = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, tex1)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    texture1Ref.current = tex1
 
     compileProgram(gl, shaderSource)
 
@@ -135,9 +146,9 @@ export function useWebGL(
 
   // Setup webcam video element
   useEffect(() => {
-    if (webcamEnabled && mediaStream) {
+    if (webcamStream) {
       const video = document.createElement('video')
-      video.srcObject = mediaStream
+      video.srcObject = webcamStream
       video.autoplay = true
       video.muted = true
       video.playsInline = true
@@ -146,15 +157,15 @@ export function useWebGL(
     } else {
       videoRef.current = null
     }
-  }, [webcamEnabled, mediaStream])
+  }, [webcamStream])
 
-  // Setup audio analyser
+  // Setup audio analyser for iChannel1
   useEffect(() => {
-    if (micEnabled && mediaStream) {
+    if (audioStream) {
       const audioCtx = new AudioContext()
       const analyser = audioCtx.createAnalyser()
       analyser.fftSize = 256
-      const source = audioCtx.createMediaStreamSource(mediaStream)
+      const source = audioCtx.createMediaStreamSource(audioStream)
       source.connect(analyser)
       analyserRef.current = analyser
       audioCtxRef.current = audioCtx
@@ -174,7 +185,7 @@ export function useWebGL(
         ctx.close().catch(console.error)
       }
     }
-  }, [micEnabled, mediaStream])
+  }, [audioStream])
 
   // Mouse tracking
   useEffect(() => {
@@ -254,17 +265,22 @@ export function useWebGL(
       const frameLoc = gl.getUniformLocation(program, 'iFrame')
       if (frameLoc) gl.uniform1i(frameLoc, frameRef.current)
 
+      // iChannel0: webcam video
       const ch0EnabledLoc = gl.getUniformLocation(program, 'iChannel0Enabled')
-
-      // Update webcam texture
-      if (webcamEnabled && videoRef.current && videoRef.current.readyState >= 2) {
+      if (webcamStream && videoRef.current && videoRef.current.readyState >= 2) {
         gl.activeTexture(gl.TEXTURE0)
         gl.bindTexture(gl.TEXTURE_2D, textureRef.current)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, videoRef.current)
         const ch0Loc = gl.getUniformLocation(program, 'iChannel0')
         if (ch0Loc) gl.uniform1i(ch0Loc, 0)
         if (ch0EnabledLoc) gl.uniform1i(ch0EnabledLoc, 1)
-      } else if (micEnabled && analyserRef.current) {
+      } else {
+        if (ch0EnabledLoc) gl.uniform1i(ch0EnabledLoc, 0)
+      }
+
+      // iChannel1: audio frequency data (mic or system audio)
+      const ch1EnabledLoc = gl.getUniformLocation(program, 'iChannel1Enabled')
+      if (audioStream && analyserRef.current) {
         const bufferLength = analyserRef.current.frequencyBinCount
         const dataArray = new Uint8Array(bufferLength)
         analyserRef.current.getByteFrequencyData(dataArray)
@@ -275,14 +291,14 @@ export function useWebGL(
           rgba[i * 4 + 2] = dataArray[i]
           rgba[i * 4 + 3] = 255
         }
-        gl.activeTexture(gl.TEXTURE0)
-        gl.bindTexture(gl.TEXTURE_2D, textureRef.current)
+        gl.activeTexture(gl.TEXTURE1)
+        gl.bindTexture(gl.TEXTURE_2D, texture1Ref.current)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bufferLength, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba)
-        const ch0Loc = gl.getUniformLocation(program, 'iChannel0')
-        if (ch0Loc) gl.uniform1i(ch0Loc, 0)
-        if (ch0EnabledLoc) gl.uniform1i(ch0EnabledLoc, 1)
+        const ch1Loc = gl.getUniformLocation(program, 'iChannel1')
+        if (ch1Loc) gl.uniform1i(ch1Loc, 1)
+        if (ch1EnabledLoc) gl.uniform1i(ch1EnabledLoc, 1)
       } else {
-        if (ch0EnabledLoc) gl.uniform1i(ch0EnabledLoc, 0)
+        if (ch1EnabledLoc) gl.uniform1i(ch1EnabledLoc, 0)
       }
 
       gl.drawArrays(gl.TRIANGLES, 0, 6)
@@ -291,5 +307,5 @@ export function useWebGL(
 
     rafRef.current = requestAnimationFrame(render)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [isPlaying, webcamEnabled, micEnabled, shaderSource, canvasRef])
+  }, [isPlaying, webcamStream, audioStream, shaderSource, canvasRef])
 }

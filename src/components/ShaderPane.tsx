@@ -11,25 +11,33 @@ import VideocamIcon from '@mui/icons-material/Videocam'
 import VideocamOffIcon from '@mui/icons-material/VideocamOff'
 import MicIcon from '@mui/icons-material/Mic'
 import MicOffIcon from '@mui/icons-material/MicOff'
+import VolumeUpIcon from '@mui/icons-material/VolumeUp'
+import VolumeOffIcon from '@mui/icons-material/VolumeOff'
 import { useWebGL } from '../hooks/useWebGL'
 
 interface ShaderPaneProps {
   shaderSource: string
-  mediaStream: MediaStream | null
+  webcamStream: MediaStream | null
+  audioStream: MediaStream | null
   webcamEnabled: boolean
   micEnabled: boolean
+  systemAudioEnabled: boolean
   onToggleWebcam: () => void
   onToggleMic: () => void
+  onToggleSystemAudio: () => void
   onShaderError?: (error: string | null) => void
 }
 
 export default function ShaderPane({
   shaderSource,
-  mediaStream,
+  webcamStream,
+  audioStream,
   webcamEnabled,
   micEnabled,
+  systemAudioEnabled,
   onToggleWebcam,
   onToggleMic,
+  onToggleSystemAudio,
   onShaderError,
 }: ShaderPaneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -39,9 +47,8 @@ export default function ShaderPane({
 
   useWebGL(canvasRef, {
     shaderSource,
-    mediaStream,
-    webcamEnabled,
-    micEnabled,
+    webcamStream,
+    audioStream,
     isPlaying,
     onError: onShaderError,
   })
@@ -62,6 +69,8 @@ export default function ShaderPane({
     document.addEventListener('fullscreenchange', handleFSChange)
     return () => document.removeEventListener('fullscreenchange', handleFSChange)
   }, [])
+
+  const audioLabel = systemAudioEnabled ? 'System Audio' : 'Mic'
 
   return (
     <Box
@@ -104,7 +113,7 @@ export default function ShaderPane({
           </IconButton>
         </Tooltip>
 
-        <Tooltip title={webcamEnabled ? 'Disable Webcam' : 'Enable Webcam (iChannel0)'}>
+        <Tooltip title={webcamEnabled ? 'Disable Webcam (iChannel0)' : 'Enable Webcam (iChannel0)'}>
           <IconButton
             onClick={onToggleWebcam}
             size="small"
@@ -114,7 +123,7 @@ export default function ShaderPane({
           </IconButton>
         </Tooltip>
 
-        <Tooltip title={micEnabled ? 'Disable Microphone' : 'Enable Microphone (iChannel0)'}>
+        <Tooltip title={micEnabled ? 'Disable Microphone (iChannel1)' : 'Enable Microphone (iChannel1)'}>
           <IconButton
             onClick={onToggleMic}
             size="small"
@@ -124,11 +133,30 @@ export default function ShaderPane({
           </IconButton>
         </Tooltip>
 
-        {(webcamEnabled || micEnabled) && (
+        <Tooltip title={systemAudioEnabled ? 'Disable System Audio (iChannel1)' : 'Enable System Audio Output (iChannel1)'}>
+          <IconButton
+            onClick={onToggleSystemAudio}
+            size="small"
+            sx={{ color: systemAudioEnabled ? 'secondary.main' : 'white' }}
+          >
+            {systemAudioEnabled ? <VolumeUpIcon /> : <VolumeOffIcon />}
+          </IconButton>
+        </Tooltip>
+
+        {webcamEnabled && (
           <Chip
-            label={webcamEnabled ? 'iChannel0: Webcam' : 'iChannel0: Mic'}
+            label="iChannel0: Webcam"
             size="small"
             color="primary"
+            variant="outlined"
+            sx={{ fontSize: '0.65rem' }}
+          />
+        )}
+        {(micEnabled || systemAudioEnabled) && (
+          <Chip
+            label={`iChannel1: ${audioLabel}`}
+            size="small"
+            color={systemAudioEnabled ? 'secondary' : 'primary'}
             variant="outlined"
             sx={{ fontSize: '0.65rem' }}
           />
