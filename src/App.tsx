@@ -10,11 +10,18 @@ import EditorPane from './components/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
 import { DEFAULT_SHADER } from './shaders/default'
 
+export const LS_GLSL_CODE = 'shader-playground:glsl-code'
+
+// Computed once at module load – used to seed the initial shader state so the
+// last-saved shader is both displayed in the editor and running on the GPU
+// without waiting for a user action.
+const initialShaderCode = localStorage.getItem(LS_GLSL_CODE) ?? DEFAULT_SHADER
+
 type ViewMode = 'glsl' | 'strudel' | 'split'
 
 export default function App() {
-  const [shaderSource, setShaderSource] = useState<string>(DEFAULT_SHADER)
-  const [pendingSource, setPendingSource] = useState<string>(DEFAULT_SHADER)
+  const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
+  const [pendingSource, setPendingSource] = useState<string>(initialShaderCode)
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [micEnabled, setMicEnabled] = useState(false)
   const [systemAudioEnabled, setSystemAudioEnabled] = useState(false)
@@ -292,7 +299,7 @@ export default function App() {
             minHeight: 0,
           }}>
             <EditorPane
-              initialCode={DEFAULT_SHADER}
+              initialCode={initialShaderCode}
               onRun={handleRun}
               pendingSource={pendingSource}
               onCodeChange={setPendingSource}

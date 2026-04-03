@@ -85,6 +85,7 @@ const DEFAULT_PROPS = {
 describe('EditorPane', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -193,5 +194,67 @@ describe('EditorPane', () => {
   it('does not display an error panel when shaderError is null', () => {
     render(<EditorPane {...DEFAULT_PROPS} shaderError={null} />)
     expect(screen.queryByText(/error/i)).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // localStorage persistence
+  // ---------------------------------------------------------------------------
+
+  it('saves code to localStorage when editor content changes', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    const textarea = screen.getByTestId('monaco-editor')
+    await user.clear(textarea)
+    await user.type(textarea, 'float x = 2.0;')
+    expect(localStorage.getItem('shader-playground:glsl-code')).toBe('float x = 2.0;')
+  })
+
+  it('saves title to localStorage when title changes', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    const input = screen.getByRole('textbox', { name: /shader title/i })
+    await user.clear(input)
+    await user.type(input, 'My Shader')
+    expect(localStorage.getItem('shader-playground:glsl-title')).toBe('My Shader')
+  })
+
+  it('loads initial title from localStorage on mount', () => {
+    localStorage.setItem('shader-playground:glsl-title', 'Saved Shader')
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    expect(screen.getByRole('textbox', { name: /shader title/i })).toHaveValue('Saved Shader')
+  })
+
+  // ---------------------------------------------------------------------------
+  // Reset button
+  // ---------------------------------------------------------------------------
+
+  it('reset button is present in the header', () => {
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    expect(screen.getByRole('button', { name: /reset to default shader/i })).toBeInTheDocument()
+  })
+
+  it('reset button restores the default title', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    const titleInput = screen.getByRole('textbox', { name: /shader title/i })
+    await user.clear(titleInput)
+    await user.type(titleInput, 'Custom Shader')
+    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
+    expect(titleInput).toHaveValue('Fragment Shader (GLSL)')
+  })
+
+  it('reset button calls setValue on the Monaco editor with initialCode', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
+    expect(mockSetValue).toHaveBeenCalledWith(DEFAULT_PROPS.initialCode)
+  })
+
+  it('reset button calls onRun with initialCode', async () => {
+    const onRun = vi.fn()
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} onRun={onRun} />)
+    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
+    expect(onRun).toHaveBeenCalledWith(DEFAULT_PROPS.initialCode)
   })
 })

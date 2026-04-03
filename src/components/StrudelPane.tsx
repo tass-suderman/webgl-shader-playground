@@ -13,6 +13,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import StopIcon from '@mui/icons-material/Stop'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
@@ -37,6 +38,11 @@ const minimalPrebake = async (): Promise<void> => {
 const DEFAULT_STRUDEL_CODE = `// Strudel live-coding pattern
 // Alt+Enter to play, Alt+. to pause
 note("c3 [e3 g3] b3 [g3 e3]").sound("sawtooth").lpf(800).lpenv(2).slow(2)`
+
+const DEFAULT_STRUDEL_TITLE = 'Strudel Pattern'
+
+const LS_STRUDEL_CODE = 'shader-playground:strudel-code'
+const LS_STRUDEL_TITLE = 'shader-playground:strudel-title'
 
 // ---------------------------------------------------------------------------
 // Sounds reference data
@@ -84,8 +90,12 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const destinationGainRef = useRef<GainNode | null>(null)
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // Capture the saved code once at mount – used as StrudelMirror's initialCode
+  const savedStrudelCode = useRef(localStorage.getItem(LS_STRUDEL_CODE) ?? DEFAULT_STRUDEL_CODE)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [strudelTitle, setStrudelTitle] = useState('Strudel Pattern')
+  const [strudelTitle, setStrudelTitle] = useState(
+    () => localStorage.getItem(LS_STRUDEL_TITLE) ?? DEFAULT_STRUDEL_TITLE,
+  )
   const [soundsOpen, setSoundsOpen] = useState(false)
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
@@ -106,7 +116,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     initAudioOnFirstClick()
     const mirror = new StrudelMirror({
       root: rootRef.current,
-      initialCode: DEFAULT_STRUDEL_CODE,
+      initialCode: savedStrudelCode.current,
       prebake: minimalPrebake,
       defaultOutput: webaudioOutput,
       getTime: () => getAudioContext()?.currentTime ?? 0,
@@ -184,13 +194,26 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleRun = useCallback(() => {
-    mirrorRef.current?.evaluate().catch(console.error)
+  const saveCode = useCallback(() => {
+    localStorage.setItem(LS_STRUDEL_CODE, mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE)
   }, [])
 
+  // Persist the strudel code when the tab is hidden or the page is unloaded
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') saveCode() }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [saveCode])
+
+  const handleRun = useCallback(() => {
+    saveCode()
+    mirrorRef.current?.evaluate().catch(console.error)
+  }, [saveCode])
+
   const handleStop = useCallback(() => {
+    saveCode()
     mirrorRef.current?.stop().catch(console.error)
-  }, [])
+  }, [saveCode])
 
   const handleExport = useCallback(() => {
     const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
@@ -222,12 +245,26 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       const content = evt.target?.result as string
       if (content !== undefined && mirrorRef.current) {
         mirrorRef.current.setCode(content)
+        localStorage.setItem(LS_STRUDEL_CODE, content)
         const name = file.name.replace(/\.[^.]+$/, '')
         setStrudelTitle(name)
+        localStorage.setItem(LS_STRUDEL_TITLE, name)
       }
     }
     reader.readAsText(file)
     e.target.value = ''
+  }, [])
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setStrudelTitle(e.target.value)
+    localStorage.setItem(LS_STRUDEL_TITLE, e.target.value)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    mirrorRef.current?.setCode(DEFAULT_STRUDEL_CODE)
+    localStorage.setItem(LS_STRUDEL_CODE, DEFAULT_STRUDEL_CODE)
+    setStrudelTitle(DEFAULT_STRUDEL_TITLE)
+    localStorage.setItem(LS_STRUDEL_TITLE, DEFAULT_STRUDEL_TITLE)
   }, [])
 
   return (
@@ -249,7 +286,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         {/* Editable title */}
         <InputBase
           value={strudelTitle}
-          onChange={e => setStrudelTitle(e.target.value)}
+          onChange={handleTitleChange}
           inputProps={{ 'aria-label': 'Strudel pattern title' }}
           sx={{
             color: 'rgba(255,255,255,0.7)',
@@ -274,6 +311,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         <Tooltip title="Available sounds">
           <IconButton size="small" onClick={() => setSoundsOpen(true)} aria-label="Available sounds" sx={{ color: 'rgba(255,255,255,0.7)' }}>
             <MusicNoteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Reset to default pattern">
+          <IconButton size="small" onClick={handleReset} aria-label="Reset to default pattern" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <RestartAltIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 

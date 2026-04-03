@@ -79,6 +79,7 @@ describe('StrudelPane', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     mockMirror.code = '// initial strudel code'
   })
 
@@ -202,5 +203,58 @@ describe('StrudelPane', () => {
   it('stop button is disabled when not playing', () => {
     render(<StrudelPane onAnalyserReady={noop} />)
     expect(screen.getByRole('button', { name: /stop/i })).toBeDisabled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // localStorage persistence
+  // ---------------------------------------------------------------------------
+
+  it('saves title to localStorage when title changes', async () => {
+    const user = userEvent.setup()
+    render(<StrudelPane onAnalyserReady={noop} />)
+    const input = screen.getByRole('textbox', { name: /strudel pattern title/i })
+    await user.clear(input)
+    await user.type(input, 'My Beat')
+    expect(localStorage.getItem('shader-playground:strudel-title')).toBe('My Beat')
+  })
+
+  it('loads initial title from localStorage on mount', () => {
+    localStorage.setItem('shader-playground:strudel-title', 'Saved Pattern')
+    render(<StrudelPane onAnalyserReady={noop} />)
+    expect(screen.getByRole('textbox', { name: /strudel pattern title/i })).toHaveValue('Saved Pattern')
+  })
+
+  it('saves code to localStorage when play button is clicked', async () => {
+    mockMirror.code = 'note("e4").sound("sine")'
+    const user = userEvent.setup()
+    render(<StrudelPane onAnalyserReady={noop} />)
+    await user.click(screen.getByRole('button', { name: /play strudel/i }))
+    expect(localStorage.getItem('shader-playground:strudel-code')).toBe('note("e4").sound("sine")')
+  })
+
+  // ---------------------------------------------------------------------------
+  // Reset button
+  // ---------------------------------------------------------------------------
+
+  it('reset button is present in the header', () => {
+    render(<StrudelPane onAnalyserReady={noop} />)
+    expect(screen.getByRole('button', { name: /reset to default pattern/i })).toBeInTheDocument()
+  })
+
+  it('reset button restores the default title', async () => {
+    const user = userEvent.setup()
+    render(<StrudelPane onAnalyserReady={noop} />)
+    const input = screen.getByRole('textbox', { name: /strudel pattern title/i })
+    await user.clear(input)
+    await user.type(input, 'Custom Beat')
+    await user.click(screen.getByRole('button', { name: /reset to default pattern/i }))
+    expect(input).toHaveValue('Strudel Pattern')
+  })
+
+  it('reset button calls mirror.setCode with the default strudel code', async () => {
+    const user = userEvent.setup()
+    render(<StrudelPane onAnalyserReady={noop} />)
+    await user.click(screen.getByRole('button', { name: /reset to default pattern/i }))
+    expect(mockSetCode).toHaveBeenCalledWith(expect.stringContaining('note("c3 [e3 g3] b3 [g3 e3]")'))
   })
 })

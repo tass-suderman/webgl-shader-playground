@@ -49,6 +49,7 @@ import { DEFAULT_SHADER } from './shaders/default'
 describe('App – global keyboard shortcuts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('Ctrl+Enter prevents the default browser action', () => {
