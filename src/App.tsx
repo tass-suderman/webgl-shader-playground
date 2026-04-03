@@ -1,8 +1,13 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Box from '@mui/material/Box'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ShaderPane from './components/ShaderPane'
 import EditorPane from './components/EditorPane'
+import StrudelPane from './components/StrudelPane'
 import { DEFAULT_SHADER } from './shaders/default'
+
+type ViewMode = 'glsl' | 'strudel' | 'split'
 
 export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(DEFAULT_SHADER)
@@ -13,6 +18,10 @@ export default function App() {
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null)
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
   const [shaderError, setShaderError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('glsl')
+  const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
+  const [splitRatio, setSplitRatio] = useState(50)
+  const rightPanelRef = useRef<HTMLDivElement>(null)
 
   const handleRun = useCallback((code: string) => {
     setShaderSource(code)
@@ -119,13 +128,35 @@ export default function App() {
     }
   }, [systemAudioEnabled, audioStream, stopAudio])
 
+  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const panel = rightPanelRef.current
+    if (!panel) return
+    const startY = e.clientY
+    const startRatio = splitRatio
+    const panelH = panel.getBoundingClientRect().height
+    const onMove = (me: MouseEvent) => {
+      const delta = me.clientY - startY
+      const newRatio = Math.min(80, Math.max(20, startRatio + (delta / panelH) * 100))
+      setSplitRatio(newRatio)
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [splitRatio])
+
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#1a1a2e' }}>
+      {/* Left: shader canvas */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <ShaderPane
           shaderSource={shaderSource}
           webcamStream={webcamStream}
           audioStream={audioStream}
+          strudelAnalyser={strudelAnalyser}
           webcamEnabled={webcamEnabled}
           micEnabled={micEnabled}
           systemAudioEnabled={systemAudioEnabled}
@@ -135,14 +166,71 @@ export default function App() {
           onShaderError={setShaderError}
         />
       </Box>
-      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <EditorPane
-          initialCode={DEFAULT_SHADER}
-          onRun={handleRun}
-          pendingSource={pendingSource}
-          onCodeChange={setPendingSource}
-          shaderError={shaderError}
-        />
+
+      {/* Right: editor panel */}
+      <Box ref={rightPanelRef} sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* Tab bar */}
+        <Box sx={{ px: 1, py: 0.5, bgcolor: '#1e1e1e', borderBottom: '1px solid rgba(255,255,255,0.1)', flexShrink: 0, display: 'flex' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_e, val: ViewMode | null) => { if (val) setViewMode(val) }}
+            size="small"
+          >
+            <ToggleButton value="glsl" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
+              GLSL
+            </ToggleButton>
+            <ToggleButton value="strudel" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
+              Strudel
+            </ToggleButton>
+            <ToggleButton value="split" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
+              Split
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
+        {/* Editor area */}
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* GLSL editor – hidden but mounted when not visible to preserve state */}
+          <Box sx={{
+            display: viewMode === 'split' ? 'flex' : (viewMode === 'glsl' ? 'flex' : 'none'),
+            flexDirection: 'column',
+            height: viewMode === 'split' ? `${splitRatio}%` : '100%',
+            minHeight: 0,
+          }}>
+            <EditorPane
+              initialCode={DEFAULT_SHADER}
+              onRun={handleRun}
+              pendingSource={pendingSource}
+              onCodeChange={setPendingSource}
+              shaderError={shaderError}
+            />
+          </Box>
+
+          {/* Drag divider (split mode only) */}
+          {viewMode === 'split' && (
+            <Box
+              onMouseDown={handleDividerMouseDown}
+              sx={{
+                height: '4px',
+                bgcolor: 'rgba(255,255,255,0.15)',
+                cursor: 'row-resize',
+                flexShrink: 0,
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+              }}
+            />
+          )}
+
+          {/* Strudel pane – hidden but mounted when not visible to preserve state */}
+          <Box sx={{
+            display: viewMode === 'split' ? 'flex' : (viewMode === 'strudel' ? 'flex' : 'none'),
+            flexDirection: 'column',
+            height: viewMode === 'split' ? `calc(${100 - splitRatio}% - 4px)` : '100%',
+            minHeight: 0,
+          }}>
+            <StrudelPane onAnalyserReady={setStrudelAnalyser} />
+          </Box>
+        </Box>
       </Box>
     </Box>
   )

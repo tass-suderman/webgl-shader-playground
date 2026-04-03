@@ -161,7 +161,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
       {/* Keyboard shortcut hint */}
       <Box sx={{ px: 2, py: 0.5, bgcolor: '#252526', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
         <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
-          Ctrl+Enter or Alt+Enter to run
+          Ctrl+Enter or Alt+Enter to run shader
         </Typography>
       </Box>
 

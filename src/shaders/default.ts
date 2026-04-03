@@ -6,6 +6,7 @@ export const DEFAULT_SHADER = `// WebGL Shader Playground
 //   iFrame      - shader playback frame
 //   iChannel0   - webcam texture (if enabled)
 //   iChannel1   - microphone / system audio frequency texture (if enabled)
+//   iChannel2   - Strudel live-coding audio frequency texture (if enabled)
 
 precision highp float;
 
@@ -17,6 +18,8 @@ uniform sampler2D iChannel0;
 uniform bool iChannel0Enabled;
 uniform sampler2D iChannel1;
 uniform bool iChannel1Enabled;
+uniform sampler2D iChannel2;
+uniform bool iChannel2Enabled;
 
 void main() {
   vec2 uv = gl_FragCoord.xy / iResolution.xy;
@@ -40,6 +43,13 @@ void main() {
   if (iChannel1Enabled) {
     float freq = texture2D(iChannel1, vec2(uv.x, 0.5)).r;
     col += vec3(0.0, freq * 0.3, freq * 0.6);
+  }
+  
+  // Sample Strudel audio frequency data if enabled (iChannel2)
+  // iChannel2 works the same as iChannel1 – 1D frequency texture from Strudel
+  if (iChannel2Enabled) {
+    float freq2 = texture2D(iChannel2, vec2(uv.x, 0.5)).r;
+    col += vec3(freq2 * 0.6, freq2 * 0.1, freq2 * 0.4);
   }
   
   gl_FragColor = vec4(col, 1.0);

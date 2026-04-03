@@ -44,6 +44,8 @@ interface UseWebGLOptions {
   webcamStream: MediaStream | null
   /** Audio stream for iChannel1 (microphone or system audio) */
   audioStream: MediaStream | null
+  /** Strudel audio analyser for iChannel2 */
+  strudelAnalyser?: AnalyserNode | null
   isPlaying: boolean
   onError?: (error: string | null) => void
 }
@@ -52,7 +54,7 @@ export function useWebGL(
   canvasRef: RefObject<HTMLCanvasElement>,
   options: UseWebGLOptions
 ) {
-  const { shaderSource, webcamStream, audioStream, isPlaying, onError } = options
+  const { shaderSource, webcamStream, audioStream, strudelAnalyser, isPlaying, onError } = options
   const glRef = useRef<WebGLRenderingContext | null>(null)
   const programRef = useRef<WebGLProgram | null>(null)
   const rafRef = useRef<number>(0)
@@ -64,6 +66,7 @@ export function useWebGL(
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const textureRef = useRef<WebGLTexture | null>(null)
   const texture1Ref = useRef<WebGLTexture | null>(null)
+  const texture2Ref = useRef<WebGLTexture | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
@@ -126,6 +129,15 @@ export function useWebGL(
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     texture1Ref.current = tex1
+
+    // Create texture for Strudel audio (iChannel2)
+    const tex2 = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, tex2)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    texture2Ref.current = tex2
 
     compileProgram(gl, shaderSource)
 
@@ -301,11 +313,34 @@ export function useWebGL(
         if (ch1EnabledLoc) gl.uniform1i(ch1EnabledLoc, 0)
       }
 
+      // iChannel2: Strudel audio frequency data
+      const ch2EnabledLoc = gl.getUniformLocation(program, 'iChannel2Enabled')
+      if (strudelAnalyser) {
+        const bufferLength2 = strudelAnalyser.frequencyBinCount
+        const dataArray2 = new Uint8Array(bufferLength2)
+        strudelAnalyser.getByteFrequencyData(dataArray2)
+        const rgba2 = new Uint8Array(bufferLength2 * 4)
+        for (let i = 0; i < bufferLength2; i++) {
+          rgba2[i * 4] = dataArray2[i]
+          rgba2[i * 4 + 1] = dataArray2[i]
+          rgba2[i * 4 + 2] = dataArray2[i]
+          rgba2[i * 4 + 3] = 255
+        }
+        gl.activeTexture(gl.TEXTURE2)
+        gl.bindTexture(gl.TEXTURE_2D, texture2Ref.current)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bufferLength2, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba2)
+        const ch2Loc = gl.getUniformLocation(program, 'iChannel2')
+        if (ch2Loc) gl.uniform1i(ch2Loc, 2)
+        if (ch2EnabledLoc) gl.uniform1i(ch2EnabledLoc, 1)
+      } else {
+        if (ch2EnabledLoc) gl.uniform1i(ch2EnabledLoc, 0)
+      }
+
       gl.drawArrays(gl.TRIANGLES, 0, 6)
       rafRef.current = requestAnimationFrame(render)
     }
 
     rafRef.current = requestAnimationFrame(render)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [isPlaying, webcamStream, audioStream, shaderSource, canvasRef])
+  }, [isPlaying, webcamStream, audioStream, strudelAnalyser, shaderSource, canvasRef])
 }

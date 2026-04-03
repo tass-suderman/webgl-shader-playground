@@ -19,6 +19,7 @@ interface ShaderPaneProps {
   shaderSource: string
   webcamStream: MediaStream | null
   audioStream: MediaStream | null
+  strudelAnalyser?: AnalyserNode | null
   webcamEnabled: boolean
   micEnabled: boolean
   systemAudioEnabled: boolean
@@ -32,6 +33,7 @@ export default function ShaderPane({
   shaderSource,
   webcamStream,
   audioStream,
+  strudelAnalyser,
   webcamEnabled,
   micEnabled,
   systemAudioEnabled,
@@ -49,6 +51,7 @@ export default function ShaderPane({
     shaderSource,
     webcamStream,
     audioStream,
+    strudelAnalyser,
     isPlaying,
     onError: onShaderError,
   })
@@ -157,6 +160,15 @@ export default function ShaderPane({
             label={`iChannel1: ${audioLabel}`}
             size="small"
             color={systemAudioEnabled ? 'secondary' : 'primary'}
+            variant="outlined"
+            sx={{ fontSize: '0.65rem' }}
+          />
+        )}
+        {strudelAnalyser && (
+          <Chip
+            label="iChannel2: Strudel"
+            size="small"
+            color="success"
             variant="outlined"
             sx={{ fontSize: '0.65rem' }}
           />
