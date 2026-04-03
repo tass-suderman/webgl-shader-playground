@@ -5,7 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import CodeIcon from '@mui/icons-material/Code'
-import ShaderPane from './components/ShaderPane'
+import ShaderPane, { type ShaderPaneHandle } from './components/ShaderPane'
 import EditorPane from './components/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
 import { DEFAULT_SHADER } from './shaders/default'
@@ -29,6 +29,7 @@ export default function App() {
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
+  const shaderRef = useRef<ShaderPaneHandle>(null)
   // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
@@ -40,18 +41,32 @@ export default function App() {
   // Global keyboard shortcuts (capture phase so they fire before Monaco / CodeMirror)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Ctrl+Enter / Cmd+Enter → Run Shader
+      // Ctrl+Enter / Cmd+Enter → Play Shader (run/compile)
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault()
         e.stopPropagation()
         setShaderSource(pendingSourceRef.current)
         return
       }
-      // Alt+Enter → Play / Pause Strudel
+      // Ctrl+. / Cmd+. → Pause Shader (freeze animation)
+      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+        e.preventDefault()
+        e.stopPropagation()
+        shaderRef.current?.pause()
+        return
+      }
+      // Alt+Enter → Play Strudel
       if (e.altKey && e.key === 'Enter') {
         e.preventDefault()
         e.stopPropagation()
-        strudelRef.current?.toggle()
+        strudelRef.current?.play()
+        return
+      }
+      // Alt+. → Pause Strudel
+      if (e.altKey && e.key === '.') {
+        e.preventDefault()
+        e.stopPropagation()
+        strudelRef.current?.pause()
       }
     }
     window.addEventListener('keydown', handler, { capture: true })
@@ -204,6 +219,7 @@ export default function App() {
       {/* Left: shader canvas */}
       <Box sx={{ width: `${leftRatio}%`, minWidth: 0, flexShrink: 0 }}>
         <ShaderPane
+          ref={shaderRef}
           shaderSource={shaderSource}
           webcamStream={webcamStream}
           audioStream={audioStream}

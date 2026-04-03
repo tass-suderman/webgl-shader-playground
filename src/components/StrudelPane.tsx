@@ -1,14 +1,19 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import StopIcon from '@mui/icons-material/Stop'
+import CloseIcon from '@mui/icons-material/Close'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
+import MusicNoteIcon from '@mui/icons-material/MusicNote'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import StopIcon from '@mui/icons-material/Stop'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
 import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
@@ -30,11 +35,36 @@ const minimalPrebake = async (): Promise<void> => {
 }
 
 const DEFAULT_STRUDEL_CODE = `// Strudel live-coding pattern
-// Alt+Enter to play/pause, Ctrl+. to stop
+// Alt+Enter to play, Alt+. to pause
 note("c3 [e3 g3] b3 [g3 e3]").sound("sawtooth").lpf(800).lpenv(2).slow(2)`
 
+// ---------------------------------------------------------------------------
+// Sounds reference data
+// ---------------------------------------------------------------------------
+
+const SOUND_CATEGORIES = [
+  {
+    label: 'Oscillator waveforms',
+    sounds: ['sine', 'sawtooth', 'square', 'triangle'],
+    aliases: { sin: 'sine', saw: 'sawtooth', sqr: 'square', tri: 'triangle' },
+  },
+  {
+    label: 'Synth voices',
+    sounds: ['sbd', 'supersaw', 'bytebeat', 'pulse', 'bus', 'user', 'one'],
+  },
+  {
+    label: 'Noise',
+    sounds: ['pink', 'white', 'brown', 'crackle'],
+  },
+  {
+    label: 'ZZFX (procedural)',
+    sounds: ['zzfx', 'z_sine', 'z_sawtooth', 'z_triangle', 'z_square', 'z_tan', 'z_noise'],
+  },
+] as const
+
 export interface StrudelPaneHandle {
-  toggle: () => void
+  play: () => void
+  pause: () => void
 }
 
 interface StrudelPaneProps {
@@ -56,18 +86,18 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [strudelTitle, setStrudelTitle] = useState('Strudel Pattern')
+  const [soundsOpen, setSoundsOpen] = useState(false)
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
   const onAudioStreamReadyRef = useRef(onAudioStreamReady)
   onAudioStreamReadyRef.current = onAudioStreamReady
 
   useImperativeHandle(ref, () => ({
-    toggle() {
-      if (isPlayingRef.current) {
-        mirrorRef.current?.stop().catch(console.error)
-      } else {
-        mirrorRef.current?.evaluate().catch(console.error)
-      }
+    play() {
+      mirrorRef.current?.evaluate().catch(console.error)
+    },
+    pause() {
+      mirrorRef.current?.stop().catch(console.error)
     },
   }), [])
 
@@ -231,7 +261,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           }}
         />
 
-        {/* Import / Export buttons */}
         <Tooltip title="Import pattern from file">
           <IconButton size="small" onClick={handleImportClick} aria-label="Import pattern from file" sx={{ color: 'rgba(255,255,255,0.7)' }}>
             <FileUploadIcon fontSize="small" />
@@ -240,6 +269,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         <Tooltip title="Export pattern to file">
           <IconButton size="small" onClick={handleExport} aria-label="Export pattern to file" sx={{ color: 'rgba(255,255,255,0.7)' }}>
             <FileDownloadIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Available sounds">
+          <IconButton size="small" onClick={() => setSoundsOpen(true)} aria-label="Available sounds" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <MusicNoteIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
@@ -277,7 +311,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         }}
       >
         <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
-          Alt+Enter to play/pause · Ctrl+. to stop
+          Alt+Enter to play · Alt+. to pause
         </Typography>
       </Box>
 
@@ -300,6 +334,52 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           '& .cm-scroller': { fontFamily: 'monospace' },
         }}
       />
+
+      {/* Sounds reference modal */}
+      <Dialog
+        open={soundsOpen}
+        onClose={() => setSoundsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { bgcolor: '#1e1e1e', color: '#fff' } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
+            Available Sounds
+          </Typography>
+          <IconButton size="small" onClick={() => setSoundsOpen(false)} aria-label="Close sounds dialog" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 0 }}>
+          {SOUND_CATEGORIES.map(cat => (
+            <Box key={cat.label} sx={{ mb: 2 }}>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {cat.label}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                {cat.sounds.map(s => (
+                  <Typography
+                    key={s}
+                    component="code"
+                    sx={{ bgcolor: '#2d2d2d', px: 0.75, py: 0.25, borderRadius: 0.5, fontSize: '0.8rem', fontFamily: 'monospace', color: '#9cdcfe' }}
+                  >
+                    {s}
+                  </Typography>
+                ))}
+              </Box>
+              {'aliases' in cat && Object.keys(cat.aliases).length > 0 && (
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace', display: 'block', mt: 0.5 }}>
+                  Aliases: {Object.entries(cat.aliases).map(([a, b]) => `${a} → ${b}`).join(', ')}
+                </Typography>
+              )}
+            </Box>
+          ))}
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace', display: 'block', mt: 1 }}>
+            Use with <code style={{ color: '#9cdcfe' }}>.sound("name")</code> in your pattern.
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </Box>
   )
 })
