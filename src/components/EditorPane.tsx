@@ -10,9 +10,9 @@ import Typography from '@mui/material/Typography'
 import Editor from '@monaco-editor/react'
 import type { OnMount, BeforeMount } from '@monaco-editor/react'
 import type { editor as MonacoEditorNS } from 'monaco-editor'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import ExamplesPanel from './ExamplesPanel'
 
 // ---------------------------------------------------------------------------
@@ -132,6 +132,10 @@ const GLSL_LANGUAGE_CONFIG = {
 }
 // ---------------------------------------------------------------------------
 
+const LS_GLSL_CODE = 'shader-playground:glsl-code'
+const LS_GLSL_TITLE = 'shader-playground:glsl-title'
+const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
+
 interface EditorPaneProps {
   initialCode: string
   onRun: (code: string) => void
@@ -141,7 +145,9 @@ interface EditorPaneProps {
 }
 
 export default function EditorPane({ initialCode, onRun, pendingSource, onCodeChange, shaderError }: EditorPaneProps) {
-  const [shaderTitle, setShaderTitle] = useState('Fragment Shader (GLSL)')
+  const [shaderTitle, setShaderTitle] = useState(
+    () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
+  )
   const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -165,10 +171,27 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     editorRef.current = editor
   }, [])
 
+  // Monaco's onChange fires after its built-in debounce (~300 ms), so saving
+  // directly here avoids extra debounce logic while keeping localStorage current.
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
       onCodeChange(value)
+      localStorage.setItem(LS_GLSL_CODE, value)
     }
+  }, [onCodeChange])
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setShaderTitle(e.target.value)
+    localStorage.setItem(LS_GLSL_TITLE, e.target.value)
+  }, [])
+
+  const handleLoadExample = useCallback((title: string, content: string) => {
+    editorRef.current?.setValue(content)
+    onCodeChange(content)
+    localStorage.setItem(LS_GLSL_CODE, content)
+    setShaderTitle(title)
+    localStorage.setItem(LS_GLSL_TITLE, title)
+    setActiveTab('editor')
   }, [onCodeChange])
 
   const handleExport = useCallback(() => {
@@ -204,21 +227,16 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         editorRef.current?.setValue(content)
         // Update parent state (also triggered by Monaco onChange, but set directly for safety)
         onCodeChange(content)
+        localStorage.setItem(LS_GLSL_CODE, content)
         // Set title from filename, stripping the extension
         const name = file.name.replace(/\.[^.]+$/, '')
         setShaderTitle(name)
+        localStorage.setItem(LS_GLSL_TITLE, name)
       }
     }
     reader.readAsText(file)
     // Reset so the same file can be re-imported
     e.target.value = ''
-  }, [onCodeChange])
-
-  const handleLoadExample = useCallback((title: string, content: string) => {
-    editorRef.current?.setValue(content)
-    onCodeChange(content)
-    setShaderTitle(title)
-    setActiveTab('editor')
   }, [onCodeChange])
 
   return (
@@ -247,7 +265,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         {/* Editable title */}
         <InputBase
           value={shaderTitle}
-          onChange={e => setShaderTitle(e.target.value)}
+          onChange={handleTitleChange}
           inputProps={{ 'aria-label': 'Shader title' }}
           sx={{
             color: 'rgba(255,255,255,0.7)',
@@ -262,7 +280,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
           }}
         />
 
-        {/* Import / Export buttons */}
+        {/* Import / Export / Reset buttons */}
         <Tooltip title="Import shader from file">
           <IconButton size="small" onClick={handleImportClick} aria-label="Import shader from file" sx={{ color: 'rgba(255,255,255,0.7)' }}>
             <FileUploadIcon fontSize="small" />
@@ -289,7 +307,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
       {/* Keyboard shortcut hint */}
       <Box sx={{ px: 2, py: 0.5, bgcolor: '#252526', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
         <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
-          Ctrl+Enter to run shader · Alt+Enter to play/pause Strudel
+          Ctrl+Enter to run shader · Alt+Enter to play Strudel · Alt+. to pause
         </Typography>
       </Box>
 

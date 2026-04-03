@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { forwardRef, useRef, useState, useCallback, useEffect, useImperativeHandle } from 'react'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
@@ -29,6 +29,10 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
+export interface ShaderPaneHandle {
+  pause: () => void
+}
+
 interface ShaderPaneProps {
   shaderSource: string
   webcamStream: MediaStream | null
@@ -45,7 +49,7 @@ interface ShaderPaneProps {
   onShaderError?: (error: string | null) => void
 }
 
-export default function ShaderPane({
+export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane({
   shaderSource,
   webcamStream,
   audioStream,
@@ -58,7 +62,7 @@ export default function ShaderPane({
   onToggleMic,
   onToggleSystemAudio,
   onShaderError,
-}: ShaderPaneProps) {
+}: ShaderPaneProps, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -66,6 +70,12 @@ export default function ShaderPane({
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
+
+  useImperativeHandle(ref, () => ({
+    pause() {
+      setIsPlaying(false)
+    },
+  }), [])
 
   useWebGL(canvasRef, {
     shaderSource,
@@ -297,4 +307,4 @@ export default function ShaderPane({
       </Box>
     </Box>
   )
-}
+})

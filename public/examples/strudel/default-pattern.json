@@ -1,0 +1,4 @@
+{
+  "title": "Default Pattern",
+  "content": "// Strudel live-coding pattern\n// Alt+Enter to play, Alt+. to pause\nnote(\"c3 [e3 g3] b3 [g3 e3]\").sound(\"sawtooth\").lpf(800).lpenv(2).slow(2)"
+}

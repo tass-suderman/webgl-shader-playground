@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import CloseIcon from '@mui/icons-material/Close'
 
 interface ExampleMeta {
   id: string
@@ -119,17 +120,42 @@ export default function ExamplesPanel({ type, onLoad }: ExamplesPanelProps) {
         </List>
       )}
 
-      <Dialog open={confirmOpen} onClose={handleCancel}>
-        <DialogTitle>Load example?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Loading <strong>&ldquo;{pending?.title}&rdquo;</strong> will replace your current{' '}
-            {itemLabel}. Any unsaved progress will be lost.
-          </DialogContentText>
+      <Dialog
+        open={confirmOpen}
+        onClose={handleCancel}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { bgcolor: '#1e1e1e', color: '#fff' } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
+            Load example?
+          </Typography>
+          <IconButton size="small" onClick={handleCancel} aria-label="Close dialog" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 0 }}>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
+            Loading <strong style={{ color: '#9cdcfe' }}>{pending?.title}</strong> will replace
+            your current {itemLabel}. Any unsaved progress will be lost.
+          </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancel}>Cancel</Button>
-          <Button onClick={handleConfirm} variant="contained" color="primary">
+        <DialogActions sx={{ px: 2, pb: 2 }}>
+          <Button
+            onClick={handleCancel}
+            size="small"
+            sx={{ textTransform: 'none', color: 'rgba(255,255,255,0.7)' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            color="primary"
+            size="small"
+            sx={{ textTransform: 'none' }}
+          >
             Load
           </Button>
         </DialogActions>

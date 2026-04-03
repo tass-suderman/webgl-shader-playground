@@ -85,6 +85,7 @@ const DEFAULT_PROPS = {
 describe('EditorPane', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -193,5 +194,42 @@ describe('EditorPane', () => {
   it('does not display an error panel when shaderError is null', () => {
     render(<EditorPane {...DEFAULT_PROPS} shaderError={null} />)
     expect(screen.queryByText(/error/i)).not.toBeInTheDocument()
+  })
+
+  // ---------------------------------------------------------------------------
+  // localStorage persistence
+  // ---------------------------------------------------------------------------
+
+  it('saves code to localStorage when editor content changes', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    const textarea = screen.getByTestId('monaco-editor')
+    await user.clear(textarea)
+    await user.type(textarea, 'float x = 2.0;')
+    expect(localStorage.getItem('shader-playground:glsl-code')).toBe('float x = 2.0;')
+  })
+
+  it('saves title to localStorage when title changes', async () => {
+    const user = userEvent.setup()
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    const input = screen.getByRole('textbox', { name: /shader title/i })
+    await user.clear(input)
+    await user.type(input, 'My Shader')
+    expect(localStorage.getItem('shader-playground:glsl-title')).toBe('My Shader')
+  })
+
+  it('loads initial title from localStorage on mount', () => {
+    localStorage.setItem('shader-playground:glsl-title', 'Saved Shader')
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    expect(screen.getByRole('textbox', { name: /shader title/i })).toHaveValue('Saved Shader')
+  })
+
+  // ---------------------------------------------------------------------------
+  // Examples tab
+  // ---------------------------------------------------------------------------
+
+  it('Examples tab is present', () => {
+    render(<EditorPane {...DEFAULT_PROPS} />)
+    expect(screen.getByRole('tab', { name: /examples/i })).toBeInTheDocument()
   })
 })

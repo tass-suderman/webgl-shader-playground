@@ -1,4 +1,5 @@
 [
+  { "id": "default-pattern", "title": "Default Pattern" },
   { "id": "techno-beat", "title": "Techno Beat" },
   { "id": "melodic-arp", "title": "Melodic Arp" }
 ]
