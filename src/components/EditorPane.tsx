@@ -168,6 +168,8 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     editorRef.current = editor
   }, [])
 
+  // Monaco's onChange fires after its built-in debounce (~300 ms), so saving
+  // directly here avoids extra debounce logic while keeping localStorage current.
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
       onCodeChange(value)

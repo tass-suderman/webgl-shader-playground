@@ -200,7 +200,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
 
   // Persist the strudel code when the tab is hidden or the page is unloaded
   useEffect(() => {
-    const onHide = () => { if (document.visibilityState === 'hidden') saveCode() }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') { saveCode() }
+    }
     document.addEventListener('visibilitychange', onHide)
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [saveCode])
