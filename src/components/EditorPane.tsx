@@ -3,6 +3,8 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import Editor from '@monaco-editor/react'
@@ -11,6 +13,7 @@ import type { editor as MonacoEditorNS } from 'monaco-editor'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
+import ExamplesPanel from './ExamplesPanel'
 
 // ---------------------------------------------------------------------------
 // GLSL Monarch tokenizer – registered before the Monaco editor mounts
@@ -139,6 +142,7 @@ interface EditorPaneProps {
 
 export default function EditorPane({ initialCode, onRun, pendingSource, onCodeChange, shaderError }: EditorPaneProps) {
   const [shaderTitle, setShaderTitle] = useState('Fragment Shader (GLSL)')
+  const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -208,6 +212,13 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     reader.readAsText(file)
     // Reset so the same file can be re-imported
     e.target.value = ''
+  }, [onCodeChange])
+
+  const handleLoadExample = useCallback((title: string, content: string) => {
+    editorRef.current?.setValue(content)
+    onCodeChange(content)
+    setShaderTitle(title)
+    setActiveTab('editor')
   }, [onCodeChange])
 
   return (
@@ -311,8 +322,32 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         </Box>
       )}
 
+      {/* Editor / Examples tab bar */}
+      <Tabs
+        value={activeTab}
+        onChange={(_e, val: 'editor' | 'examples') => setActiveTab(val)}
+        sx={{
+          minHeight: 32,
+          flexShrink: 0,
+          bgcolor: '#252526',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          '& .MuiTabs-indicator': { height: 2 },
+        }}
+      >
+        <Tab
+          label="Editor"
+          value="editor"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+        <Tab
+          label="Examples"
+          value="examples"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+      </Tabs>
+
       {/* Monaco editor */}
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ flex: 1, overflow: 'hidden', display: activeTab === 'editor' ? 'block' : 'none' }}>
         <Editor
           height="100%"
           defaultLanguage="glsl"
@@ -331,6 +366,13 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
           }}
         />
       </Box>
+
+      {/* Examples panel */}
+      {activeTab === 'examples' && (
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <ExamplesPanel type="glsl" onLoad={handleLoadExample} />
+        </Box>
+      )}
     </Box>
   )
 }

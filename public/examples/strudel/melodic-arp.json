@@ -1,0 +1,4 @@
+{
+  "title": "Melodic Arp",
+  "content": "// Melodic arpeggiated pattern with filter sweep\nnote(\"<c3 e3 g3 b3>/2\")\n  .sound(\"sawtooth\")\n  .lpf(sine.slow(8).range(400, 2000))\n  .lpenv(2)\n  .gain(0.6)\n  .room(0.4)\n  .slow(0.75)\n"
+}
