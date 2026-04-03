@@ -13,6 +13,10 @@ declare module '@strudel/codemirror' {
     constructor(options: StrudelMirrorOptions)
     evaluate(): Promise<void>
     stop(): Promise<void>
+    view: {
+      state: { doc: { toString(): string; length: number } }
+      dispatch(tr: { changes?: { from: number; to?: number; insert?: string } }): void
+    }
   }
   export const codemirrorSettings: { get: () => Record<string, unknown> }
 }

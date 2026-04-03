@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Box from '@mui/material/Box'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ShaderPane from './components/ShaderPane'
 import EditorPane from './components/EditorPane'
-import StrudelPane from './components/StrudelPane'
+import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
 import { DEFAULT_SHADER } from './shaders/default'
 
 type ViewMode = 'glsl' | 'strudel' | 'split'
@@ -22,9 +22,34 @@ export default function App() {
   const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
   const [splitRatio, setSplitRatio] = useState(50)
   const rightPanelRef = useRef<HTMLDivElement>(null)
+  const strudelRef = useRef<StrudelPaneHandle>(null)
+  // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
+  const pendingSourceRef = useRef(pendingSource)
+  pendingSourceRef.current = pendingSource
 
   const handleRun = useCallback((code: string) => {
     setShaderSource(code)
+  }, [])
+
+  // Global keyboard shortcuts (capture phase so they fire before Monaco / CodeMirror)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl+Enter / Cmd+Enter → Run Shader
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        e.stopPropagation()
+        setShaderSource(pendingSourceRef.current)
+        return
+      }
+      // Alt+Enter → Play / Pause Strudel
+      if (e.altKey && e.key === 'Enter') {
+        e.preventDefault()
+        e.stopPropagation()
+        strudelRef.current?.toggle()
+      }
+    }
+    window.addEventListener('keydown', handler, { capture: true })
+    return () => window.removeEventListener('keydown', handler, { capture: true })
   }, [])
 
   const handleToggleWebcam = useCallback(async () => {
@@ -228,7 +253,7 @@ export default function App() {
             height: viewMode === 'split' ? `calc(${100 - splitRatio}% - 4px)` : '100%',
             minHeight: 0,
           }}>
-            <StrudelPane onAnalyserReady={setStrudelAnalyser} />
+            <StrudelPane ref={strudelRef} onAnalyserReady={setStrudelAnalyser} />
           </Box>
         </Box>
       </Box>
