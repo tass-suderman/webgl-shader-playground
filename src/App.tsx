@@ -22,6 +22,8 @@ export default function App() {
   const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
   const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
   const [splitRatio, setSplitRatio] = useState(50)
+  const [leftRatio, setLeftRatio] = useState(50)
+  const outerContainerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
   // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
@@ -174,10 +176,30 @@ export default function App() {
     document.addEventListener('mouseup', onUp)
   }, [splitRatio])
 
+  const handleHorizontalDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const container = outerContainerRef.current
+    if (!container) return
+    const startX = e.clientX
+    const startRatio = leftRatio
+    const containerW = container.getBoundingClientRect().width
+    const onMove = (me: MouseEvent) => {
+      const delta = me.clientX - startX
+      const newRatio = Math.min(80, Math.max(20, startRatio + (delta / containerW) * 100))
+      setLeftRatio(newRatio)
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [leftRatio])
+
   return (
-    <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#1a1a2e' }}>
+    <Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#1a1a2e' }}>
       {/* Left: shader canvas */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ width: `${leftRatio}%`, minWidth: 0, flexShrink: 0 }}>
         <ShaderPane
           shaderSource={shaderSource}
           webcamStream={webcamStream}
@@ -193,6 +215,18 @@ export default function App() {
           onShaderError={setShaderError}
         />
       </Box>
+
+      {/* Horizontal drag divider between shader and editor */}
+      <Box
+        onMouseDown={handleHorizontalDividerMouseDown}
+        sx={{
+          width: '4px',
+          cursor: 'col-resize',
+          bgcolor: 'rgba(255,255,255,0.15)',
+          flexShrink: 0,
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+        }}
+      />
 
       {/* Right: editor panel */}
       <Box ref={rightPanelRef} sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>

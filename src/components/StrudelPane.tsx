@@ -16,7 +16,7 @@ import { transpiler } from '@strudel/transpiler'
 
 const DEFAULT_STRUDEL_CODE = `// Strudel live-coding pattern
 // Alt+Enter to play/pause, Ctrl+. to stop
-note("c3 [e3 g3] b3 [g3 e3]").sound("piano").slow(2)`
+note("c3 [e3 g3] b3 [g3 e3]").sound("sawtooth").lpf(800).lpenv(2).slow(2)`
 
 export interface StrudelPaneHandle {
   toggle: () => void
@@ -35,6 +35,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const mirrorRef = useRef<StrudelMirror | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const destinationNodeRef = useRef<MediaStreamAudioDestinationNode | null>(null)
+  /** Reference to the GainNode we connected our analyser/destination to, so we can remove those connections cleanly on stop */
+  const destinationGainRef = useRef<GainNode | null>(null)
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -71,27 +73,41 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         if (started && !analyserRef.current) {
           const ctx = getAudioContext()
           const controller = getSuperdoughAudioController()
+          // Resume suspended audio context (browser autoplay policy)
+          if (ctx?.state === 'suspended') {
+            ctx.resume().catch(console.error)
+          }
           if (ctx && controller?.output?.destinationGain) {
+            const dg = controller.output.destinationGain
+            destinationGainRef.current = dg
+
             const analyser = ctx.createAnalyser()
             analyser.fftSize = 256
-            controller.output.destinationGain.connect(analyser)
+            dg.connect(analyser)
             analyserRef.current = analyser
             onAnalyserReadyRef.current(analyser)
 
             // Create a MediaStream destination so the audio can be captured for recording
             const destination = ctx.createMediaStreamDestination()
-            controller.output.destinationGain.connect(destination)
+            dg.connect(destination)
             destinationNodeRef.current = destination
             onAudioStreamReadyRef.current?.(destination.stream)
           }
         }
         if (!started && analyserRef.current) {
-          analyserRef.current.disconnect()
+          // Remove the specific connections we added to destinationGain
+          const dg = destinationGainRef.current
+          if (dg) {
+            try { dg.disconnect(analyserRef.current) } catch (_) { /* node may have been reset */ }
+            if (destinationNodeRef.current) {
+              try { dg.disconnect(destinationNodeRef.current) } catch (_) { /* node may have been reset */ }
+            }
+            destinationGainRef.current = null
+          }
           analyserRef.current = null
           onAnalyserReadyRef.current(null)
 
           if (destinationNodeRef.current) {
-            destinationNodeRef.current.disconnect()
             destinationNodeRef.current = null
             onAudioStreamReadyRef.current?.(null)
           }
@@ -101,12 +117,18 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     mirrorRef.current = mirror
     return () => {
       if (analyserRef.current) {
-        analyserRef.current.disconnect()
+        const dg = destinationGainRef.current
+        if (dg) {
+          try { dg.disconnect(analyserRef.current) } catch (_) { /* node may have been reset */ }
+          if (destinationNodeRef.current) {
+            try { dg.disconnect(destinationNodeRef.current) } catch (_) { /* node may have been reset */ }
+          }
+          destinationGainRef.current = null
+        }
         analyserRef.current = null
         onAnalyserReadyRef.current(null)
       }
       if (destinationNodeRef.current) {
-        destinationNodeRef.current.disconnect()
         destinationNodeRef.current = null
         onAudioStreamReadyRef.current?.(null)
       }
