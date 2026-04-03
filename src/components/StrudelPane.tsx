@@ -24,21 +24,25 @@ export interface StrudelPaneHandle {
 
 interface StrudelPaneProps {
   onAnalyserReady: (analyser: AnalyserNode | null) => void
+  onAudioStreamReady?: (stream: MediaStream | null) => void
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady },
+  { onAnalyserReady, onAudioStreamReady },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
   const mirrorRef = useRef<StrudelMirror | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
+  const destinationNodeRef = useRef<MediaStreamAudioDestinationNode | null>(null)
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [strudelTitle, setStrudelTitle] = useState('Strudel Pattern')
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
+  const onAudioStreamReadyRef = useRef(onAudioStreamReady)
+  onAudioStreamReadyRef.current = onAudioStreamReady
 
   useImperativeHandle(ref, () => ({
     toggle() {
@@ -73,12 +77,24 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
             controller.output.destinationGain.connect(analyser)
             analyserRef.current = analyser
             onAnalyserReadyRef.current(analyser)
+
+            // Create a MediaStream destination so the audio can be captured for recording
+            const destination = ctx.createMediaStreamDestination()
+            controller.output.destinationGain.connect(destination)
+            destinationNodeRef.current = destination
+            onAudioStreamReadyRef.current?.(destination.stream)
           }
         }
         if (!started && analyserRef.current) {
           analyserRef.current.disconnect()
           analyserRef.current = null
           onAnalyserReadyRef.current(null)
+
+          if (destinationNodeRef.current) {
+            destinationNodeRef.current.disconnect()
+            destinationNodeRef.current = null
+            onAudioStreamReadyRef.current?.(null)
+          }
         }
       },
     })
@@ -88,6 +104,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         analyserRef.current.disconnect()
         analyserRef.current = null
         onAnalyserReadyRef.current(null)
+      }
+      if (destinationNodeRef.current) {
+        destinationNodeRef.current.disconnect()
+        destinationNodeRef.current = null
+        onAudioStreamReadyRef.current?.(null)
       }
       mirror.stop().catch(console.error)
     }

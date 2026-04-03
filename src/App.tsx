@@ -20,6 +20,7 @@ export default function App() {
   const [shaderError, setShaderError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
   const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
+  const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
   const [splitRatio, setSplitRatio] = useState(50)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
@@ -182,6 +183,7 @@ export default function App() {
           webcamStream={webcamStream}
           audioStream={audioStream}
           strudelAnalyser={strudelAnalyser}
+          strudelAudioStream={strudelAudioStream}
           webcamEnabled={webcamEnabled}
           micEnabled={micEnabled}
           systemAudioEnabled={systemAudioEnabled}
@@ -253,7 +255,7 @@ export default function App() {
             height: viewMode === 'split' ? `calc(${100 - splitRatio}% - 4px)` : '100%',
             minHeight: 0,
           }}>
-            <StrudelPane ref={strudelRef} onAnalyserReady={setStrudelAnalyser} />
+            <StrudelPane ref={strudelRef} onAnalyserReady={setStrudelAnalyser} onAudioStreamReady={setStrudelAudioStream} />
           </Box>
         </Box>
       </Box>

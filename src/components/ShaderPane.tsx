@@ -13,13 +13,29 @@ import MicIcon from '@mui/icons-material/Mic'
 import MicOffIcon from '@mui/icons-material/MicOff'
 import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 import VolumeOffIcon from '@mui/icons-material/VolumeOff'
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
+import StopCircleIcon from '@mui/icons-material/StopCircle'
 import { useWebGL } from '../hooks/useWebGL'
+
+// Download a blob via a temporary anchor element (fallback when showSaveFilePicker is unavailable)
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 interface ShaderPaneProps {
   shaderSource: string
   webcamStream: MediaStream | null
   audioStream: MediaStream | null
   strudelAnalyser?: AnalyserNode | null
+  /** MediaStream carrying the Strudel audio output – used for recording */
+  strudelAudioStream?: MediaStream | null
   webcamEnabled: boolean
   micEnabled: boolean
   systemAudioEnabled: boolean
@@ -34,6 +50,7 @@ export default function ShaderPane({
   webcamStream,
   audioStream,
   strudelAnalyser,
+  strudelAudioStream,
   webcamEnabled,
   micEnabled,
   systemAudioEnabled,
@@ -46,6 +63,9 @@ export default function ShaderPane({
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = useRef<Blob[]>([])
 
   useWebGL(canvasRef, {
     shaderSource,
@@ -62,6 +82,84 @@ export default function ShaderPane({
       containerRef.current.requestFullscreen()
     } else {
       document.exitFullscreen()
+    }
+  }, [])
+
+  const handleStartRecording = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas || typeof canvas.captureStream !== 'function') return
+
+    const canvasStream = canvas.captureStream(30)
+
+    // Prefer Strudel audio; fall back to mic / system audio
+    const audioTracks =
+      strudelAudioStream && strudelAudioStream.getAudioTracks().length > 0
+        ? strudelAudioStream.getAudioTracks()
+        : (audioStream?.getAudioTracks() ?? [])
+
+    const recordStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...audioTracks,
+    ])
+
+    const mimeType = MediaRecorder.isTypeSupported('video/mp4')
+      ? 'video/mp4'
+      : 'video/webm'
+
+    const recorder = new MediaRecorder(recordStream, { mimeType })
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        recordedChunksRef.current.push(e.data)
+      }
+    }
+
+    recorder.onstop = async () => {
+      const chunks = recordedChunksRef.current.splice(0)
+      if (chunks.length === 0) return
+      const blob = new Blob(chunks, { type: recorder.mimeType || mimeType })
+      const ext = (recorder.mimeType || mimeType).includes('mp4') ? 'mp4' : 'webm'
+      const filename = `recording.${ext}`
+
+      if (typeof window.showSaveFilePicker === 'function') {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{ description: 'Video file', accept: { [(recorder.mimeType || mimeType)]: [`.${ext}`] } }],
+          })
+          const writable = await handle.createWritable()
+          await writable.write(blob)
+          await writable.close()
+          return
+        } catch (err) {
+          // AbortError means user cancelled – do nothing; anything else falls through to anchor download
+          if ((err as DOMException).name === 'AbortError') return
+        }
+      }
+
+      downloadBlob(blob, filename)
+    }
+
+    recordedChunksRef.current = []
+    recorder.start()
+    mediaRecorderRef.current = recorder
+    setIsRecording(true)
+  }, [audioStream, strudelAudioStream])
+
+  const handleStopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop()
+    }
+    setIsRecording(false)
+  }, [])
+
+  // Stop any active recording when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      }
     }
   }, [])
 
@@ -175,6 +273,17 @@ export default function ShaderPane({
         )}
 
         <Box sx={{ flex: 1 }} />
+
+        <Tooltip title={isRecording ? 'Stop recording' : 'Start recording'}>
+          <IconButton
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            size="small"
+            aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+            sx={{ color: isRecording ? 'error.main' : 'white' }}
+          >
+            {isRecording ? <StopCircleIcon /> : <FiberManualRecordIcon />}
+          </IconButton>
+        </Tooltip>
 
         <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
           <IconButton
