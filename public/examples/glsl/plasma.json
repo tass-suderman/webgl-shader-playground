@@ -1,0 +1,4 @@
+{
+  "title": "Plasma Effect",
+  "content": "// Classic plasma effect using layered sine waves\nprecision highp float;\n\nuniform float iTime;\nuniform vec2 iResolution;\n\nvoid main() {\n    vec2 uv = gl_FragCoord.xy / iResolution.xy;\n    float x = uv.x * 6.0 - 3.0;\n    float y = uv.y * 6.0 - 3.0;\n\n    float v = 0.0;\n    v += sin(x + iTime);\n    v += sin(y + iTime * 0.7);\n    v += sin(x + y + iTime * 0.5);\n    v += sin(sqrt(x * x + y * y + 1.0) + iTime);\n\n    vec3 col;\n    col.r = sin(v * 3.14159);\n    col.g = sin(v * 3.14159 + 2.094);\n    col.b = sin(v * 3.14159 + 4.189);\n\n    gl_FragColor = vec4(col * 0.5 + 0.5, 1.0);\n}\n"
+}

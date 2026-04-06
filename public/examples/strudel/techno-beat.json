@@ -1,0 +1,4 @@
+{
+  "title": "Techno Beat",
+  "content": "// Four-on-the-floor techno beat using built-in oscillators\nstack(\n  note(\"c1\").sound(\"square\").s(\"*4\").gain(1.0).lpf(200).lpenv(1),\n  note(\"~ c2 ~ c2\").sound(\"triangle\").gain(0.8).room(0.1),\n  note(\"c4*8\").sound(\"sine\").gain(0.3).pan(sine.range(0.3, 0.7)),\n  note(\"~ ~ ~ c3\").sound(\"sawtooth\").gain(0.5).lpf(1200)\n).cpm(135)\n"
+}

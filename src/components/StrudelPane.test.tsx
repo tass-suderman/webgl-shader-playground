@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -230,6 +230,42 @@ describe('StrudelPane', () => {
     render(<StrudelPane onAnalyserReady={noop} vimMode={false} themeName="kanagawa" />)
     await user.click(screen.getByRole('button', { name: /play strudel/i }))
     expect(localStorage.getItem('shader-playground:strudel-code')).toBe('note("e4").sound("sine")')
+  })
+
+  // ---------------------------------------------------------------------------
+  // Examples tab
+  // ---------------------------------------------------------------------------
+
+  it('Examples tab is present', () => {
+    render(<StrudelPane onAnalyserReady={noop} />)
+    expect(screen.getByRole('tab', { name: /examples/i })).toBeInTheDocument()
+  })
+
+  it('clicking Examples tab hides the CodeMirror editor area', async () => {
+    const user = userEvent.setup()
+    render(<StrudelPane onAnalyserReady={noop} />)
+    await user.click(screen.getByRole('tab', { name: /examples/i }))
+    // The CodeMirror root box should have display:none when Examples tab is active
+    const editorBox = document.querySelector('[style*="display: none"]')
+    expect(editorBox).toBeTruthy()
+  })
+
+  it('handleLoadExample calls mirror.evaluate() to auto-play the pattern', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url: RequestInfo | URL) => {
+      const key = String(url)
+      if (key.includes('index.json')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'melodic-arp', title: 'Melodic Arp' }]) } as Response)
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ title: 'Melodic Arp', content: 'note("c3").sound("sawtooth")' }) } as Response)
+    })
+    render(<StrudelPane onAnalyserReady={noop} />)
+    await user.click(screen.getByRole('tab', { name: /examples/i }))
+    await waitFor(() => screen.getByText('Melodic Arp'))
+    await user.click(screen.getByText('Melodic Arp'))
+    await user.click(screen.getByRole('button', { name: /^load$/i }))
+    await waitFor(() => expect(mockEvaluate).toHaveBeenCalled())
+    vi.restoreAllMocks()
   })
 
   // ---------------------------------------------------------------------------

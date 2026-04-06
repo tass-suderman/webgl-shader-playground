@@ -6,6 +6,8 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import CloseIcon from '@mui/icons-material/Close'
@@ -13,12 +15,12 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import StopIcon from '@mui/icons-material/Stop'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
 import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
+import ExamplesPanel from './ExamplesPanel'
 
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
@@ -110,6 +112,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const [strudelTitle, setStrudelTitle] = useState(
     () => localStorage.getItem(LS_STRUDEL_TITLE) ?? DEFAULT_STRUDEL_TITLE,
   )
+  const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const [soundsOpen, setSoundsOpen] = useState(false)
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
@@ -294,11 +297,15 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     localStorage.setItem(LS_STRUDEL_TITLE, e.target.value)
   }, [])
 
-  const handleReset = useCallback(() => {
-    mirrorRef.current?.setCode(DEFAULT_STRUDEL_CODE)
-    localStorage.setItem(LS_STRUDEL_CODE, DEFAULT_STRUDEL_CODE)
-    setStrudelTitle(DEFAULT_STRUDEL_TITLE)
-    localStorage.setItem(LS_STRUDEL_TITLE, DEFAULT_STRUDEL_TITLE)
+  const handleLoadExample = useCallback((title: string, content: string) => {
+    if (mirrorRef.current) {
+      mirrorRef.current.setCode(content)
+      mirrorRef.current.evaluate().catch(console.error)
+    }
+    localStorage.setItem(LS_STRUDEL_CODE, content)
+    setStrudelTitle(title)
+    localStorage.setItem(LS_STRUDEL_TITLE, title)
+    setActiveTab('editor')
   }, [])
 
   return (
@@ -400,16 +407,48 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         onChange={handleFileChange}
       />
 
+      {/* Editor / Examples tab bar */}
+      <Tabs
+        value={activeTab}
+        onChange={(_e, val: 'editor' | 'examples') => setActiveTab(val)}
+        sx={{
+          minHeight: 32,
+          flexShrink: 0,
+          bgcolor: '#252526',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          '& .MuiTabs-indicator': { height: 2 },
+        }}
+      >
+        <Tab
+          label="Editor"
+          value="editor"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+        <Tab
+          label="Examples"
+          value="examples"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+      </Tabs>
+
       {/* Strudel CodeMirror editor */}
       <Box
         ref={rootRef}
         sx={{
           flex: 1,
           overflow: 'auto',
+          display: activeTab === 'editor' ? 'block' : 'none',
           '& .cm-editor': { minHeight: '100%', fontSize: '13px' },
           '& .cm-scroller': { fontFamily: 'monospace' },
         }}
       />
+
+      {/* Examples panel */}
+      {activeTab === 'examples' && (
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <ExamplesPanel type="strudel" onLoad={handleLoadExample} />
+        </Box>
+      )}
 
       {/* Sounds reference modal */}
       <Dialog

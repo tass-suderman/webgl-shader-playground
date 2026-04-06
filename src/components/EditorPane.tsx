@@ -3,6 +3,8 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import Editor from '@monaco-editor/react'
@@ -13,6 +15,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { initVimMode, type VimAdapterInstance } from 'monaco-vim'
+import ExamplesPanel from './ExamplesPanel'
 
 // ---------------------------------------------------------------------------
 // GLSL Monarch tokenizer – registered before the Monaco editor mounts
@@ -217,6 +220,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
   const [shaderTitle, setShaderTitle] = useState(
     () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
   )
+  const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -293,15 +297,15 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     localStorage.setItem(LS_GLSL_TITLE, e.target.value)
   }, [])
 
-  const handleReset = useCallback(() => {
-    editorRef.current?.setValue(initialCode)
-    // setValue may or may not fire onChange – set explicitly to be safe
-    onCodeChange(initialCode)
-    localStorage.setItem(LS_GLSL_CODE, initialCode)
-    setShaderTitle(DEFAULT_SHADER_TITLE)
-    localStorage.setItem(LS_GLSL_TITLE, DEFAULT_SHADER_TITLE)
-    onRun(initialCode)
-  }, [initialCode, onCodeChange, onRun])
+  const handleLoadExample = useCallback((title: string, content: string) => {
+    editorRef.current?.setValue(content)
+    onCodeChange(content)
+    localStorage.setItem(LS_GLSL_CODE, content)
+    setShaderTitle(title)
+    localStorage.setItem(LS_GLSL_TITLE, title)
+    onRun(content)
+    setActiveTab('editor')
+  }, [onCodeChange, onRun])
 
   const handleExport = useCallback(() => {
     const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })
@@ -454,8 +458,32 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         </Box>
       )}
 
+      {/* Editor / Examples tab bar */}
+      <Tabs
+        value={activeTab}
+        onChange={(_e, val: 'editor' | 'examples') => setActiveTab(val)}
+        sx={{
+          minHeight: 32,
+          flexShrink: 0,
+          bgcolor: '#252526',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          '& .MuiTabs-indicator': { height: 2 },
+        }}
+      >
+        <Tab
+          label="Editor"
+          value="editor"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+        <Tab
+          label="Examples"
+          value="examples"
+          sx={{ minHeight: 32, py: 0.5, px: 2, fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.6)' }}
+        />
+      </Tabs>
+
       {/* Monaco editor */}
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ flex: 1, overflow: 'hidden', display: activeTab === 'editor' ? 'block' : 'none' }}>
         <Editor
           height="100%"
           defaultLanguage="glsl"
@@ -474,6 +502,13 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
           }}
         />
       </Box>
+
+      {/* Examples panel */}
+      {activeTab === 'examples' && (
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <ExamplesPanel type="glsl" onLoad={handleLoadExample} />
+        </Box>
+      )}
 
       {/* Vim status bar – only shown when vim mode is active */}
       <Box

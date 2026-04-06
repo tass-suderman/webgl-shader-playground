@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -227,36 +227,38 @@ describe('EditorPane', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Reset button
+  // Examples tab
   // ---------------------------------------------------------------------------
 
-  it('reset button is present in the header', () => {
+  it('Examples tab is present', () => {
     render(<EditorPane {...DEFAULT_PROPS} />)
-    expect(screen.getByRole('button', { name: /reset to default shader/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /examples/i })).toBeInTheDocument()
   })
 
-  it('reset button restores the default title', async () => {
+  it('clicking Examples tab shows ExamplesPanel and hides Monaco editor', async () => {
     const user = userEvent.setup()
     render(<EditorPane {...DEFAULT_PROPS} />)
-    const titleInput = screen.getByRole('textbox', { name: /shader title/i })
-    await user.clear(titleInput)
-    await user.type(titleInput, 'Custom Shader')
-    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
-    expect(titleInput).toHaveValue('Fragment Shader (GLSL)')
+    await user.click(screen.getByRole('tab', { name: /examples/i }))
+    // ExamplesPanel's fetch will fail (no server), but the panel container renders
+    expect(screen.getByTestId('monaco-editor').parentElement).toHaveStyle({ display: 'none' })
   })
 
-  it('reset button calls setValue on the Monaco editor with initialCode', async () => {
-    const user = userEvent.setup()
-    render(<EditorPane {...DEFAULT_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
-    expect(mockSetValue).toHaveBeenCalledWith(DEFAULT_PROPS.initialCode)
-  })
-
-  it('reset button calls onRun with initialCode', async () => {
+  it('handleLoadExample calls onRun with the example content to auto-run the shader', async () => {
     const onRun = vi.fn()
     const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url: RequestInfo | URL) => {
+      const key = String(url)
+      if (key.includes('index.json')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'plasma', title: 'Plasma Effect' }]) } as Response)
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ title: 'Plasma Effect', content: 'void main(){}' }) } as Response)
+    })
     render(<EditorPane {...DEFAULT_PROPS} onRun={onRun} />)
-    await user.click(screen.getByRole('button', { name: /reset to default shader/i }))
-    expect(onRun).toHaveBeenCalledWith(DEFAULT_PROPS.initialCode)
+    await user.click(screen.getByRole('tab', { name: /examples/i }))
+    await waitFor(() => screen.getByText('Plasma Effect'))
+    await user.click(screen.getByText('Plasma Effect'))
+    await user.click(screen.getByRole('button', { name: /^load$/i }))
+    await waitFor(() => expect(onRun).toHaveBeenCalledWith('void main(){}'))
+    vi.restoreAllMocks()
   })
 })
