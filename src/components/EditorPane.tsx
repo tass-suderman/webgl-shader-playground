@@ -12,7 +12,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
-import { initVimMode } from 'monaco-vim'
+import { initVimMode, type VimAdapterInstance } from 'monaco-vim'
 
 // ---------------------------------------------------------------------------
 // GLSL Monarch tokenizer – registered before the Monaco editor mounts
@@ -151,8 +151,7 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const statusBarRef = useRef<HTMLDivElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const vimModeInstanceRef = useRef<any>(null)
+  const vimModeInstanceRef = useRef<VimAdapterInstance | null>(null)
 
   // Keep a ref so Monaco keyboard shortcuts always call with latest pendingSource
   const pendingSourceRef = useRef(pendingSource)
