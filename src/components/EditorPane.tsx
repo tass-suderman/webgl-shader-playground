@@ -191,8 +191,9 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     localStorage.setItem(LS_GLSL_CODE, content)
     setShaderTitle(title)
     localStorage.setItem(LS_GLSL_TITLE, title)
+    onRun(content)
     setActiveTab('editor')
-  }, [onCodeChange])
+  }, [onCodeChange, onRun])
 
   const handleExport = useCallback(() => {
     const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })

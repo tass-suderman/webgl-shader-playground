@@ -268,6 +268,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const handleLoadExample = useCallback((title: string, content: string) => {
     if (mirrorRef.current) {
       mirrorRef.current.setCode(content)
+      mirrorRef.current.evaluate().catch(console.error)
     }
     localStorage.setItem(LS_STRUDEL_CODE, content)
     setStrudelTitle(title)

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -239,5 +239,24 @@ describe('EditorPane', () => {
     await user.click(screen.getByRole('tab', { name: /examples/i }))
     // ExamplesPanel's fetch will fail (no server), but the panel container renders
     expect(screen.getByTestId('monaco-editor').parentElement).toHaveStyle({ display: 'none' })
+  })
+
+  it('handleLoadExample calls onRun with the example content to auto-run the shader', async () => {
+    const onRun = vi.fn()
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url: RequestInfo | URL) => {
+      const key = String(url)
+      if (key.includes('index.json')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'plasma', title: 'Plasma Effect' }]) } as Response)
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ title: 'Plasma Effect', content: 'void main(){}' }) } as Response)
+    })
+    render(<EditorPane {...DEFAULT_PROPS} onRun={onRun} />)
+    await user.click(screen.getByRole('tab', { name: /examples/i }))
+    await waitFor(() => screen.getByText('Plasma Effect'))
+    await user.click(screen.getByText('Plasma Effect'))
+    await user.click(screen.getByRole('button', { name: /^load$/i }))
+    await waitFor(() => expect(onRun).toHaveBeenCalledWith('void main(){}'))
+    vi.restoreAllMocks()
   })
 })
