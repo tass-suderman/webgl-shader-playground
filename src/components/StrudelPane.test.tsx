@@ -7,12 +7,14 @@ import React from 'react'
 // Module mocks – hoisted so they run before imports
 // ---------------------------------------------------------------------------
 
-const { mockEvaluate, mockStop, mockSetCode, mockClear, mockEditorDestroy } = vi.hoisted(() => ({
+const { mockEvaluate, mockStop, mockSetCode, mockClear, mockEditorDestroy, mockChangeSetting, mockSetTheme } = vi.hoisted(() => ({
   mockEvaluate: vi.fn().mockResolvedValue(undefined),
   mockStop: vi.fn().mockResolvedValue(undefined),
   mockSetCode: vi.fn(),
   mockClear: vi.fn(),
   mockEditorDestroy: vi.fn(),
+  mockChangeSetting: vi.fn(),
+  mockSetTheme: vi.fn(),
 }))
 
 const mockMirror = vi.hoisted(() => ({
@@ -21,6 +23,8 @@ const mockMirror = vi.hoisted(() => ({
   stop: mockStop,
   setCode: mockSetCode,
   clear: mockClear,
+  changeSetting: mockChangeSetting,
+  setTheme: mockSetTheme,
   editor: { state: { doc: { toString: () => '', length: 0 } }, dispatch: vi.fn(), destroy: mockEditorDestroy },
 }))
 

@@ -26,9 +26,13 @@ vi.mock('@monaco-editor/react', () => ({
           setMonarchTokensProvider: vi.fn(),
           setLanguageConfiguration: vi.fn(),
         },
+        editor: {
+          defineTheme: vi.fn(),
+          setTheme: vi.fn(),
+        },
       }
       beforeMount?.(mockedMonaco)
-      const mockEditor = { setValue: mockSetValue, getValue: () => 'void main() {}' }
+      const mockEditor = { setValue: mockSetValue, getValue: () => 'void main() {}', onDidDispose: vi.fn() }
       onMount?.(mockEditor, mockedMonaco)
     }, [])
     return (
@@ -38,6 +42,11 @@ vi.mock('@monaco-editor/react', () => ({
       />
     )
   },
+}))
+
+// Mock monaco-vim to avoid requiring the full monaco-editor ESM build in tests
+vi.mock('monaco-vim', () => ({
+  initVimMode: vi.fn(() => ({ dispose: vi.fn() })),
 }))
 
 // ---------------------------------------------------------------------------

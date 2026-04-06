@@ -12,6 +12,7 @@ import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
 import SettingsPane from './components/SettingsPane'
 import { DEFAULT_SHADER } from './shaders/default'
 import { applyTheme, getThemeByName } from './themes/appThemes'
+import { useMediaStreams } from './hooks/useMediaStreams'
 
 export const LS_GLSL_CODE = 'shader-playground:glsl-code'
 const LS_THEME = 'shader-playground:theme'
@@ -27,11 +28,6 @@ type ViewMode = 'glsl' | 'strudel' | 'split'
 export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
   const [pendingSource, setPendingSource] = useState<string>(initialShaderCode)
-  const [webcamEnabled, setWebcamEnabled] = useState(false)
-  const [micEnabled, setMicEnabled] = useState(false)
-  const [systemAudioEnabled, setSystemAudioEnabled] = useState(false)
-  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null)
-  const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
   const [shaderError, setShaderError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -48,6 +44,17 @@ export default function App() {
   // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
+
+  const {
+    webcamEnabled,
+    micEnabled,
+    systemAudioEnabled,
+    webcamStream,
+    audioStream,
+    handleToggleWebcam,
+    handleToggleMic,
+    handleToggleSystemAudio,
+  } = useMediaStreams()
 
   // Apply the active theme as CSS custom properties whenever it changes
   useEffect(() => {
@@ -102,107 +109,6 @@ export default function App() {
     window.addEventListener('keydown', handler, { capture: true })
     return () => window.removeEventListener('keydown', handler, { capture: true })
   }, [])
-
-  const handleToggleWebcam = useCallback(async () => {
-    if (webcamEnabled) {
-      if (webcamStream) {
-        webcamStream.getTracks().forEach(t => t.stop())
-        setWebcamStream(null)
-      }
-      setWebcamEnabled(false)
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        // Stop webcam when the track ends (e.g. user revokes permission)
-        stream.getVideoTracks().forEach(track => {
-          track.onended = () => {
-            setWebcamStream(null)
-            setWebcamEnabled(false)
-          }
-        })
-        setWebcamStream(stream)
-        setWebcamEnabled(true)
-      } catch (e) {
-        console.error('Failed to get webcam:', e)
-      }
-    }
-  }, [webcamEnabled, webcamStream])
-
-  const stopAudio = useCallback(() => {
-    if (audioStream) {
-      audioStream.getTracks().forEach(t => t.stop())
-      setAudioStream(null)
-    }
-    setMicEnabled(false)
-    setSystemAudioEnabled(false)
-  }, [audioStream])
-
-  const handleToggleMic = useCallback(async () => {
-    if (micEnabled) {
-      stopAudio()
-    } else {
-      // Stop any existing audio source first
-      if (audioStream) {
-        audioStream.getTracks().forEach(t => t.stop())
-        setAudioStream(null)
-      }
-      setSystemAudioEnabled(false)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        stream.getAudioTracks().forEach(track => {
-          track.onended = () => {
-            setAudioStream(null)
-            setMicEnabled(false)
-          }
-        })
-        setAudioStream(stream)
-        setMicEnabled(true)
-      } catch (e) {
-        console.error('Failed to get mic:', e)
-      }
-    }
-  }, [micEnabled, audioStream, stopAudio])
-
-  const handleToggleSystemAudio = useCallback(async () => {
-    if (systemAudioEnabled) {
-      stopAudio()
-    } else {
-      // Stop any existing audio source first
-      if (audioStream) {
-        audioStream.getTracks().forEach(t => t.stop())
-        setAudioStream(null)
-      }
-      setMicEnabled(false)
-      try {
-        // getDisplayMedia is the only browser API that can capture system audio output.
-        // Most browsers require video:true even when only audio is needed.
-        // Note: browser support and user-facing dialogs vary – Chrome shows a tab/window
-        // picker with an "also share audio" checkbox, Firefox may not support system audio.
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-        const audioTracks = displayStream.getAudioTracks()
-        if (audioTracks.length === 0) {
-          // No audio was shared – stop everything and bail out
-          displayStream.getTracks().forEach(t => t.stop())
-          console.warn('No system audio track found. Make sure to enable audio sharing in the dialog.')
-          return
-        }
-        // Stop the video capture immediately – we only need the audio
-        displayStream.getVideoTracks().forEach(t => t.stop())
-        // Build a new stream that contains only the audio tracks
-        const audioOnlyStream = new MediaStream(audioTracks)
-        audioTracks.forEach(track => {
-          track.onended = () => {
-            setAudioStream(null)
-            setSystemAudioEnabled(false)
-          }
-        })
-        setAudioStream(audioOnlyStream)
-        setSystemAudioEnabled(true)
-      } catch (e) {
-        console.error('Failed to get system audio:', e)
-      }
-    }
-  }, [systemAudioEnabled, audioStream, stopAudio])
 
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
