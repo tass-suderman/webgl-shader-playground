@@ -37,7 +37,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const statusBarRef = useRef<HTMLDivElement>(null)
+  // Off-DOM element that monaco-vim writes its status into – never appended to
+  // the document so nothing is rendered to the user.
+  const statusBarRef = useRef(document.createElement('div'))
   const vimModeInstanceRef = useRef<VimAdapterInstance | null>(null)
 
   // Keep a ref so Monaco keyboard shortcuts always call with latest pendingSource
@@ -59,18 +61,16 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   // Enable / disable vim mode whenever the prop changes or the editor mounts
   useEffect(() => {
     const editor = editorRef.current
-    const statusBar = statusBarRef.current
-    if (!editor || !statusBar) return
+    if (!editor) return
 
     if (vimMode) {
       if (!vimModeInstanceRef.current) {
-        vimModeInstanceRef.current = initVimMode(editor, statusBar)
+        vimModeInstanceRef.current = initVimMode(editor, statusBarRef.current)
       }
     } else {
       if (vimModeInstanceRef.current) {
         vimModeInstanceRef.current.dispose()
         vimModeInstanceRef.current = null
-        statusBar.textContent = ''
       }
     }
   }, [vimMode])
@@ -99,7 +99,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const handleEditorMount = useCallback<OnMount>((editor) => {
     editorRef.current = editor
     // Initialize vim mode immediately if it is already enabled when the editor mounts
-    if (vimMode && statusBarRef.current && !vimModeInstanceRef.current) {
+    if (vimMode && !vimModeInstanceRef.current) {
       vimModeInstanceRef.current = initVimMode(editor, statusBarRef.current)
     }
     // Clean up vim mode when the editor is destroyed
@@ -223,14 +223,6 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
           }}
         />
       </Box>
-
-      {/* Vim status bar element – kept hidden so monaco-vim has a DOM node to
-          write into; the mode is not displayed to the user */}
-      <Box
-        ref={statusBarRef}
-        component="div"
-        sx={{ display: 'none' }}
-      />
     </Box>
   )
 })
