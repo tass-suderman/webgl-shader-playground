@@ -39,13 +39,13 @@ Drum samples are fetched automatically from open-source sample libraries the fir
 ```js
 // TR-808 groove
 stack(
-  s("TR808_bd ~ TR808_bd ~"),
-  s("~ TR808_sd ~ TR808_sd"),
-  s("TR808_hh*8")
+  s("RolandTR808_bd ~ RolandTR808_bd ~"),
+  s("~ RolandTR808_sd ~ RolandTR808_sd"),
+  s("RolandTR808_hh*8")
 ).cpm(120)
 ```
 
-Other machines: `TR909_*`, `TR606_*`, `TR707_*`, `LM1_*`, `DMX_*`, `R8_*`, `DR110_*`, and more. See the *Available Sounds* panel for the full list.
+Other machines: `RolandTR909_*`, `RolandTR606_*`, `RolandTR707_*`, `LinnLM1_*`, `OberheimDMX_*`, `RolandR8_*`, `BossDR110_*`, and more. See the *Available Sounds* panel for the full list.
 
 ---
 
