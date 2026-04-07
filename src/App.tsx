@@ -5,6 +5,8 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ShaderPane, { type ShaderPaneHandle } from './components/ShaderPane'
 import EditorPane, { type EditorPaneHandle } from './components/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
+import SwiftPane, { type SwiftPaneHandle } from './components/SwiftPane'
+import SwiftConsole from './components/SwiftConsole'
 import SettingsPane from './components/SettingsPane'
 import CombinedExamplesPanel from './components/CombinedExamplesPanel'
 import { DEFAULT_SHADER } from './shaders/default'
@@ -20,7 +22,7 @@ const LS_VIM_MODE = 'shader-playground:vim-mode'
 // without waiting for a user action.
 const initialShaderCode = localStorage.getItem(LS_GLSL_CODE) ?? DEFAULT_SHADER
 
-type ViewMode = 'glsl' | 'strudel' | 'split' | 'examples' | 'settings'
+type ViewMode = 'glsl' | 'strudel' | 'split' | 'examples' | 'settings' | 'swift'
 
 // Shared base styles for all top-bar toggle buttons
 const baseTabSx = {
@@ -63,6 +65,10 @@ export default function App() {
   const strudelRef = useRef<StrudelPaneHandle>(null)
   const editorRef = useRef<EditorPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
+  const swiftRef = useRef<SwiftPaneHandle>(null)
+  const [swiftOutput, setSwiftOutput] = useState<string | null>(null)
+  const [swiftIsRunning, setSwiftIsRunning] = useState(false)
+  const [swiftIsError, setSwiftIsError] = useState(false)
   // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
@@ -100,11 +106,15 @@ export default function App() {
   // Global keyboard shortcuts (capture phase so they fire before Monaco / CodeMirror)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Ctrl+Enter / Cmd+Enter → Play Shader (run/compile)
+      // Ctrl+Enter / Cmd+Enter → Play Shader (run/compile) or Run Swift
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault()
         e.stopPropagation()
-        setShaderSource(pendingSourceRef.current)
+        if (viewMode === 'swift') {
+          swiftRef.current?.run()
+        } else {
+          setShaderSource(pendingSourceRef.current)
+        }
         return
       }
       // Ctrl+. / Cmd+. → Pause Shader (freeze animation)
@@ -130,7 +140,7 @@ export default function App() {
     }
     window.addEventListener('keydown', handler, { capture: true })
     return () => window.removeEventListener('keydown', handler, { capture: true })
-  }, [])
+  }, [viewMode])
 
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -183,32 +193,47 @@ export default function App() {
     setViewMode('strudel')
   }, [])
 
+  const handleSwiftOutput = useCallback((output: string, isError: boolean) => {
+    setSwiftOutput(output)
+    setSwiftIsError(isError)
+  }, [])
+
   const isSplit = viewMode === 'split'
   const showGlsl = viewMode === 'glsl' || isSplit
   const showStrudel = viewMode === 'strudel' || isSplit
+  const isSwift = viewMode === 'swift'
 
   return (
     <Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'var(--pg-bg-app)' }}>
-      {/* Left: shader canvas */}
+      {/* Left: shader canvas or Swift output console */}
       <Box sx={{ width: `${leftRatio}%`, minWidth: 0, flexShrink: 0 }}>
-        <ShaderPane
-          ref={shaderRef}
-          shaderSource={shaderSource}
-          webcamStream={webcamStream}
-          audioStream={audioStream}
-          strudelAnalyser={strudelAnalyser}
-          strudelAudioStream={strudelAudioStream}
-          webcamEnabled={webcamEnabled}
-          micEnabled={micEnabled}
-          systemAudioEnabled={systemAudioEnabled}
-          onToggleWebcam={handleToggleWebcam}
-          onToggleMic={handleToggleMic}
-          onToggleSystemAudio={handleToggleSystemAudio}
-          onShaderError={setShaderError}
-        />
+        {isSwift ? (
+          <SwiftConsole
+            output={swiftOutput}
+            isRunning={swiftIsRunning}
+            isError={swiftIsError}
+            onClear={() => setSwiftOutput(null)}
+          />
+        ) : (
+          <ShaderPane
+            ref={shaderRef}
+            shaderSource={shaderSource}
+            webcamStream={webcamStream}
+            audioStream={audioStream}
+            strudelAnalyser={strudelAnalyser}
+            strudelAudioStream={strudelAudioStream}
+            webcamEnabled={webcamEnabled}
+            micEnabled={micEnabled}
+            systemAudioEnabled={systemAudioEnabled}
+            onToggleWebcam={handleToggleWebcam}
+            onToggleMic={handleToggleMic}
+            onToggleSystemAudio={handleToggleSystemAudio}
+            onShaderError={setShaderError}
+          />
+        )}
       </Box>
 
-      {/* Horizontal drag divider between shader and editor */}
+      {/* Horizontal drag divider between left and editor */}
       <Box
         onMouseDown={handleHorizontalDividerMouseDown}
         sx={{
@@ -247,6 +272,7 @@ export default function App() {
             <ToggleButton value="glsl" sx={editorTabSx}>GLSL</ToggleButton>
             <ToggleButton value="strudel" sx={editorTabSx}>Strudel</ToggleButton>
             <ToggleButton value="split" sx={editorTabSx}>Split</ToggleButton>
+            <ToggleButton value="swift" sx={editorTabSx}>Swift</ToggleButton>
             <ToggleButton value="examples" sx={utilTabSx}>Examples</ToggleButton>
             <ToggleButton value="settings" sx={utilTabSx}>Settings</ToggleButton>
             <ToggleButton
@@ -332,9 +358,24 @@ export default function App() {
               themeName={themeName}
             />
           </Box>
+
+          {/* Swift pane – hidden but mounted when not visible to preserve state */}
+          <Box sx={{
+            display: isSwift ? 'flex' : 'none',
+            flexDirection: 'column',
+            height: '100%',
+            minHeight: 0,
+          }}>
+            <SwiftPane
+              ref={swiftRef}
+              onOutput={handleSwiftOutput}
+              onRunningChange={setSwiftIsRunning}
+              vimMode={vimMode}
+              themeName={themeName}
+            />
+          </Box>
         </Box>
       </Box>
     </Box>
   )
 }
-
