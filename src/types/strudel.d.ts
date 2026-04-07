@@ -1,12 +1,3 @@
-declare module '@strudel/draw'
-declare module '@strudel/mini'
-declare module '@strudel/tonal'
-declare module '@strudel/hydra'
-declare module '@strudel/soundfonts' {
-  export function registerSoundfonts(): void
-}
-declare module '@strudel/midi'
-
 declare module '@strudel/codemirror' {
   export interface StrudelMirrorOptions {
     root: HTMLElement
@@ -39,13 +30,6 @@ declare module '@strudel/codemirror' {
   export const codemirrorSettings: { get: () => Record<string, unknown> }
 }
 
-declare module '@strudel/core' {
-  export function evalScope(...args: unknown[]): Promise<void>
-  export const Pattern: {
-    prototype: { piano: () => unknown }
-  }
-}
-
 declare module '@strudel/repl' {
   export function prebake(): Promise<void>
 }
@@ -64,6 +48,4 @@ declare module '@strudel/webaudio' {
   } | null
   export function registerSynthSounds(): void
   export function registerZZFXSounds(): void
-  export function samples(sampleMap: string | object, baseUrl?: string, options?: object): Promise<void>
-  export function aliasBank(arg: string | object, ...rest: unknown[]): Promise<void>
 }

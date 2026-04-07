@@ -1,4 +1,0 @@
-{
-  "title": "Drum Machine Beat",
-  "content": "// Classic TR-808 groove – samples load automatically on first play\n// Swap RolandTR808 for RolandTR909, RolandTR606, RolandTR707, LinnLM1, OberheimDMX, etc.\nstack(\n  s(\"RolandTR808_bd ~ RolandTR808_bd ~\").gain(0.95),\n  s(\"~ RolandTR808_sd ~ RolandTR808_sd\").gain(0.85),\n  s(\"RolandTR808_hh*8\").gain(0.45).pan(sine.slow(4).range(0.3, 0.7)),\n  s(\"~ ~ ~ RolandTR808_oh\").gain(0.6),\n  s(\"~ ~ RolandTR808_cp ~\").gain(0.5)\n).cpm(120)\n"
-}

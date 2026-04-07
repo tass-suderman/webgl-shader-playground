@@ -51,11 +51,6 @@ export default function SoundsModal({ open, onClose }: SoundsModalProps) {
                 Aliases: {Object.entries(cat.aliases).map(([a, b]) => `${a} → ${b}`).join(', ')}
               </Typography>
             )}
-            {cat.note && (
-              <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', fontFamily: 'monospace', display: 'block', mt: 0.25, fontStyle: 'italic' }}>
-                {cat.note}
-              </Typography>
-            )}
           </Box>
         ))}
         <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', fontFamily: 'monospace', display: 'block', mt: 1 }}>
