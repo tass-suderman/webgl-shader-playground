@@ -7,9 +7,10 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import CodeIcon from '@mui/icons-material/Code'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShaderPane, { type ShaderPaneHandle } from './components/ShaderPane'
-import EditorPane from './components/EditorPane'
+import EditorPane, { type EditorPaneHandle } from './components/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/StrudelPane'
 import SettingsPane from './components/SettingsPane'
+import CombinedExamplesPanel from './components/CombinedExamplesPanel'
 import { DEFAULT_SHADER } from './shaders/default'
 import { applyTheme, getThemeByName } from './themes/appThemes'
 import { useMediaStreams } from './hooks/useMediaStreams'
@@ -23,7 +24,27 @@ const LS_VIM_MODE = 'shader-playground:vim-mode'
 // without waiting for a user action.
 const initialShaderCode = localStorage.getItem(LS_GLSL_CODE) ?? DEFAULT_SHADER
 
-type ViewMode = 'glsl' | 'strudel' | 'split'
+type ViewMode = 'glsl' | 'strudel' | 'split' | 'examples'
+
+// Shared SX for top-bar toggle buttons (issue 13)
+const tabButtonSx = {
+  color: 'var(--pg-text-button)',
+  backgroundColor: 'var(--pg-bg-button)',
+  borderRadius: '15px',
+  fontSize: '0.75rem',
+  py: 0.25,
+  px: 1.5,
+  textTransform: 'none',
+  flex: 1,
+  '&.Mui-selected': {
+    backgroundColor: 'var(--pg-accent)',
+    color: 'var(--pg-text-hover)',
+  },
+  '&:hover': {
+    backgroundColor: 'var(--pg-bg-hover)',
+    color: 'var(--pg-text-hover)',
+  },
+} as const
 
 export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
@@ -37,9 +58,12 @@ export default function App() {
   const [leftRatio, setLeftRatio] = useState(50)
   const [vimMode, setVimMode] = useState<boolean>(() => localStorage.getItem(LS_VIM_MODE) === 'true')
   const [themeName, setThemeName] = useState<string>(() => localStorage.getItem(LS_THEME) ?? 'kanagawa')
+  // Shared vim status for the single bar shown in split mode
+  const [vimStatus, setVimStatus] = useState('')
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
+  const editorRef = useRef<EditorPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
   // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
   const pendingSourceRef = useRef(pendingSource)
@@ -150,6 +174,23 @@ export default function App() {
     document.addEventListener('mouseup', onUp)
   }, [leftRatio])
 
+  // Examples loading callbacks – called by CombinedExamplesPanel
+  const handleLoadGlslExample = useCallback((title: string, content: string) => {
+    editorRef.current?.loadExample(title, content)
+    setViewMode('glsl')
+    setSettingsOpen(false)
+  }, [])
+
+  const handleLoadStrudelExample = useCallback((title: string, content: string) => {
+    strudelRef.current?.loadExample(title, content)
+    setViewMode('strudel')
+    setSettingsOpen(false)
+  }, [])
+
+  const isSplit = viewMode === 'split'
+  const showGlsl = !settingsOpen && (viewMode === 'glsl' || isSplit)
+  const showStrudel = !settingsOpen && (viewMode === 'strudel' || isSplit)
+
   return (
     <Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'var(--pg-bg-app)' }}>
       {/* Left: shader canvas */}
@@ -185,31 +226,39 @@ export default function App() {
 
       {/* Right: editor panel */}
       <Box ref={rightPanelRef} sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* Tab bar */}
-        <Box sx={{ px: 1, py: 0.5, bgcolor: 'var(--pg-bg-header)', borderBottom: '1px solid var(--pg-border-subtle)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        {/* Top tab bar */}
+        <Box sx={{
+          px: 1,
+          py: 0.5,
+          bgcolor: 'var(--pg-bg-header)',
+          borderBottom: '1px solid var(--pg-border-subtle)',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}>
           <ToggleButtonGroup
-            value={viewMode}
+            value={settingsOpen ? null : viewMode}
             exclusive
-            onChange={(_e, val: ViewMode | null) => { if (val) { setViewMode(val); setSettingsOpen(false) } }}
+            onChange={(_e, val: ViewMode | null) => {
+              if (val) { setViewMode(val); setSettingsOpen(false) }
+            }}
             size="small"
+            sx={{ flex: 1 }}
           >
-            <ToggleButton value="glsl" sx={{ color: 'var(--pg-text-primary)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
-              GLSL
-            </ToggleButton>
-            <ToggleButton value="strudel" sx={{ color: 'var(--pg-text-primary)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
-              Strudel
-            </ToggleButton>
-            <ToggleButton value="split" sx={{ color: 'var(--pg-text-primary)', fontSize: '0.75rem', py: 0.25, px: 1.5, textTransform: 'none' }}>
-              Split
-            </ToggleButton>
+            <ToggleButton value="glsl" sx={tabButtonSx}>GLSL</ToggleButton>
+            <ToggleButton value="strudel" sx={tabButtonSx}>Strudel</ToggleButton>
+            <ToggleButton value="split" sx={tabButtonSx}>Split</ToggleButton>
+            <ToggleButton value="examples" sx={tabButtonSx}>Examples</ToggleButton>
           </ToggleButtonGroup>
+
+          {/* Settings and Source buttons grouped on the right */}
           <Tooltip title={settingsOpen ? 'Close settings' : 'Settings'}>
             <IconButton
               size="small"
               onClick={() => setSettingsOpen(v => !v)}
               aria-label="Settings"
               sx={{
-                ml: 1,
                 color: settingsOpen ? 'var(--pg-accent)' : 'var(--pg-text-primary)',
                 '&:hover': { color: 'var(--pg-accent)' },
               }}
@@ -224,7 +273,7 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer"
               size="small"
-              sx={{ ml: 'auto', color: 'var(--pg-text-primary)', '&:hover': { color: '#fff' } }}
+              sx={{ color: 'var(--pg-text-primary)', '&:hover': { color: '#fff' } }}
               aria-label="View source on GitHub"
             >
               <CodeIcon fontSize="small" />
@@ -244,14 +293,25 @@ export default function App() {
             />
           )}
 
+          {/* Examples panel (combined GLSL + Strudel) */}
+          {!settingsOpen && viewMode === 'examples' && (
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <CombinedExamplesPanel
+                onLoadGlsl={handleLoadGlslExample}
+                onLoadStrudel={handleLoadStrudelExample}
+              />
+            </Box>
+          )}
+
           {/* GLSL editor – hidden but mounted when not visible to preserve state */}
           <Box sx={{
-            display: settingsOpen ? 'none' : (viewMode === 'split' ? 'flex' : (viewMode === 'glsl' ? 'flex' : 'none')),
+            display: showGlsl ? 'flex' : 'none',
             flexDirection: 'column',
-            height: viewMode === 'split' ? `${splitRatio}%` : '100%',
+            height: isSplit ? `${splitRatio}%` : '100%',
             minHeight: 0,
           }}>
             <EditorPane
+              ref={editorRef}
               initialCode={initialShaderCode}
               onRun={handleRun}
               pendingSource={pendingSource}
@@ -259,11 +319,13 @@ export default function App() {
               shaderError={shaderError}
               vimMode={vimMode}
               themeName={themeName}
+              showVimBar={!isSplit}
+              onVimStatusChange={isSplit ? setVimStatus : undefined}
             />
           </Box>
 
           {/* Drag divider (split mode only) */}
-          {!settingsOpen && viewMode === 'split' && (
+          {!settingsOpen && isSplit && (
             <Box
               onMouseDown={handleDividerMouseDown}
               sx={{
@@ -278,13 +340,40 @@ export default function App() {
 
           {/* Strudel pane – hidden but mounted when not visible to preserve state */}
           <Box sx={{
-            display: settingsOpen ? 'none' : (viewMode === 'split' ? 'flex' : (viewMode === 'strudel' ? 'flex' : 'none')),
+            display: showStrudel ? 'flex' : 'none',
             flexDirection: 'column',
-            height: viewMode === 'split' ? `calc(${100 - splitRatio}% - 4px)` : '100%',
+            height: isSplit ? `calc(${100 - splitRatio}% - 4px)` : '100%',
             minHeight: 0,
           }}>
-            <StrudelPane ref={strudelRef} onAnalyserReady={setStrudelAnalyser} onAudioStreamReady={setStrudelAudioStream} vimMode={vimMode} themeName={themeName} />
+            <StrudelPane
+              ref={strudelRef}
+              onAnalyserReady={setStrudelAnalyser}
+              onAudioStreamReady={setStrudelAudioStream}
+              vimMode={vimMode}
+              themeName={themeName}
+              showVimBar={!isSplit}
+              onVimStatusChange={isSplit ? setVimStatus : undefined}
+            />
           </Box>
+
+          {/* Single vim status bar shown below both panes in split mode */}
+          {!settingsOpen && isSplit && vimMode && (
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                bgcolor: 'var(--pg-bg-header)',
+                color: 'var(--pg-text-primary)',
+                fontFamily: 'monospace',
+                fontSize: '0.8rem',
+                borderTop: '1px solid var(--pg-border-subtle)',
+                flexShrink: 0,
+                minHeight: '1.5rem',
+              }}
+            >
+              {vimStatus}
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>

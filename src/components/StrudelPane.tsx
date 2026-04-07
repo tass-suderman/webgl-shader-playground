@@ -1,15 +1,11 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
 import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
-import ExamplesPanel from './ExamplesPanel'
-import StrudelHeader from './strudel/StrudelHeader'
+import ShaderHeader from './ShaderHeader'
 import SoundsModal from './strudel/SoundsModal'
-import EditorTabBar from './common/EditorTabBar'
-
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
   changeSetting: (key: string, value: unknown) => void
@@ -49,17 +45,22 @@ function mapToStrudelTheme(themeName: string): string {
 export interface StrudelPaneHandle {
   play: () => void
   pause: () => void
+  loadExample: (title: string, content: string) => void
 }
 
 interface StrudelPaneProps {
   onAnalyserReady: (analyser: AnalyserNode | null) => void
   onAudioStreamReady?: (stream: MediaStream | null) => void
-  vimMode: boolean
-  themeName: string
+  vimMode?: boolean
+  themeName?: string
+  /** Called whenever the vim status bar text changes (for a shared bar in split mode) */
+  onVimStatusChange?: (status: string) => void
+  /** Whether to render the vim status bar inside this pane (false in split mode) */
+  showVimBar?: boolean
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, vimMode, themeName },
+  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', onVimStatusChange, showVimBar = true },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -76,8 +77,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const [strudelTitle, setStrudelTitle] = useState(
     () => localStorage.getItem(LS_STRUDEL_TITLE) ?? DEFAULT_STRUDEL_TITLE,
   )
-  const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const [soundsOpen, setSoundsOpen] = useState(false)
+  const [vimStatus, setVimStatus] = useState('')
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
   const onAudioStreamReadyRef = useRef(onAudioStreamReady)
@@ -94,6 +95,15 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     },
     pause() {
       mirrorRef.current?.stop().catch(console.error)
+    },
+    loadExample(title: string, content: string) {
+      if (mirrorRef.current) {
+        mirrorRef.current.setCode(content)
+        mirrorRef.current.evaluate().catch(console.error)
+      }
+      localStorage.setItem(LS_STRUDEL_CODE, content)
+      setStrudelTitle(title)
+      localStorage.setItem(LS_STRUDEL_TITLE, title)
     },
   }), [])
 
@@ -206,6 +216,31 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [saveCode])
 
+  // Watch the rootRef for vim status changes emitted by @codemirror/vim's status panel
+  useEffect(() => {
+    if (!vimMode || !rootRef.current) return
+    const root = rootRef.current
+    const updateVimStatus = () => {
+      // @replit/codemirror-vim renders its status bar inside .cm-panels-bottom or as a
+      // panel element; look for any element whose text contains a vim mode indicator.
+      const panels = root.querySelectorAll<HTMLElement>('[class*="panel"], [class*="vim"], .cm-scroller + *')
+      let found = ''
+      for (const el of panels) {
+        const text = el.textContent?.trim() ?? ''
+        if (text && (text.includes('INSERT') || text.includes('NORMAL') || text.includes('VISUAL') || text.includes('REPLACE'))) {
+          found = text
+          break
+        }
+      }
+      setVimStatus(found)
+      onVimStatusChange?.(found)
+    }
+    const observer = new MutationObserver(updateVimStatus)
+    observer.observe(root, { childList: true, subtree: true, characterData: true })
+    updateVimStatus()
+    return () => observer.disconnect()
+  }, [vimMode, onVimStatusChange])
+
   const handleRun = useCallback(() => {
     saveCode()
     mirrorRef.current?.evaluate().catch(console.error)
@@ -261,54 +296,23 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     localStorage.setItem(LS_STRUDEL_TITLE, e.target.value)
   }, [])
 
-  const handleLoadExample = useCallback((title: string, content: string) => {
-    if (mirrorRef.current) {
-      mirrorRef.current.setCode(content)
-      mirrorRef.current.evaluate().catch(console.error)
-    }
-    localStorage.setItem(LS_STRUDEL_CODE, content)
-    setStrudelTitle(title)
-    localStorage.setItem(LS_STRUDEL_TITLE, title)
-    setActiveTab('editor')
-  }, [])
-
-  const handleReset = useCallback(() => {
-    if (mirrorRef.current) {
-      mirrorRef.current.setCode(DEFAULT_STRUDEL_CODE)
-      localStorage.setItem(LS_STRUDEL_CODE, DEFAULT_STRUDEL_CODE)
-    }
-    setStrudelTitle(DEFAULT_STRUDEL_TITLE)
-    localStorage.setItem(LS_STRUDEL_TITLE, DEFAULT_STRUDEL_TITLE)
-  }, [])
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'var(--pg-bg-panel)' }}>
-      <StrudelHeader
+      <ShaderHeader
         title={strudelTitle}
         isPlaying={isPlaying}
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
         onShowSounds={() => setSoundsOpen(true)}
-        onReset={handleReset}
-        onPlay={handleRun}
+        onRun={handleRun}
         onStop={handleStop}
+        titleAriaLabel="Strudel pattern title"
+        importAriaLabel="Import pattern from file"
+        exportAriaLabel="Export pattern to file"
+        runLabel="Play Strudel"
+        runColor="success"
       />
-
-      {/* Keyboard hint */}
-      <Box
-        sx={{
-          px: 2,
-          py: 0.5,
-          bgcolor: 'var(--pg-bg-header)',
-          borderBottom: '1px solid var(--pg-border-faint)',
-          flexShrink: 0,
-        }}
-      >
-        <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', fontFamily: 'monospace' }}>
-          Alt+Enter to play · Alt+. to pause
-        </Typography>
-      </Box>
 
       {/* Hidden file input for import */}
       <input
@@ -319,24 +323,33 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         onChange={handleFileChange}
       />
 
-      <EditorTabBar value={activeTab} onChange={setActiveTab} />
-
-      {/* Strudel CodeMirror editor */}
+      {/* Strudel CodeMirror editor – always mounted to preserve state */}
       <Box
         ref={rootRef}
         sx={{
           flex: 1,
           overflow: 'auto',
-          display: activeTab === 'editor' ? 'block' : 'none',
           '& .cm-editor': { minHeight: '100%', fontSize: '13px' },
           '& .cm-scroller': { fontFamily: 'monospace' },
         }}
       />
 
-      {/* Examples panel */}
-      {activeTab === 'examples' && (
-        <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          <ExamplesPanel type="strudel" onLoad={handleLoadExample} />
+      {/* Vim status bar – shown when vim mode is on and showVimBar is true */}
+      {vimMode && showVimBar && (
+        <Box
+          sx={{
+            px: 1,
+            py: 0.25,
+            bgcolor: 'var(--pg-bg-header)',
+            color: 'var(--pg-text-primary)',
+            fontFamily: 'monospace',
+            fontSize: '0.8rem',
+            borderTop: '1px solid var(--pg-border-subtle)',
+            flexShrink: 0,
+            minHeight: '1.5rem',
+          }}
+        >
+          {vimStatus}
         </Box>
       )}
 

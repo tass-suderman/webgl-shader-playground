@@ -1,17 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import Editor from '@monaco-editor/react'
 import type { OnMount, BeforeMount } from '@monaco-editor/react'
 import type { editor as MonacoEditorNS } from 'monaco-editor'
 import { initVimMode, type VimAdapterInstance } from 'monaco-vim'
-import ExamplesPanel from './ExamplesPanel'
-import EditorHeader from './editor/EditorHeader'
+import ShaderHeader from './ShaderHeader'
 import ShaderError from './editor/ShaderError'
-import EditorTabBar from './common/EditorTabBar'
 import { GLSL_MONARCH_TOKENS, GLSL_LANGUAGE_CONFIG } from './editor/glslLanguage'
 import { ensureMonacoThemes, themeNameToMonaco } from './editor/monacoThemes'
-import { DEFAULT_SHADER } from '../shaders/default'
 
 const LS_GLSL_CODE = 'shader-playground:glsl-code'
 const LS_GLSL_TITLE = 'shader-playground:glsl-title'
@@ -25,13 +21,23 @@ interface EditorPaneProps {
   shaderError: string | null
   vimMode: boolean
   themeName: string
+  /** Called whenever the vim status bar text changes (for a shared bar in split mode) */
+  onVimStatusChange?: (status: string) => void
+  /** Whether to render the vim status bar inside this pane (false in split mode) */
+  showVimBar?: boolean
 }
 
-export default function EditorPane({ initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName }: EditorPaneProps) {
+export interface EditorPaneHandle {
+  loadExample: (title: string, content: string) => void
+}
+
+export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
+  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, onVimStatusChange, showVimBar = true },
+  ref,
+) {
   const [shaderTitle, setShaderTitle] = useState(
     () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
   )
-  const [activeTab, setActiveTab] = useState<'editor' | 'examples'>('editor')
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -41,6 +47,18 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
   // Keep a ref so Monaco keyboard shortcuts always call with latest pendingSource
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
+
+  // Expose loadExample imperatively (used by App when a GLSL example is selected)
+  useImperativeHandle(ref, () => ({
+    loadExample(title: string, content: string) {
+      editorRef.current?.setValue(content)
+      onCodeChange(content)
+      localStorage.setItem(LS_GLSL_CODE, content)
+      setShaderTitle(title)
+      localStorage.setItem(LS_GLSL_TITLE, title)
+      onRun(content)
+    },
+  }), [onCodeChange, onRun])
 
   // Enable / disable vim mode whenever the prop changes or the editor mounts
   useEffect(() => {
@@ -60,6 +78,18 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
       }
     }
   }, [vimMode])
+
+  // Forward vim status changes to the parent (used in split mode for a shared bar)
+  useEffect(() => {
+    if (!onVimStatusChange) return
+    const el = statusBarRef.current
+    if (!el) return
+    const observer = new MutationObserver(() => {
+      onVimStatusChange(el.textContent ?? '')
+    })
+    observer.observe(el, { childList: true, subtree: true, characterData: true })
+    return () => observer.disconnect()
+  }, [onVimStatusChange])
 
   const handleRun = useCallback(() => {
     onRun(pendingSourceRef.current)
@@ -108,16 +138,6 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     localStorage.setItem(LS_GLSL_TITLE, e.target.value)
   }, [])
 
-  const handleLoadExample = useCallback((title: string, content: string) => {
-    editorRef.current?.setValue(content)
-    onCodeChange(content)
-    localStorage.setItem(LS_GLSL_CODE, content)
-    setShaderTitle(title)
-    localStorage.setItem(LS_GLSL_TITLE, title)
-    onRun(content)
-    setActiveTab('editor')
-  }, [onCodeChange, onRun])
-
   const handleExport = useCallback(() => {
     const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -163,15 +183,6 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
     e.target.value = ''
   }, [onCodeChange])
 
-  const handleReset = useCallback(() => {
-    editorRef.current?.setValue(DEFAULT_SHADER)
-    onCodeChange(DEFAULT_SHADER)
-    localStorage.setItem(LS_GLSL_CODE, DEFAULT_SHADER)
-    setShaderTitle(DEFAULT_SHADER_TITLE)
-    localStorage.setItem(LS_GLSL_TITLE, DEFAULT_SHADER_TITLE)
-    onRun(DEFAULT_SHADER)
-  }, [onCodeChange, onRun])
-
   return (
     <Box
       sx={{
@@ -181,27 +192,18 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         bgcolor: 'var(--pg-bg-panel)',
       }}
     >
-      <EditorHeader
+      <ShaderHeader
         title={shaderTitle}
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
-        onReset={handleReset}
         onRun={handleRun}
         titleAriaLabel="Shader title"
         importAriaLabel="Import shader from file"
         exportAriaLabel="Export shader to file"
-        resetAriaLabel="Reset to default shader"
         runLabel="Run Shader"
         runColor="primary"
       />
-
-      {/* Keyboard shortcut hint */}
-      <Box sx={{ px: 2, py: 0.5, bgcolor: 'var(--pg-bg-header)', borderBottom: '1px solid var(--pg-border-faint)', flexShrink: 0 }}>
-        <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', fontFamily: 'monospace' }}>
-          Ctrl+Enter to run shader · Alt+Enter to play Strudel · Alt+. to pause
-        </Typography>
-      </Box>
 
       {/* Hidden file input for import */}
       <input
@@ -214,10 +216,8 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
 
       <ShaderError error={shaderError} />
 
-      <EditorTabBar value={activeTab} onChange={setActiveTab} />
-
       {/* Monaco editor */}
-      <Box sx={{ flex: 1, overflow: 'hidden', display: activeTab === 'editor' ? 'block' : 'none' }}>
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
         <Editor
           height="100%"
           defaultLanguage="glsl"
@@ -237,19 +237,12 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
         />
       </Box>
 
-      {/* Examples panel */}
-      {activeTab === 'examples' && (
-        <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          <ExamplesPanel type="glsl" onLoad={handleLoadExample} />
-        </Box>
-      )}
-
-      {/* Vim status bar – only shown when vim mode is active */}
+      {/* Vim status bar – only shown when vim mode is active and showVimBar is true */}
       <Box
         ref={statusBarRef}
         component="div"
         sx={{
-          display: vimMode ? 'block' : 'none',
+          display: vimMode && showVimBar ? 'block' : 'none',
           px: 1,
           py: 0.25,
           bgcolor: 'var(--pg-bg-header)',
@@ -263,4 +256,4 @@ export default function EditorPane({ initialCode, onRun, pendingSource, onCodeCh
       />
     </Box>
   )
-}
+})

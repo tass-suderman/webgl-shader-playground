@@ -136,8 +136,8 @@ describe('useMediaStreams', () => {
       await act(() => result.current.handleToggleSystemAudio())
 
       expect(result.current.systemAudioEnabled).toBe(true)
-      // Video track should be stopped (only audio is kept)
-      expect(videoTrack.stop).toHaveBeenCalled()
+      // Video track should NOT be stopped – it keeps the audio capture session alive
+      expect(videoTrack.stop).not.toHaveBeenCalled()
     })
 
     it('does not enable system audio when no audio track is shared', async () => {

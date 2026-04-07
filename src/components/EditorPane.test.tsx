@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -53,6 +53,7 @@ vi.mock('monaco-vim', () => ({
 // Component under test (imported after mocks)
 // ---------------------------------------------------------------------------
 import EditorPane from './EditorPane'
+import type { EditorPaneHandle } from './EditorPane'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -236,38 +237,25 @@ describe('EditorPane', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Examples tab
+  // loadExample imperative handle
   // ---------------------------------------------------------------------------
 
-  it('Examples tab is present', () => {
-    render(<EditorPane {...DEFAULT_PROPS} />)
-    expect(screen.getByRole('tab', { name: /examples/i })).toBeInTheDocument()
-  })
-
-  it('clicking Examples tab shows ExamplesPanel and hides Monaco editor', async () => {
-    const user = userEvent.setup()
-    render(<EditorPane {...DEFAULT_PROPS} />)
-    await user.click(screen.getByRole('tab', { name: /examples/i }))
-    // ExamplesPanel's fetch will fail (no server), but the panel container renders
-    expect(screen.getByTestId('monaco-editor').parentElement).toHaveStyle({ display: 'none' })
-  })
-
-  it('handleLoadExample calls onRun with the example content to auto-run the shader', async () => {
+  it('loadExample handle calls onRun with the example content', async () => {
     const onRun = vi.fn()
-    const user = userEvent.setup()
-    vi.spyOn(globalThis, 'fetch').mockImplementation((url: RequestInfo | URL) => {
-      const key = String(url)
-      if (key.includes('index.json')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'plasma', title: 'Plasma Effect' }]) } as Response)
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ title: 'Plasma Effect', content: 'void main(){}' }) } as Response)
+    const ref = React.createRef<EditorPaneHandle>()
+    render(<EditorPane {...DEFAULT_PROPS} onRun={onRun} ref={ref} />)
+    await act(async () => {
+      ref.current?.loadExample('My Example', 'void main(){}')
     })
-    render(<EditorPane {...DEFAULT_PROPS} onRun={onRun} />)
-    await user.click(screen.getByRole('tab', { name: /examples/i }))
-    await waitFor(() => screen.getByText('Plasma Effect'))
-    await user.click(screen.getByText('Plasma Effect'))
-    await user.click(screen.getByRole('button', { name: /^load$/i }))
-    await waitFor(() => expect(onRun).toHaveBeenCalledWith('void main(){}'))
-    vi.restoreAllMocks()
+    expect(onRun).toHaveBeenCalledWith('void main(){}')
+  })
+
+  it('loadExample handle updates the title', async () => {
+    const ref = React.createRef<EditorPaneHandle>()
+    render(<EditorPane {...DEFAULT_PROPS} ref={ref} />)
+    await act(async () => {
+      ref.current?.loadExample('New Example Title', 'void main(){}')
+    })
+    expect(screen.getByRole('textbox', { name: /shader title/i })).toHaveValue('New Example Title')
   })
 })

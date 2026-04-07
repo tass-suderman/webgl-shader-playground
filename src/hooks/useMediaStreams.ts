@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 export interface UseMediaStreamsReturn {
   webcamEnabled: boolean
@@ -17,10 +17,19 @@ export function useMediaStreams(): UseMediaStreamsReturn {
   const [systemAudioEnabled, setSystemAudioEnabled] = useState(false)
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null)
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
+  // Keep the full display stream alive so that stopping video tracks doesn't
+  // end the audio capture session (Chrome terminates the entire session when
+  // the video track is stopped).
+  const displayStreamRef = useRef<MediaStream | null>(null)
 
   const stopAudio = useCallback((currentStream: MediaStream | null) => {
     if (currentStream) {
       currentStream.getTracks().forEach(t => t.stop())
+    }
+    // Also stop any leftover video tracks from getDisplayMedia
+    if (displayStreamRef.current) {
+      displayStreamRef.current.getTracks().forEach(t => t.stop())
+      displayStreamRef.current = null
     }
     setAudioStream(null)
     setMicEnabled(false)
@@ -84,6 +93,10 @@ export function useMediaStreams(): UseMediaStreamsReturn {
         audioStream.getTracks().forEach(t => t.stop())
         setAudioStream(null)
       }
+      if (displayStreamRef.current) {
+        displayStreamRef.current.getTracks().forEach(t => t.stop())
+        displayStreamRef.current = null
+      }
       setMicEnabled(false)
       try {
         // getDisplayMedia is the only browser API that can capture system audio output.
@@ -98,16 +111,24 @@ export function useMediaStreams(): UseMediaStreamsReturn {
           console.warn('No system audio track found. Make sure to enable audio sharing in the dialog.')
           return
         }
-        // Stop the video capture immediately – we only need the audio
-        displayStream.getVideoTracks().forEach(t => t.stop())
+        // Keep the display stream (including video tracks) alive in a ref.
+        // Stopping the video track in Chrome terminates the entire capture session,
+        // which would also end the audio track.  We never render the video anywhere.
+        displayStreamRef.current = displayStream
+
         // Build a new stream that contains only the audio tracks
         const audioOnlyStream = new MediaStream(audioTracks)
-        audioTracks.forEach(track => {
+
+        // When the video track ends (user clicks "Stop sharing" in the browser UI),
+        // clean up audio state as well.
+        displayStream.getTracks().forEach(track => {
           track.onended = () => {
+            displayStreamRef.current = null
             setAudioStream(null)
             setSystemAudioEnabled(false)
           }
         })
+
         setAudioStream(audioOnlyStream)
         setSystemAudioEnabled(true)
       } catch (e) {
@@ -127,3 +148,4 @@ export function useMediaStreams(): UseMediaStreamsReturn {
     handleToggleSystemAudio,
   }
 }
+

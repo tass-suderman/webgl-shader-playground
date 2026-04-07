@@ -35,6 +35,7 @@ export const KANAGAWA_THEME: AppTheme = {
     '--pg-divider-default':'rgba(149,127,184,0.2)',
     '--pg-divider-hover': 'rgba(122,168,159,0.5)',
     '--pg-accent':        '#7AA89F',
+    '--pg-bg-hover':      '#7AA89F',
   },
 }
 
@@ -62,6 +63,7 @@ export const ORIGINAL_DARK_THEME: AppTheme = {
     '--pg-divider-default':'rgba(255,255,255,0.15)',
     '--pg-divider-hover': 'rgba(255,255,255,0.35)',
     '--pg-accent':        'rgba(255,255,255,0.5)',
+    '--pg-bg-hover':      'rgba(255,255,255,0.2)',
   },
 }
 

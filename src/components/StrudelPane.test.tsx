@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
@@ -237,64 +237,26 @@ describe('StrudelPane', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Examples tab
+  // ---------------------------------------------------------------------------
+  // loadExample imperative handle
   // ---------------------------------------------------------------------------
 
-  it('Examples tab is present', () => {
-    render(<StrudelPane onAnalyserReady={noop} />)
-    expect(screen.getByRole('tab', { name: /examples/i })).toBeInTheDocument()
-  })
-
-  it('clicking Examples tab hides the CodeMirror editor area', async () => {
-    const user = userEvent.setup()
-    render(<StrudelPane onAnalyserReady={noop} />)
-    await user.click(screen.getByRole('tab', { name: /examples/i }))
-    // The CodeMirror root box should have display:none when Examples tab is active
-    const editorBox = document.querySelector('[style*="display: none"]')
-    expect(editorBox).toBeTruthy()
-  })
-
-  it('handleLoadExample calls mirror.evaluate() to auto-play the pattern', async () => {
-    const user = userEvent.setup()
-    vi.spyOn(globalThis, 'fetch').mockImplementation((url: RequestInfo | URL) => {
-      const key = String(url)
-      if (key.includes('index.json')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'melodic-arp', title: 'Melodic Arp' }]) } as Response)
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ title: 'Melodic Arp', content: 'note("c3").sound("sawtooth")' }) } as Response)
+  it('loadExample handle calls mirror.evaluate() to auto-play the pattern', async () => {
+    const ref = React.createRef<import('./StrudelPane').StrudelPaneHandle>()
+    render(<StrudelPane onAnalyserReady={noop} ref={ref} />)
+    await act(async () => {
+      ref.current?.loadExample('Melodic Arp', 'note("c3").sound("sawtooth")')
     })
-    render(<StrudelPane onAnalyserReady={noop} />)
-    await user.click(screen.getByRole('tab', { name: /examples/i }))
-    await waitFor(() => screen.getByText('Melodic Arp'))
-    await user.click(screen.getByText('Melodic Arp'))
-    await user.click(screen.getByRole('button', { name: /^load$/i }))
-    await waitFor(() => expect(mockEvaluate).toHaveBeenCalled())
-    vi.restoreAllMocks()
+    expect(mockSetCode).toHaveBeenCalledWith('note("c3").sound("sawtooth")')
+    expect(mockEvaluate).toHaveBeenCalled()
   })
 
-  // ---------------------------------------------------------------------------
-  // Reset button
-  // ---------------------------------------------------------------------------
-
-  it('reset button is present in the header', () => {
-    render(<StrudelPane onAnalyserReady={noop} vimMode={false} themeName="kanagawa" />)
-    expect(screen.getByRole('button', { name: /reset to default pattern/i })).toBeInTheDocument()
-  })
-
-  it('reset button restores the default title', async () => {
-    const user = userEvent.setup()
-    render(<StrudelPane onAnalyserReady={noop} vimMode={false} themeName="kanagawa" />)
-    const input = screen.getByRole('textbox', { name: /strudel pattern title/i })
-    await user.clear(input)
-    await user.type(input, 'Custom Beat')
-    await user.click(screen.getByRole('button', { name: /reset to default pattern/i }))
-    expect(input).toHaveValue('Strudel Pattern')
-  })
-
-  it('reset button calls mirror.setCode with the default strudel code', async () => {
-    const user = userEvent.setup()
-    render(<StrudelPane onAnalyserReady={noop} vimMode={false} themeName="kanagawa" />)
-    await user.click(screen.getByRole('button', { name: /reset to default pattern/i }))
-    expect(mockSetCode).toHaveBeenCalledWith(expect.stringContaining('note("c3 [e3 g3] b3 [g3 e3]")'))
+  it('loadExample handle updates the title', async () => {
+    const ref = React.createRef<import('./StrudelPane').StrudelPaneHandle>()
+    render(<StrudelPane onAnalyserReady={noop} ref={ref} />)
+    await act(async () => {
+      ref.current?.loadExample('New Pattern', 'note("c3")')
+    })
+    expect(screen.getByRole('textbox', { name: /strudel pattern title/i })).toHaveValue('New Pattern')
   })
 })

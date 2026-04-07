@@ -7,6 +7,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import Divider from '@mui/material/Divider'
 import FormControl from '@mui/material/FormControl'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import InputLabel from '@mui/material/InputLabel'
@@ -27,9 +28,9 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   const handleResetConfirm = useCallback(() => {
-    // Remove every key that belongs to this application
-    const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith('shader-playground:'))
-    keysToRemove.forEach(k => localStorage.removeItem(k))
+    // Clear all localStorage to ensure third-party persistence (e.g. Strudel's
+    // internal CodeMirror storage) is also removed along with app keys.
+    localStorage.clear()
     setResetDialogOpen(false)
     window.location.reload()
   }, [])
@@ -83,6 +84,8 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
           </Button>
         </Box>
 
+        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
+
         {/* ---- Vim keybindings ---- */}
         <Box>
           <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 0.5 }}>
@@ -102,11 +105,13 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
             }
             label={
               <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)' }}>
-                Vim keybindings (GLSL editor)
+                Vim keybindings
               </Typography>
             }
           />
         </Box>
+
+        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
 
         {/* ---- Theme ---- */}
         <Box>
@@ -168,6 +173,46 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
               ))}
             </Select>
           </FormControl>
+        </Box>
+
+        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
+
+        {/* ---- Keyboard shortcuts ---- */}
+        <Box>
+          <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 1 }}>
+            Keyboard Shortcuts
+          </Typography>
+          {[
+            { keys: 'Ctrl + Enter', desc: 'Run / compile GLSL shader' },
+            { keys: 'Ctrl + .', desc: 'Pause shader animation' },
+            { keys: 'Alt + Enter', desc: 'Play Strudel pattern' },
+            { keys: 'Alt + .', desc: 'Pause Strudel pattern' },
+          ].map(({ keys, desc }) => (
+            <Box key={keys} sx={{ display: 'flex', gap: 2, mb: 0.75, alignItems: 'center' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontFamily: 'monospace',
+                  color: 'var(--pg-text-primary)',
+                  bgcolor: 'var(--pg-bg-button)',
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 0.5,
+                  border: '1px solid var(--pg-border-faint)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  minWidth: 110,
+                  display: 'inline-block',
+                  textAlign: 'center',
+                }}
+              >
+                {keys}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)' }}>
+                {desc}
+              </Typography>
+            </Box>
+          ))}
         </Box>
       </Box>
 
