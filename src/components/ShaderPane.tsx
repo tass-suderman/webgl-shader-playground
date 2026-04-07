@@ -117,9 +117,9 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
       const ext = (recorder.mimeType || mimeType).includes('mp4') ? 'mp4' : 'webm'
       const filename = `recording.${ext}`
 
-      if (typeof window.showSaveFilePicker === 'function') {
+      if (typeof (window as any).showSaveFilePicker === 'function') {
         try {
-          const handle = await window.showSaveFilePicker({
+          const handle = await (window as any).showSaveFilePicker({
             suggestedName: filename,
             types: [{ description: 'Video file', accept: { [(recorder.mimeType || mimeType)]: [`.${ext}`] } }],
           })
