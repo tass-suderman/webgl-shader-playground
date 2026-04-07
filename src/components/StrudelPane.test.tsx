@@ -34,6 +34,7 @@ vi.mock('@strudel/codemirror', () => ({
   StrudelMirror: vi.fn(function MockStrudelMirror(this: unknown) { return mockMirror } as unknown as new (...a: unknown[]) => typeof mockMirror),
   codemirrorSettings: { get: () => ({}) },
 }))
+vi.mock('@strudel/core', () => ({ evalScope: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@strudel/repl', () => ({ prebake: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@strudel/transpiler', () => ({ transpiler: {} }))
 vi.mock('@strudel/webaudio', () => ({
@@ -43,6 +44,8 @@ vi.mock('@strudel/webaudio', () => ({
   getSuperdoughAudioController: vi.fn(() => null),
   registerSynthSounds: vi.fn(),
   registerZZFXSounds: vi.fn(),
+  samples: vi.fn().mockResolvedValue(undefined),
+  aliasBank: vi.fn().mockResolvedValue(undefined),
 }))
 
 // ---------------------------------------------------------------------------

@@ -1,8 +1,9 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import { StrudelMirror } from '@strudel/codemirror'
-import { prebake } from '@strudel/repl'
-import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
+import { evalScope } from '@strudel/core'
+import * as core from '@strudel/core'
+import { aliasBank, samples, webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
 import ShaderHeader from './ShaderHeader'
 import SoundsModal from './strudel/SoundsModal'
@@ -12,19 +13,59 @@ type StrudelMirrorExt = StrudelMirror & {
   setTheme: (name: string) => void
 }
 
-// Minimal prebake: first registers built-in oscillator sounds synchronously
-// (sawtooth, sine, square, triangle, etc.), then runs the full prebake which
-// loads evalScope globals and optional remote sample banks.  Any failure in
-// remote sample loading is caught so the prebake promise never rejects –
-// built-in oscillators will always work, even offline.
+// Resilient prebake: loads each sample bank independently so that a single
+// network failure (e.g. piano.json, vcsl.json) cannot block the drum machines.
+// evalScope is awaited separately so pattern functions are always available.
 const minimalPrebake = async (): Promise<void> => {
-  registerSynthSounds()
-  registerZZFXSounds()
-  try {
-    await prebake()
-  } catch {
-    console.warn('[strudel] Remote sample loading failed – only built-in oscillator sounds are available.')
-  }
+  const ds = 'https://raw.githubusercontent.com/felixroos/dough-samples/main'
+  const ts = 'https://raw.githubusercontent.com/todepond/samples/main'
+  const tc = 'https://raw.githubusercontent.com/tidalcycles/uzu-drumkit/main'
+
+  // Load all scope modules so pattern functions (s, note, stack, …) are available
+  const modulesLoading = evalScope(
+    core,
+    import('@strudel/draw'),
+    import('@strudel/mini'),
+    import('@strudel/tonal'),
+    import('@strudel/webaudio'),
+    import('@strudel/codemirror'),
+    import('@strudel/hydra'),
+    import('@strudel/soundfonts'),
+    import('@strudel/midi'),
+  )
+
+  // Built-in sounds register synchronously; soundfonts are async
+  const soundsLoading = Promise.all([
+    modulesLoading,
+    registerSynthSounds(),
+    registerZZFXSounds(),
+    import('@strudel/soundfonts').then(({ registerSoundfonts }) => registerSoundfonts()),
+  ]).catch((e: unknown) => console.warn('[strudel] Scope/built-in sounds failed to load:', e))
+
+  // Load each sample bank independently – one failure never blocks the others
+  const sampleBanks = [
+    `${ds}/tidal-drum-machines.json`,
+    `${ds}/piano.json`,
+    `${ds}/Dirt-Samples.json`,
+    `${ds}/vcsl.json`,
+    `${ds}/mridangam.json`,
+    `${tc}/strudel.json`,
+  ]
+  const results = await Promise.allSettled([
+    soundsLoading,
+    ...sampleBanks.map((url) => samples(url)),
+  ])
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      const label = i === 0 ? 'scope/built-in sounds' : sampleBanks[i - 1]
+      console.warn(`[strudel] Failed to load ${label}:`, r.reason)
+    }
+  })
+
+  // Aliases are purely optional convenience shortcuts
+  aliasBank(`${ts}/tidal-drum-machines-alias.json`).catch((e: unknown) =>
+    console.warn('[strudel] Alias bank failed to load:', e),
+  )
 }
 
 const DEFAULT_STRUDEL_CODE = `// Strudel live-coding pattern
