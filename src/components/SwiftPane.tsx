@@ -20,9 +20,8 @@ let sum = numbers.reduce(0, +)
 print("Sum of \\(numbers) = \\(sum)")
 `
 
-// Wandbox API – free public Swift execution service
-const WANDBOX_URL = 'https://wandbox.org/api/compile.json'
-const SWIFT_COMPILER = 'swift-HEAD'
+// Piston API – free public code execution service
+const PISTON_URL = 'https://emkc.org/api/v2/piston/execute'
 
 interface SwiftPaneProps {
   onOutput: (output: string, isError: boolean) => void
@@ -59,21 +58,21 @@ export default forwardRef<SwiftPaneHandle, SwiftPaneProps>(function SwiftPane(
     const code = codeRef.current
     onRunningChangeRef.current(true)
     try {
-      const response = await fetch(WANDBOX_URL, {
+      const response = await fetch(PISTON_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, compiler: SWIFT_COMPILER }),
+        body: JSON.stringify({
+          language: 'swift',
+          version: '*',
+          files: [{ content: code }],
+        }),
       })
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       const data = await response.json()
-      const parts: string[] = []
-      if (data.compiler_message) parts.push(data.compiler_message)
-      if (data.program_output) parts.push(data.program_output)
-      if (data.program_error) parts.push(data.program_error)
-      const output = parts.join('').trimEnd() || '(no output)'
-      const isError = data.status !== '0' && data.status !== 0
+      const output = [data.run.stdout, data.run.stderr].filter(Boolean).join('\n').trimEnd() || '(no output)'
+      const isError = data.run.code !== 0
       onOutputRef.current(output, isError)
     } catch (err) {
       onOutputRef.current(
