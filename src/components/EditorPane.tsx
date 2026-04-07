@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import Box from '@mui/material/Box'
 import Editor from '@monaco-editor/react'
 import type { OnMount, BeforeMount } from '@monaco-editor/react'
-import type { editor as MonacoEditorNS } from 'monaco-editor'
+// import type { editor as MonacoEditorNS } from 'monaco-editor'
 import { initVimMode, type VimAdapterInstance } from 'monaco-vim'
 import ShaderHeader from './ShaderHeader'
 import ShaderError from './editor/ShaderError'
@@ -34,7 +34,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const [shaderTitle, setShaderTitle] = useState(
     () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
   )
-  const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
+		// TODO -- Fix me
+  // const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
+  const editorRef = useRef<any>(null)
   const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   // Off-DOM element that monaco-vim writes its status into – never appended to
