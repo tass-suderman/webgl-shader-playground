@@ -21,10 +21,6 @@ interface EditorPaneProps {
   shaderError: string | null
   vimMode: boolean
   themeName: string
-  /** Called whenever the vim status bar text changes (for a shared bar in split mode) */
-  onVimStatusChange?: (status: string) => void
-  /** Whether to render the vim status bar inside this pane (false in split mode) */
-  showVimBar?: boolean
 }
 
 export interface EditorPaneHandle {
@@ -32,7 +28,7 @@ export interface EditorPaneHandle {
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, onVimStatusChange, showVimBar = true },
+  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName },
   ref,
 ) {
   const [shaderTitle, setShaderTitle] = useState(
@@ -80,16 +76,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   }, [vimMode])
 
   // Forward vim status changes to the parent (used in split mode for a shared bar)
-  useEffect(() => {
-    if (!onVimStatusChange) return
-    const el = statusBarRef.current
-    if (!el) return
-    const observer = new MutationObserver(() => {
-      onVimStatusChange(el.textContent ?? '')
-    })
-    observer.observe(el, { childList: true, subtree: true, characterData: true })
-    return () => observer.disconnect()
-  }, [onVimStatusChange])
+  // (Removed – vim status bar is no longer displayed)
 
   const handleRun = useCallback(() => {
     onRun(pendingSourceRef.current)
@@ -237,22 +224,12 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         />
       </Box>
 
-      {/* Vim status bar – only shown when vim mode is active and showVimBar is true */}
+      {/* Vim status bar element – kept hidden so monaco-vim has a DOM node to
+          write into; the mode is not displayed to the user */}
       <Box
         ref={statusBarRef}
         component="div"
-        sx={{
-          display: vimMode && showVimBar ? 'block' : 'none',
-          px: 1,
-          py: 0.25,
-          bgcolor: 'var(--pg-bg-header)',
-          color: 'var(--pg-text-primary)',
-          fontFamily: 'monospace',
-          fontSize: '0.8rem',
-          borderTop: '1px solid var(--pg-border-subtle)',
-          flexShrink: 0,
-          minHeight: '1.5rem',
-        }}
+        sx={{ display: 'none' }}
       />
     </Box>
   )

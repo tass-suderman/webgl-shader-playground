@@ -53,14 +53,10 @@ interface StrudelPaneProps {
   onAudioStreamReady?: (stream: MediaStream | null) => void
   vimMode?: boolean
   themeName?: string
-  /** Called whenever the vim status bar text changes (for a shared bar in split mode) */
-  onVimStatusChange?: (status: string) => void
-  /** Whether to render the vim status bar inside this pane (false in split mode) */
-  showVimBar?: boolean
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', onVimStatusChange, showVimBar = true },
+  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa' },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -78,7 +74,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     () => localStorage.getItem(LS_STRUDEL_TITLE) ?? DEFAULT_STRUDEL_TITLE,
   )
   const [soundsOpen, setSoundsOpen] = useState(false)
-  const [vimStatus, setVimStatus] = useState('')
   const onAnalyserReadyRef = useRef(onAnalyserReady)
   onAnalyserReadyRef.current = onAnalyserReady
   const onAudioStreamReadyRef = useRef(onAudioStreamReady)
@@ -216,34 +211,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [saveCode])
 
-// Vim mode indicators emitted by @replit/codemirror-vim in the status panel
-const VIM_MODE_INDICATORS = ['INSERT', 'NORMAL', 'VISUAL', 'REPLACE']
-
-// Watch the rootRef for vim status changes emitted by @codemirror/vim's status panel
-  useEffect(() => {
-    if (!vimMode || !rootRef.current) return
-    const root = rootRef.current
-    const updateVimStatus = () => {
-      // @replit/codemirror-vim renders its status bar inside .cm-panels-bottom or as a
-      // panel element; look for any element whose text contains a vim mode indicator.
-      const panels = root.querySelectorAll<HTMLElement>('[class*="panel"], [class*="vim"], .cm-scroller + *')
-      let found = ''
-      for (const el of panels) {
-        const text = el.textContent?.trim() ?? ''
-        if (text && VIM_MODE_INDICATORS.some(m => text.includes(m))) {
-          found = text
-          break
-        }
-      }
-      setVimStatus(found)
-      onVimStatusChange?.(found)
-    }
-    const observer = new MutationObserver(updateVimStatus)
-    observer.observe(root, { childList: true, subtree: true, characterData: true })
-    updateVimStatus()
-    return () => observer.disconnect()
-  }, [vimMode, onVimStatusChange])
-
   const handleRun = useCallback(() => {
     saveCode()
     mirrorRef.current?.evaluate().catch(console.error)
@@ -326,35 +293,22 @@ const VIM_MODE_INDICATORS = ['INSERT', 'NORMAL', 'VISUAL', 'REPLACE']
         onChange={handleFileChange}
       />
 
-      {/* Strudel CodeMirror editor – always mounted to preserve state */}
+      {/* Strudel CodeMirror editor – fills available space; click empty area to focus */}
       <Box
         ref={rootRef}
+        onClick={() => {
+          // Focus the CodeMirror editor when clicking the empty area below content
+          const view = mirrorRef.current?.editor as { hasFocus?: boolean; focus?: () => void } | undefined
+          if (view?.focus && !view.hasFocus) view.focus()
+        }}
         sx={{
           flex: 1,
-          overflow: 'auto',
-          '& .cm-editor': { minHeight: '100%', fontSize: '13px' },
-          '& .cm-scroller': { fontFamily: 'monospace' },
+          overflow: 'hidden',
+          cursor: 'text',
+          '& .cm-editor': { height: '100%', fontSize: '13px' },
+          '& .cm-scroller': { fontFamily: 'monospace', overflow: 'auto !important' },
         }}
       />
-
-      {/* Vim status bar – shown when vim mode is on and showVimBar is true */}
-      {vimMode && showVimBar && (
-        <Box
-          sx={{
-            px: 1,
-            py: 0.25,
-            bgcolor: 'var(--pg-bg-header)',
-            color: 'var(--pg-text-primary)',
-            fontFamily: 'monospace',
-            fontSize: '0.8rem',
-            borderTop: '1px solid var(--pg-border-subtle)',
-            flexShrink: 0,
-            minHeight: '1.5rem',
-          }}
-        >
-          {vimStatus}
-        </Box>
-      )}
 
       <SoundsModal open={soundsOpen} onClose={() => setSoundsOpen(false)} />
     </Box>
