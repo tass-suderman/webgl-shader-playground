@@ -68,7 +68,7 @@ export default function SwiftConsole({ output, isRunning, isError, onClear }: Sw
           fontSize: '13px',
           lineHeight: 1.6,
           whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all',
+          wordBreak: 'break-word',
         }}
       >
         {isRunning && !output ? (
