@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import Box from '@mui/material/Box'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
-import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
+import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds, soundAlias } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
 import ShaderHeader from './ShaderHeader'
 import SoundsModal from './strudel/SoundsModal'
@@ -20,6 +20,10 @@ type StrudelMirrorExt = StrudelMirror & {
 const minimalPrebake = async (): Promise<void> => {
   registerSynthSounds()
   registerZZFXSounds()
+  // Register 'bd' as a fallback alias for 'sbd' (synth bass drum) so patterns
+  // using the common 'bd' name work even when remote sample banks fail to load.
+  // If prebake() succeeds and loads real 'bd' samples they will take precedence.
+  soundAlias('sbd', 'bd')
   try {
     await prebake()
   } catch {

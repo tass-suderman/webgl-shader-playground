@@ -17,6 +17,7 @@ export const SOUND_CATEGORIES: readonly SoundCategory[] = [
   {
     label: 'Synth voices',
     sounds: ['sbd', 'supersaw', 'bytebeat', 'pulse', 'bus', 'user', 'one'],
+    aliases: { bd: 'sbd' },
   },
   {
     label: 'Noise',
