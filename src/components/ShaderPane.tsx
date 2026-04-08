@@ -117,9 +117,17 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
       const ext = (recorder.mimeType || mimeType).includes('mp4') ? 'mp4' : 'webm'
       const filename = `recording.${ext}`
 
-      if (typeof (window as any).showSaveFilePicker === 'function') {
+      // showSaveFilePicker is part of the File System Access API and not yet
+      // in TypeScript's lib.dom.d.ts – cast through unknown to avoid using any.
+      type ShowSaveFilePicker = (options: {
+        suggestedName?: string
+        types?: { description: string; accept: Record<string, string[]> }[]
+      }) => Promise<{ createWritable: () => Promise<{ write: (data: Blob) => Promise<void>; close: () => Promise<void> }> }>
+      const winFSA = window as Window & { showSaveFilePicker?: ShowSaveFilePicker }
+
+      if (typeof winFSA.showSaveFilePicker === 'function') {
         try {
-          const handle = await (window as any).showSaveFilePicker({
+          const handle = await winFSA.showSaveFilePicker({
             suggestedName: filename,
             types: [{ description: 'Video file', accept: { [(recorder.mimeType || mimeType)]: [`.${ext}`] } }],
           })

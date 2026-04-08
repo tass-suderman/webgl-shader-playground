@@ -30,7 +30,7 @@ const mockMirror = vi.hoisted(() => ({
 
 vi.mock('@strudel/codemirror', () => ({
   // Use a regular function so `new StrudelMirror(...)` returns mockMirror
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   StrudelMirror: vi.fn(function MockStrudelMirror(this: unknown) { return mockMirror } as unknown as new (...a: unknown[]) => typeof mockMirror),
   codemirrorSettings: { get: () => ({}) },
 }))

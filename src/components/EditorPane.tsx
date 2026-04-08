@@ -34,8 +34,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const [shaderTitle, setShaderTitle] = useState(
     () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
   )
-		// TODO -- Fix me
+  // TODO -- Fix me
   // const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null)
   const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

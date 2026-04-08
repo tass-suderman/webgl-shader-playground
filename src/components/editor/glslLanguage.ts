@@ -53,7 +53,7 @@ export const GLSL_MONARCH_TOKENS = {
     'gl_VertexID', 'gl_InstanceID',
     'gl_DepthRange',
   ],
-  symbols: /[=><!~?:&|+\-*\/^%]+/,
+  symbols: /[=><!~?:&|+\-*^%]+/,
   tokenizer: {
     root: [
       // Preprocessor directives (entire line)
@@ -73,7 +73,7 @@ export const GLSL_MONARCH_TOKENS = {
       [/[{}()[\]]/, '@brackets'],
       [/@symbols/, 'operator'],
       // Floats
-      [/\d*\.\d+([eEfF][\-+]?\d+)?[fF]?/, 'number.float'],
+      [/\d*\.\d+([eEfF][-+]?\d+)?[fF]?/, 'number.float'],
       // Hex
       [/0[xX][0-9a-fA-F]+[uU]?/, 'number.hex'],
       // Integers
@@ -85,9 +85,9 @@ export const GLSL_MONARCH_TOKENS = {
       [/\/\/.*$/, 'comment'],
     ],
     block_comment: [
-      [/[^\/*]+/, 'comment'],
+      [/[^/*]+/, 'comment'],
       [/\*\//, 'comment', '@pop'],
-      [/[\/*]/, 'comment'],
+      [/[/*]/, 'comment'],
     ],
   },
 }
