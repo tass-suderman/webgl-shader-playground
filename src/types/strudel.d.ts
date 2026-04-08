@@ -8,6 +8,8 @@ declare module '@strudel/codemirror' {
     transpiler: unknown
     solo?: boolean
     onToggle?: (started: boolean) => void
+    /** Called with the Error thrown when pattern evaluation fails */
+    onEvalError?: (err: unknown) => void
   }
   export class StrudelMirror {
     constructor(options: StrudelMirrorOptions)
@@ -30,6 +32,19 @@ declare module '@strudel/codemirror' {
   export const codemirrorSettings: { get: () => Record<string, unknown> }
 }
 
+declare module '@strudel/core' {
+  /** Register modules as globals so that Strudel pattern functions are available at eval time */
+  export function evalScope(...modules: Promise<unknown>[]): Promise<unknown[]>
+}
+
+declare module '@strudel/mini' {
+  // Pattern mini-notation parser – no additional types needed
+}
+
+declare module '@strudel/tonal' {
+  // Tonal (music theory) helpers for Strudel – no additional types needed
+}
+
 declare module '@strudel/repl' {
   export function prebake(): Promise<void>
 }
@@ -48,6 +63,7 @@ declare module '@strudel/webaudio' {
   } | null
   export function registerSynthSounds(): void
   export function registerZZFXSounds(): void
+  export function soundAlias(source: string, target: string): void
   export function registerSound(
     name: string,
     onTrigger: (time: number, value: Record<string, unknown>, onended: () => void) => { node: AudioNode; stop?: (releaseTime: number) => void; nodes?: Record<string, AudioNode[]> } | void,
