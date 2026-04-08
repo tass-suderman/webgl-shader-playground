@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import Box from '@mui/material/Box'
 import { StrudelMirror } from '@strudel/codemirror'
 import { prebake } from '@strudel/repl'
-import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds } from '@strudel/webaudio'
+import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds, soundAlias } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
 import ShaderHeader from './ShaderHeader'
 import SoundsModal from './strudel/SoundsModal'
@@ -20,6 +20,10 @@ type StrudelMirrorExt = StrudelMirror & {
 const minimalPrebake = async (): Promise<void> => {
   registerSynthSounds()
   registerZZFXSounds()
+  // Register 'bd' as a fallback alias for 'sbd' (synth bass drum) so patterns
+  // using the common 'bd' name work even when remote sample banks fail to load.
+  // If prebake() succeeds and loads real 'bd' samples they will take precedence.
+  soundAlias('sbd', 'bd')
   try {
     await prebake()
   } catch {
@@ -144,9 +148,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           // Remove the specific connections we added to destinationGain
           const dg = destinationGainRef.current
           if (dg) {
-            try { dg.disconnect(analyserRef.current) } catch (_) { /* node may have been reset */ }
+            try { dg.disconnect(analyserRef.current) } catch { /* node may have been reset */ }
             if (destinationNodeRef.current) {
-              try { dg.disconnect(destinationNodeRef.current) } catch (_) { /* node may have been reset */ }
+              try { dg.disconnect(destinationNodeRef.current) } catch { /* node may have been reset */ }
             }
             destinationGainRef.current = null
           }
@@ -168,9 +172,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       if (analyserRef.current) {
         const dg = destinationGainRef.current
         if (dg) {
-          try { dg.disconnect(analyserRef.current) } catch (_) { /* node may have been reset */ }
+          try { dg.disconnect(analyserRef.current) } catch { /* node may have been reset */ }
           if (destinationNodeRef.current) {
-            try { dg.disconnect(destinationNodeRef.current) } catch (_) { /* node may have been reset */ }
+            try { dg.disconnect(destinationNodeRef.current) } catch { /* node may have been reset */ }
           }
           destinationGainRef.current = null
         }
@@ -185,7 +189,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       mirror.editor.destroy()
       mirror.stop().catch(console.error)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const saveCode = useCallback(() => {

@@ -11,13 +11,13 @@ const { mockSetValue } = vi.hoisted(() => ({
   mockSetValue: vi.fn(),
 }))
 
-vi.mock('@monaco-editor/react', () => ({
-  default: ({ onChange, onMount, beforeMount }: {
+vi.mock('@monaco-editor/react', () => {
+  function MockMonacoEditor({ onChange, onMount, beforeMount }: {
     onChange?: (value: string | undefined) => void
     onMount?: (editor: unknown, monaco: unknown) => void
     beforeMount?: (monaco: unknown) => void
     defaultValue?: string
-  }) => {
+  }) {
     // Simulate beforeMount + onMount in effect
     React.useEffect(() => {
       const mockedMonaco = {
@@ -41,8 +41,9 @@ vi.mock('@monaco-editor/react', () => ({
         onChange={e => onChange?.(e.target.value)}
       />
     )
-  },
-}))
+  }
+  return { default: MockMonacoEditor }
+})
 
 // Mock monaco-vim to avoid requiring the full monaco-editor ESM build in tests
 vi.mock('monaco-vim', () => ({
