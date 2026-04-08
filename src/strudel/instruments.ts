@@ -12,10 +12,9 @@
  *   lt909  – low tom
  *
  * Bass synth registered (use with `.s()` or `.sound()`):
- *   acid303 – sawtooth oscillator tuned to the hap note.
+ *   acid303 – sawtooth oscillator tuned to the played note.
  *             Pair with Strudel filter controls for the 303 acid sound:
  *             .cutoff(800).resonance(20).lpenv(4).lpdecay(0.2)
- */
 
 import { registerSound, getAudioContext, getFrequencyFromValue } from '@strudel/webaudio'
 
