@@ -1,5 +1,8 @@
 [
   { "id": "default-pattern", "title": "Default Pattern" },
   { "id": "techno-beat", "title": "Techno Beat" },
-  { "id": "melodic-arp", "title": "Melodic Arp" }
+  { "id": "melodic-arp", "title": "Melodic Arp" },
+  { "id": "tr909-kit", "title": "TR-909 Drum Kit" },
+  { "id": "tb303-acid", "title": "TB-303 Acid Bass" },
+  { "id": "909-303-acid-rave", "title": "909 + 303 Acid Rave" }
 ]

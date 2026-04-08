@@ -1,0 +1,4 @@
+{
+  "title": "909 + 303 Acid Rave",
+  "content": "// TR-909 drums + TB-303 acid bass together\nstack(\n  // ── TR-909 drums ──\n  s(\"bd909 ~ ~ bd909 ~ ~ bd909 ~\").gain(0.95),\n  s(\"~ ~ sd909 ~ ~ ~ sd909 ~\").gain(0.85),\n  s(\"~ ~ cp909 ~ ~ ~ cp909 cp909\").gain(0.55).room(0.25),\n  s(\"ch909*16\").gain(0.3),\n  s(\"~ ~ ~ oh909 ~ ~ ~ oh909\").gain(0.5),\n\n  // ── TB-303 acid bass ──\n  note(\"<c2 c2 c2 [c2 d2]> <g2 g2 [g2 a2] g2> <a#2 [a#2 c3] a#2 a#2> <f2 f2 [f2 g2] f2>\")\n    .s(\"acid303\")\n    .cutoff(sine.slow(16).range(300, 2200))\n    .resonance(24)\n    .lpenv(6)\n    .lpdecay(0.14)\n    .gain(0.65)\n    .room(0.08)\n).cpm(138)\n"
+}

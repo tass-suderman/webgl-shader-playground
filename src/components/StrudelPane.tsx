@@ -6,6 +6,7 @@ import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAu
 import { transpiler } from '@strudel/transpiler'
 import ShaderHeader from './ShaderHeader'
 import SoundsModal from './strudel/SoundsModal'
+import { registerInstruments } from '../strudel/instruments'
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
   changeSetting: (key: string, value: unknown) => void
@@ -20,6 +21,7 @@ type StrudelMirrorExt = StrudelMirror & {
 const minimalPrebake = async (): Promise<void> => {
   registerSynthSounds()
   registerZZFXSounds()
+  registerInstruments()
   // Register 'bd' as a fallback alias for 'sbd' (synth bass drum) so patterns
   // using the common 'bd' name work even when remote sample banks fail to load.
   // If prebake() succeeds and loads real 'bd' samples they will take precedence.

@@ -48,4 +48,10 @@ declare module '@strudel/webaudio' {
   } | null
   export function registerSynthSounds(): void
   export function registerZZFXSounds(): void
+  export function registerSound(
+    name: string,
+    onTrigger: (time: number, value: Record<string, unknown>, onended: () => void) => { node: AudioNode; stop?: (releaseTime: number) => void; nodes?: Record<string, AudioNode[]> } | void,
+    options?: { type?: string; prebake?: boolean },
+  ): void
+  export function getFrequencyFromValue(value: Record<string, unknown>, defaultMidi?: number): number
 }

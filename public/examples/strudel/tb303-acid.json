@@ -1,0 +1,4 @@
+{
+  "title": "TB-303 Acid Bass",
+  "content": "// TB-303 acid bass — use acid303 with Strudel's filter controls:\n// .cutoff()    sets the filter base frequency\n// .resonance() sets the filter Q (20+ for screaming acid)\n// .lpenv()     how far above cutoff the filter sweeps on each note\n// .lpdecay()   how fast the filter closes (seconds)\nnote(\"<c2 c2 c2 c2> <g2 g2 g2 [g2 a2]> <a#2 a#2 [a#2 c3] a#2> <f2 [f2 g2] f2 f2>\")\n  .s(\"acid303\")\n  .cutoff(\"<400 600 800 500>\")\n  .resonance(22)\n  .lpenv(5)\n  .lpdecay(0.18)\n  .gain(0.7)\n  .room(0.1)\n  .cpm(130)\n"
+}
