@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -186,8 +187,8 @@ describe('ShaderPane – record button', () => {
   })
 
   it('falls back to anchor download when showSaveFilePicker is not available', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).showSaveFilePicker
+    // Remove showSaveFilePicker from window using a typed augmentation to avoid `any`
+    delete (window as Window & { showSaveFilePicker?: unknown }).showSaveFilePicker
 
     const user = userEvent.setup()
     // Render BEFORE spying on appendChild so React can mount the component

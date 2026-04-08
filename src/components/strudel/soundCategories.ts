@@ -27,4 +27,12 @@ export const SOUND_CATEGORIES: readonly SoundCategory[] = [
     label: 'ZZFX (procedural)',
     sounds: ['zzfx', 'z_sine', 'z_sawtooth', 'z_triangle', 'z_square', 'z_tan', 'z_noise'],
   },
+  {
+    label: 'TR-909 drums (synthesised)',
+    sounds: ['bd909', 'sd909', 'cp909', 'ch909', 'oh909', 'rd909', 'ht909', 'lt909'],
+  },
+  {
+    label: 'TB-303 acid bass (synthesised)',
+    sounds: ['acid303'],
+  },
 ] as const

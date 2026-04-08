@@ -17,6 +17,8 @@ function downloadBlob(blob: Blob, filename: string): void {
 
 export interface ShaderPaneHandle {
   pause: () => void
+  unpause: () => void
+  togglePlay: () => void
 }
 
 interface ShaderPaneProps {
@@ -60,6 +62,12 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
   useImperativeHandle(ref, () => ({
     pause() {
       setIsPlaying(false)
+    },
+    unpause() {
+      setIsPlaying(true)
+    },
+    togglePlay() {
+      setIsPlaying(p => !p)
     },
   }), [])
 

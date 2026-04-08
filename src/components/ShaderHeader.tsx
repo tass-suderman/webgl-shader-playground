@@ -24,6 +24,8 @@ export interface ShaderHeaderProps {
   isPlaying?: boolean
   onStop?: () => void
   onShowSounds?: () => void
+  /** When true the music-note button is rendered in the accent colour to show it is active */
+  soundsActive?: boolean
 }
 
 export default function ShaderHeader({
@@ -40,6 +42,7 @@ export default function ShaderHeader({
   isPlaying,
   onStop,
   onShowSounds,
+  soundsActive = false,
 }: ShaderHeaderProps) {
   return (
     <Box
@@ -71,8 +74,13 @@ export default function ShaderHeader({
 
       {/* Sounds button – only for Strudel */}
       {onShowSounds && (
-        <Tooltip title="Available sounds">
-          <IconButton size="small" onClick={onShowSounds} aria-label="Available sounds" sx={{ color: 'var(--pg-text-primary)' }}>
+        <Tooltip title={soundsActive ? 'Hide sounds' : 'Available sounds'}>
+          <IconButton
+            size="small"
+            onClick={onShowSounds}
+            aria-label="Available sounds"
+            sx={{ color: soundsActive ? 'var(--pg-accent)' : 'var(--pg-text-primary)' }}
+          >
             <MusicNoteIcon fontSize="small" />
           </IconButton>
         </Tooltip>

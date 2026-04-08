@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, act } from '@testing-library/react'
 import React, { forwardRef, useImperativeHandle } from 'react'
@@ -6,27 +7,29 @@ import React, { forwardRef, useImperativeHandle } from 'react'
 // Mocks – all heavy components replaced with thin stubs
 // ---------------------------------------------------------------------------
 
-const { mockShaderPane, mockEditorPane, mockPlay, mockPause, mockShaderPause } = vi.hoisted(() => ({
+const { mockShaderPane, mockEditorPane, mockPlay, mockPause, mockShaderPause, mockShaderUnpause, mockShaderTogglePlay } = vi.hoisted(() => ({
   mockShaderPane: vi.fn(),
   mockEditorPane: vi.fn(),
   mockPlay: vi.fn(),
   mockPause: vi.fn(),
   mockShaderPause: vi.fn(),
+  mockShaderUnpause: vi.fn(),
+  mockShaderTogglePlay: vi.fn(),
 }))
 
 vi.mock('./components/ShaderPane', () => ({
-  default: forwardRef((props: { shaderSource: string }, ref: React.Ref<{ pause: () => void }>) => {
+  default: forwardRef((props: { shaderSource: string }, ref: React.Ref<{ pause: () => void; unpause: () => void; togglePlay: () => void }>) => {
     mockShaderPane(props)
-    useImperativeHandle(ref, () => ({ pause: mockShaderPause }), [])
+    useImperativeHandle(ref, () => ({ pause: mockShaderPause, unpause: mockShaderUnpause, togglePlay: mockShaderTogglePlay }), [])
     return <div data-testid="shader-pane" data-source={props.shaderSource} />
   }),
 }))
 
 vi.mock('./components/EditorPane', () => ({
-  default: (props: { pendingSource: string; onCodeChange: (c: string) => void }) => {
+  default: forwardRef((props: { pendingSource: string; onCodeChange: (c: string) => void }, _ref: React.Ref<unknown>) => {
     mockEditorPane(props)
     return <div data-testid="editor-pane" />
-  },
+  }),
 }))
 
 vi.mock('./components/StrudelPane', () => ({
@@ -76,6 +79,16 @@ describe('App – global keyboard shortcuts', () => {
     expect(latestCall?.shaderSource).toBe(DEFAULT_SHADER)
   })
 
+  it('Ctrl+Enter also calls unpause() on the ShaderPane', () => {
+    render(<App />)
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }),
+      )
+    })
+    expect(mockShaderUnpause).toHaveBeenCalledTimes(1)
+  })
+
   it('Ctrl+. prevents the default browser action', () => {
     render(<App />)
     const event = new KeyboardEvent('keydown', {
@@ -95,7 +108,7 @@ describe('App – global keyboard shortcuts', () => {
         new KeyboardEvent('keydown', { key: '.', ctrlKey: true, bubbles: true, cancelable: true }),
       )
     })
-    expect(mockShaderPause).toHaveBeenCalledTimes(1)
+    expect(mockShaderTogglePlay).toHaveBeenCalledTimes(1)
   })
 
   it('Alt+Enter prevents the default browser action', () => {

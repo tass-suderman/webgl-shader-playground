@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -34,7 +35,7 @@ vi.mock('@strudel/codemirror', () => ({
   StrudelMirror: vi.fn(function MockStrudelMirror(this: unknown) { return mockMirror } as unknown as new (...a: unknown[]) => typeof mockMirror),
   codemirrorSettings: { get: () => ({}) },
 }))
-vi.mock('@strudel/repl', () => ({ prebake: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@strudel/core', () => ({ evalScope: vi.fn().mockResolvedValue([]) }))
 vi.mock('@strudel/transpiler', () => ({ transpiler: {} }))
 vi.mock('@strudel/webaudio', () => ({
   webaudioOutput: {},
@@ -43,7 +44,9 @@ vi.mock('@strudel/webaudio', () => ({
   getSuperdoughAudioController: vi.fn(() => null),
   registerSynthSounds: vi.fn(),
   registerZZFXSounds: vi.fn(),
+  soundAlias: vi.fn(),
 }))
+vi.mock('../strudel/instruments', () => ({ registerInstruments: vi.fn() }))
 
 // ---------------------------------------------------------------------------
 // Component under test (imported after mocks are set up)
