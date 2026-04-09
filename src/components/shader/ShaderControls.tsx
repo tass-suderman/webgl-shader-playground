@@ -23,14 +23,12 @@ interface ShaderControlsProps {
   isFullscreen: boolean
   webcamEnabled: boolean
   micEnabled: boolean
-  systemAudioEnabled: boolean
   strudelAnalyser?: AnalyserNode | null
   volume: number
   muted: boolean
   onTogglePlay: () => void
   onToggleWebcam: () => void
   onToggleMic: () => void
-  onToggleSystemAudio: () => void
   onVolumeChange: (value: number) => void
   onToggleMute: () => void
   onStartRecording: () => void
@@ -44,14 +42,12 @@ export default function ShaderControls({
   isFullscreen,
   webcamEnabled,
   micEnabled,
-  systemAudioEnabled,
   strudelAnalyser,
   volume,
   muted,
   onTogglePlay,
   onToggleWebcam,
   onToggleMic,
-  onToggleSystemAudio,
   onVolumeChange,
   onToggleMute,
   onStartRecording,
@@ -94,16 +90,9 @@ export default function ShaderControls({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={systemAudioEnabled ? 'Disable System Audio (iChannel1)' : 'Enable System Audio Output (iChannel1)'}>
-        <IconButton onClick={onToggleSystemAudio} size="small" sx={{ color: systemAudioEnabled ? 'secondary.main' : 'white' }}>
-          {systemAudioEnabled ? <VolumeUpIcon /> : <VolumeOffIcon />}
-        </IconButton>
-      </Tooltip>
-
       <ChannelStatusChips
         webcamEnabled={webcamEnabled}
         micEnabled={micEnabled}
-        systemAudioEnabled={systemAudioEnabled}
         strudelAnalyser={strudelAnalyser}
       />
 
