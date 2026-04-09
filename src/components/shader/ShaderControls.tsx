@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
+import Slider from '@mui/material/Slider'
 import Tooltip from '@mui/material/Tooltip'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -10,6 +11,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff'
 import MicIcon from '@mui/icons-material/Mic'
 import MicOffIcon from '@mui/icons-material/MicOff'
 import VolumeUpIcon from '@mui/icons-material/VolumeUp'
+import VolumeDownIcon from '@mui/icons-material/VolumeDown'
 import VolumeOffIcon from '@mui/icons-material/VolumeOff'
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
@@ -23,10 +25,14 @@ interface ShaderControlsProps {
   micEnabled: boolean
   systemAudioEnabled: boolean
   strudelAnalyser?: AnalyserNode | null
+  volume: number
+  muted: boolean
   onTogglePlay: () => void
   onToggleWebcam: () => void
   onToggleMic: () => void
   onToggleSystemAudio: () => void
+  onVolumeChange: (value: number) => void
+  onToggleMute: () => void
   onStartRecording: () => void
   onStopRecording: () => void
   onToggleFullscreen: () => void
@@ -40,14 +46,24 @@ export default function ShaderControls({
   micEnabled,
   systemAudioEnabled,
   strudelAnalyser,
+  volume,
+  muted,
   onTogglePlay,
   onToggleWebcam,
   onToggleMic,
   onToggleSystemAudio,
+  onVolumeChange,
+  onToggleMute,
   onStartRecording,
   onStopRecording,
   onToggleFullscreen,
 }: ShaderControlsProps) {
+  const VolumeIcon = muted || volume === 0
+    ? VolumeOffIcon
+    : volume <= 50
+      ? VolumeDownIcon
+      : VolumeUpIcon
+
   return (
     <Box
       sx={{
@@ -92,6 +108,27 @@ export default function ShaderControls({
       />
 
       <Box sx={{ flex: 1 }} />
+
+      <Tooltip title={muted ? 'Unmute' : 'Mute'}>
+        <IconButton onClick={onToggleMute} size="small" aria-label={muted ? 'Unmute' : 'Mute'} sx={{ color: 'white' }}>
+          <VolumeIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Slider
+        value={volume}
+        min={0}
+        max={100}
+        size="small"
+        aria-label="Volume"
+        onChange={(_e, val) => onVolumeChange(val as number)}
+        sx={{
+          width: 80,
+          color: 'white',
+          '& .MuiSlider-thumb': { width: 12, height: 12 },
+          '& .MuiSlider-rail': { opacity: 0.3 },
+        }}
+      />
 
       <Tooltip title={isRecording ? 'Stop recording' : 'Start recording'}>
         <IconButton

@@ -14,6 +14,8 @@ import { useMediaStreams } from './hooks/useMediaStreams'
 export const LS_GLSL_CODE = 'shader-playground:glsl-code'
 const LS_THEME = 'shader-playground:theme'
 const LS_VIM_MODE = 'shader-playground:vim-mode'
+const LS_VOLUME = 'shader-playground:volume'
+const LS_MUTED = 'shader-playground:muted'
 
 // Computed once at module load – used to seed the initial shader state so the
 // last-saved shader is both displayed in the editor and running on the GPU
@@ -61,6 +63,11 @@ export default function App() {
   const [leftRatio, setLeftRatio] = useState(50)
   const [vimMode, setVimMode] = useState<boolean>(() => localStorage.getItem(LS_VIM_MODE) === 'true')
   const [themeName, setThemeName] = useState<string>(() => localStorage.getItem(LS_THEME) ?? 'kanagawa')
+  const [volume, setVolume] = useState<number>(() => {
+    const stored = localStorage.getItem(LS_VOLUME)
+    return stored !== null ? Number(stored) : 50
+  })
+  const [muted, setMuted] = useState<boolean>(() => localStorage.getItem(LS_MUTED) === 'true')
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
@@ -94,6 +101,19 @@ export default function App() {
   const handleVimModeChange = useCallback((enabled: boolean) => {
     setVimMode(enabled)
     localStorage.setItem(LS_VIM_MODE, String(enabled))
+  }, [])
+
+  const handleVolumeChange = useCallback((value: number) => {
+    setVolume(value)
+    localStorage.setItem(LS_VOLUME, String(value))
+  }, [])
+
+  const handleToggleMute = useCallback(() => {
+    setMuted(prev => {
+      const next = !prev
+      localStorage.setItem(LS_MUTED, String(next))
+      return next
+    })
   }, [])
 
   const handleRun = useCallback((code: string) => {
@@ -204,9 +224,13 @@ export default function App() {
           webcamEnabled={webcamEnabled}
           micEnabled={micEnabled}
           systemAudioEnabled={systemAudioEnabled}
+          volume={volume}
+          muted={muted}
           onToggleWebcam={handleToggleWebcam}
           onToggleMic={handleToggleMic}
           onToggleSystemAudio={handleToggleSystemAudio}
+          onVolumeChange={handleVolumeChange}
+          onToggleMute={handleToggleMute}
           onShaderError={setShaderError}
         />
       </Box>
@@ -333,6 +357,8 @@ export default function App() {
               onAudioStreamReady={setStrudelAudioStream}
               vimMode={vimMode}
               themeName={themeName}
+              volume={volume}
+              muted={muted}
             />
           </Box>
         </Box>

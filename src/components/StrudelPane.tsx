@@ -59,10 +59,12 @@ interface StrudelPaneProps {
   onAudioStreamReady?: (stream: MediaStream | null) => void
   vimMode?: boolean
   themeName?: string
+  volume?: number
+  muted?: boolean
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa' },
+  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', volume = 50, muted = false },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -88,6 +90,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const vimModeRef = useRef(vimMode)
   vimModeRef.current = vimMode
   const themeNameRef = useRef(themeName)
+  themeNameRef.current = themeName
+  const volumeRef = useRef(volume)
+  volumeRef.current = volume
+  const mutedRef = useRef(muted)
+  mutedRef.current = muted
   themeNameRef.current = themeName
 
   useImperativeHandle(ref, () => ({
@@ -132,6 +139,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           if (ctx && controller?.output?.destinationGain) {
             const dg = controller.output.destinationGain
             destinationGainRef.current = dg
+
+            // Apply current volume/mute settings immediately
+            dg.gain.value = mutedRef.current ? 0 : volumeRef.current / 100
 
             const analyser = ctx.createAnalyser()
             analyser.fftSize = 256
@@ -206,6 +216,14 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   useEffect(() => {
     mirrorRef.current?.setTheme(mapToStrudelTheme(themeName))
   }, [themeName])
+
+  // Apply volume / mute to the Strudel GainNode whenever either changes
+  useEffect(() => {
+    const dg = destinationGainRef.current
+    if (dg) {
+      dg.gain.value = muted ? 0 : volume / 100
+    }
+  }, [volume, muted])
 
   // Persist the strudel code when the tab is hidden or the page is unloaded
   useEffect(() => {
