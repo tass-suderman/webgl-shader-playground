@@ -8,7 +8,6 @@ describe('ChannelStatusChips', () => {
       <ChannelStatusChips
         webcamEnabled={false}
         micEnabled={false}
-        systemAudioEnabled={false}
         strudelAnalyser={null}
       />,
     )
@@ -20,7 +19,6 @@ describe('ChannelStatusChips', () => {
       <ChannelStatusChips
         webcamEnabled={true}
         micEnabled={false}
-        systemAudioEnabled={false}
         strudelAnalyser={null}
       />,
     )
@@ -32,23 +30,10 @@ describe('ChannelStatusChips', () => {
       <ChannelStatusChips
         webcamEnabled={false}
         micEnabled={true}
-        systemAudioEnabled={false}
         strudelAnalyser={null}
       />,
     )
     expect(screen.getByText('iChannel1: Mic')).toBeInTheDocument()
-  })
-
-  it('renders system audio chip when system audio is enabled', () => {
-    render(
-      <ChannelStatusChips
-        webcamEnabled={false}
-        micEnabled={false}
-        systemAudioEnabled={true}
-        strudelAnalyser={null}
-      />,
-    )
-    expect(screen.getByText('iChannel1: System Audio')).toBeInTheDocument()
   })
 
   it('renders Strudel chip when strudelAnalyser is set', () => {
@@ -56,7 +41,6 @@ describe('ChannelStatusChips', () => {
       <ChannelStatusChips
         webcamEnabled={false}
         micEnabled={false}
-        systemAudioEnabled={false}
         strudelAnalyser={{} as AnalyserNode}
       />,
     )
@@ -68,7 +52,6 @@ describe('ChannelStatusChips', () => {
       <ChannelStatusChips
         webcamEnabled={true}
         micEnabled={true}
-        systemAudioEnabled={false}
         strudelAnalyser={{} as AnalyserNode}
       />,
     )

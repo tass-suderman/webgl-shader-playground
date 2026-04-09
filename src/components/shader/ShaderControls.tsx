@@ -9,8 +9,6 @@ import VideocamIcon from '@mui/icons-material/Videocam'
 import VideocamOffIcon from '@mui/icons-material/VideocamOff'
 import MicIcon from '@mui/icons-material/Mic'
 import MicOffIcon from '@mui/icons-material/MicOff'
-import VolumeUpIcon from '@mui/icons-material/VolumeUp'
-import VolumeOffIcon from '@mui/icons-material/VolumeOff'
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import ChannelStatusChips from './ChannelStatusChips'
@@ -21,12 +19,10 @@ interface ShaderControlsProps {
   isFullscreen: boolean
   webcamEnabled: boolean
   micEnabled: boolean
-  systemAudioEnabled: boolean
   strudelAnalyser?: AnalyserNode | null
   onTogglePlay: () => void
   onToggleWebcam: () => void
   onToggleMic: () => void
-  onToggleSystemAudio: () => void
   onStartRecording: () => void
   onStopRecording: () => void
   onToggleFullscreen: () => void
@@ -38,12 +34,10 @@ export default function ShaderControls({
   isFullscreen,
   webcamEnabled,
   micEnabled,
-  systemAudioEnabled,
   strudelAnalyser,
   onTogglePlay,
   onToggleWebcam,
   onToggleMic,
-  onToggleSystemAudio,
   onStartRecording,
   onStopRecording,
   onToggleFullscreen,
@@ -78,16 +72,9 @@ export default function ShaderControls({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={systemAudioEnabled ? 'Disable System Audio (iChannel1)' : 'Enable System Audio Output (iChannel1)'}>
-        <IconButton onClick={onToggleSystemAudio} size="small" sx={{ color: systemAudioEnabled ? 'secondary.main' : 'white' }}>
-          {systemAudioEnabled ? <VolumeUpIcon /> : <VolumeOffIcon />}
-        </IconButton>
-      </Tooltip>
-
       <ChannelStatusChips
         webcamEnabled={webcamEnabled}
         micEnabled={micEnabled}
-        systemAudioEnabled={systemAudioEnabled}
         strudelAnalyser={strudelAnalyser}
       />
 
