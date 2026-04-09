@@ -58,9 +58,9 @@ export default function ShaderControls({
   onStopRecording,
   onToggleFullscreen,
 }: ShaderControlsProps) {
-  const VolumeIcon = muted || volume === 0
+  const VolumeIcon = muted
     ? VolumeOffIcon
-    : volume <= 50
+    : volume === 0 || volume <= 50
       ? VolumeDownIcon
       : VolumeUpIcon
 

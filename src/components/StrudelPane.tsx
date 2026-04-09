@@ -95,7 +95,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   volumeRef.current = volume
   const mutedRef = useRef(muted)
   mutedRef.current = muted
-  themeNameRef.current = themeName
 
   useImperativeHandle(ref, () => ({
     play() {
