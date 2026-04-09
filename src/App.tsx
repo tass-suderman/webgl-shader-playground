@@ -14,13 +14,15 @@ import { useMediaStreams } from './hooks/useMediaStreams'
 export const LS_GLSL_CODE = 'shader-playground:glsl-code'
 const LS_THEME = 'shader-playground:theme'
 const LS_VIM_MODE = 'shader-playground:vim-mode'
+const LS_VOLUME = 'shader-playground:volume'
+const LS_MUTED = 'shader-playground:muted'
 
 // Computed once at module load – used to seed the initial shader state so the
 // last-saved shader is both displayed in the editor and running on the GPU
 // without waiting for a user action.
 const initialShaderCode = localStorage.getItem(LS_GLSL_CODE) ?? DEFAULT_SHADER
 
-type ViewMode = 'glsl' | 'strudel' | 'split' | 'examples' | 'settings'
+type ViewMode = 'glsl' | 'strudel' | 'examples' | 'settings'
 
 // Shared base styles for all top-bar toggle buttons
 const baseTabSx = {
@@ -41,7 +43,7 @@ const baseTabSx = {
   },
 } as const
 
-// Editor mode tabs (GLSL / Strudel / Split) – primary text colour
+// Editor mode tabs (GLSL / Strudel) – primary text colour
 const editorTabSx = { ...baseTabSx, color: 'var(--pg-text-button)' } as const
 
 // Utility tabs (Examples / Settings) – warm complementary text colour
@@ -57,12 +59,15 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
   const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
   const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
-  const [splitRatio, setSplitRatio] = useState(50)
   const [leftRatio, setLeftRatio] = useState(50)
   const [vimMode, setVimMode] = useState<boolean>(() => localStorage.getItem(LS_VIM_MODE) === 'true')
   const [themeName, setThemeName] = useState<string>(() => localStorage.getItem(LS_THEME) ?? 'kanagawa')
+  const [volume, setVolume] = useState<number>(() => {
+    const stored = localStorage.getItem(LS_VOLUME)
+    return stored !== null ? Number(stored) : 50
+  })
+  const [muted, setMuted] = useState<boolean>(() => localStorage.getItem(LS_MUTED) === 'true')
   const outerContainerRef = useRef<HTMLDivElement>(null)
-  const rightPanelRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
   const editorRef = useRef<EditorPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
@@ -73,12 +78,10 @@ export default function App() {
   const {
     webcamEnabled,
     micEnabled,
-    systemAudioEnabled,
     webcamStream,
     audioStream,
     handleToggleWebcam,
     handleToggleMic,
-    handleToggleSystemAudio,
   } = useMediaStreams()
 
   // Apply the active theme as CSS custom properties whenever it changes
@@ -94,6 +97,19 @@ export default function App() {
   const handleVimModeChange = useCallback((enabled: boolean) => {
     setVimMode(enabled)
     localStorage.setItem(LS_VIM_MODE, String(enabled))
+  }, [])
+
+  const handleVolumeChange = useCallback((value: number) => {
+    setVolume(value)
+    localStorage.setItem(LS_VOLUME, String(value))
+  }, [])
+
+  const handleToggleMute = useCallback(() => {
+    setMuted(prev => {
+      const next = !prev
+      localStorage.setItem(LS_MUTED, String(next))
+      return next
+    })
   }, [])
 
   const handleRun = useCallback((code: string) => {
@@ -135,26 +151,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler, { capture: true })
   }, [])
 
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const panel = rightPanelRef.current
-    if (!panel) return
-    const startY = e.clientY
-    const startRatio = splitRatio
-    const panelH = panel.getBoundingClientRect().height
-    const onMove = (me: MouseEvent) => {
-      const delta = me.clientY - startY
-      const newRatio = Math.min(80, Math.max(20, startRatio + (delta / panelH) * 100))
-      setSplitRatio(newRatio)
-    }
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-  }, [splitRatio])
-
   const handleHorizontalDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     const container = outerContainerRef.current
@@ -186,9 +182,8 @@ export default function App() {
     setViewMode('strudel')
   }, [])
 
-  const isSplit = viewMode === 'split'
-  const showGlsl = viewMode === 'glsl' || isSplit
-  const showStrudel = viewMode === 'strudel' || isSplit
+  const showGlsl = viewMode === 'glsl'
+  const showStrudel = viewMode === 'strudel'
 
   return (
     <Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'var(--pg-bg-app)' }}>
@@ -203,10 +198,12 @@ export default function App() {
           strudelAudioStream={strudelAudioStream}
           webcamEnabled={webcamEnabled}
           micEnabled={micEnabled}
-          systemAudioEnabled={systemAudioEnabled}
+          volume={volume}
+          muted={muted}
           onToggleWebcam={handleToggleWebcam}
           onToggleMic={handleToggleMic}
-          onToggleSystemAudio={handleToggleSystemAudio}
+          onVolumeChange={handleVolumeChange}
+          onToggleMute={handleToggleMute}
           onShaderError={setShaderError}
         />
       </Box>
@@ -224,7 +221,7 @@ export default function App() {
       />
 
       {/* Right: editor panel */}
-      <Box ref={rightPanelRef} sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {/* Top tab bar */}
         <Box sx={{
           px: 1,
@@ -249,7 +246,6 @@ export default function App() {
           >
             <ToggleButton value="glsl" sx={editorTabSx}>GLSL</ToggleButton>
             <ToggleButton value="strudel" sx={editorTabSx}>Strudel</ToggleButton>
-            <ToggleButton value="split" sx={editorTabSx}>Split</ToggleButton>
             <ToggleButton value="examples" sx={utilTabSx}>Examples</ToggleButton>
             <ToggleButton value="settings" sx={utilTabSx}>Settings</ToggleButton>
             <ToggleButton
@@ -291,7 +287,7 @@ export default function App() {
           <Box sx={{
             display: showGlsl ? 'flex' : 'none',
             flexDirection: 'column',
-            height: isSplit ? `${splitRatio}%` : '100%',
+            height: '100%',
             minHeight: 0,
           }}>
             <EditorPane
@@ -306,25 +302,11 @@ export default function App() {
             />
           </Box>
 
-          {/* Drag divider (split mode only) */}
-          {isSplit && (
-            <Box
-              onMouseDown={handleDividerMouseDown}
-              sx={{
-                height: '4px',
-                bgcolor: 'var(--pg-divider-default)',
-                cursor: 'row-resize',
-                flexShrink: 0,
-                '&:hover': { bgcolor: 'var(--pg-divider-hover)' },
-              }}
-            />
-          )}
-
           {/* Strudel pane – hidden but mounted when not visible to preserve state */}
           <Box sx={{
             display: showStrudel ? 'flex' : 'none',
             flexDirection: 'column',
-            height: isSplit ? `calc(${100 - splitRatio}% - 4px)` : '100%',
+            height: '100%',
             minHeight: 0,
           }}>
             <StrudelPane
@@ -333,6 +315,8 @@ export default function App() {
               onAudioStreamReady={setStrudelAudioStream}
               vimMode={vimMode}
               themeName={themeName}
+              volume={volume}
+              muted={muted}
             />
           </Box>
         </Box>

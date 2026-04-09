@@ -4,18 +4,14 @@ import Chip from '@mui/material/Chip'
 interface ChannelStatusChipsProps {
   webcamEnabled: boolean
   micEnabled: boolean
-  systemAudioEnabled: boolean
   strudelAnalyser?: AnalyserNode | null
 }
 
 export default function ChannelStatusChips({
   webcamEnabled,
   micEnabled,
-  systemAudioEnabled,
   strudelAnalyser,
 }: ChannelStatusChipsProps) {
-  const audioLabel = systemAudioEnabled ? 'System Audio' : 'Mic'
-
   return (
     <Box sx={{ display: 'contents' }}>
       {webcamEnabled && (
@@ -27,11 +23,11 @@ export default function ChannelStatusChips({
           sx={{ fontSize: '0.65rem' }}
         />
       )}
-      {(micEnabled || systemAudioEnabled) && (
+      {micEnabled && (
         <Chip
-          label={`iChannel1: ${audioLabel}`}
+          label="iChannel1: Mic"
           size="small"
-          color={systemAudioEnabled ? 'secondary' : 'primary'}
+          color="primary"
           variant="outlined"
           sx={{ fontSize: '0.65rem' }}
         />
