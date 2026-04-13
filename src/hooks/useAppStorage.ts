@@ -16,6 +16,7 @@ const KEYS = {
   muted: 'shader-playground:muted',
   immersiveOpacity: 'shader-playground:immersive-opacity',
   fontSize: 'shader-playground:font-size',
+  warnOnOverwrite: 'shader-playground:warn-on-overwrite',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -80,6 +81,8 @@ export interface AppStorage {
   setImmersiveOpacity: (v: number) => void
   fontSize: number
   setFontSize: (v: number) => void
+  warnOnOverwrite: boolean
+  setWarnOnOverwrite: (v: boolean) => void
 }
 
 export function useAppStorage(): AppStorage {
@@ -89,6 +92,7 @@ export function useAppStorage(): AppStorage {
   const [muted, setMuted] = useLocalStorage(KEYS.muted, false)
   const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(KEYS.immersiveOpacity, 50)
   const [fontSize, setFontSize] = useLocalStorage(KEYS.fontSize, 13)
+  const [warnOnOverwrite, setWarnOnOverwrite] = useLocalStorage(KEYS.warnOnOverwrite, true)
 
   return {
     theme, setTheme,
@@ -97,5 +101,6 @@ export function useAppStorage(): AppStorage {
     muted, setMuted,
     immersiveOpacity, setImmersiveOpacity,
     fontSize, setFontSize,
+    warnOnOverwrite, setWarnOnOverwrite,
   }
 }

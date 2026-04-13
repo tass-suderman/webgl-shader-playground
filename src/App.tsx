@@ -1,8 +1,18 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
 import Collapse from '@mui/material/Collapse'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import IconButton from '@mui/material/IconButton'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Typography from '@mui/material/Typography'
+import CloseIcon from '@mui/icons-material/Close'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import type { SxProps, Theme } from '@mui/material/styles'
 import ShaderPane, { type ShaderPaneHandle } from './components/shader/ShaderPane'
@@ -10,11 +20,12 @@ import ShaderControls from './components/shader/ShaderControls'
 import EditorPane, { type EditorPaneHandle } from './components/editor/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/strudel/StrudelPane'
 import SettingsPane from './components/settings/SettingsPane'
-import CombinedExamplesPanel from './components/editor/CombinedExamplesPanel'
+import SavedPane from './components/editor/SavedPane'
 import AboutPane from './components/about/AboutPane'
 import { applyTheme, getThemeByName } from './themes/appThemes'
 import { useMediaStreams } from './hooks/useMediaStreams'
 import { useAppStorage, getInitialGlslCode } from './hooks/useAppStorage'
+import { useSavedContent } from './hooks/useSavedContent'
 
 type DisplayMode = 'default' | 'immersive'
 
@@ -23,7 +34,7 @@ type DisplayMode = 'default' | 'immersive'
 // without waiting for a user action.
 const initialShaderCode = getInitialGlslCode()
 
-type ViewMode = 'glsl' | 'strudel' | 'examples' | 'settings' | 'about'
+type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
 
 /** Controls the colour applied to a tab toggle button. */
 type ButtonVariant = 'editor' | 'utility'
@@ -81,7 +92,13 @@ export default function App() {
     muted, setMuted,
     immersiveOpacity, setImmersiveOpacity,
     fontSize, setFontSize,
+    warnOnOverwrite, setWarnOnOverwrite,
   } = useAppStorage()
+  const savedContent = useSavedContent()
+  // Overwrite warning dialog state
+  const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false)
+  const [overwritePending, setOverwritePending] = useState<{ title: string; content: string; type: 'shader' | 'pattern' } | null>(null)
+  const [dontShowAgain, setDontShowAgain] = useState(false)
   const [displayMode, setDisplayMode] = useState<DisplayMode>('default')
   // State mirrored from ShaderPane for use in the immersive controls bar
   const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
@@ -234,6 +251,64 @@ export default function App() {
     setViewMode('strudel')
   }, [])
 
+  // ── Saved content: load saved entries into editors ─────────────────────────
+
+  const handleLoadSavedShader = useCallback((title: string, content: string) => {
+    editorRef.current?.loadExample(title, content)
+    setViewMode('glsl')
+  }, [])
+
+  const handleLoadSavedPattern = useCallback((title: string, content: string) => {
+    strudelRef.current?.loadExample(title, content)
+    setViewMode('strudel')
+  }, [])
+
+  // ── Save flow with optional overwrite confirmation ─────────────────────────
+
+  const commitSave = useCallback((title: string, content: string, type: 'shader' | 'pattern') => {
+    if (type === 'shader') {
+      savedContent.saveShader(title, content)
+    } else {
+      savedContent.savePattern(title, content)
+    }
+  }, [savedContent])
+
+  const handleSaveShader = useCallback((title: string, content: string) => {
+    if (warnOnOverwrite && savedContent.hasExistingShader(title)) {
+      setOverwritePending({ title, content, type: 'shader' })
+      setDontShowAgain(false)
+      setOverwriteDialogOpen(true)
+    } else {
+      commitSave(title, content, 'shader')
+    }
+  }, [warnOnOverwrite, savedContent, commitSave])
+
+  const handleSavePattern = useCallback((title: string, content: string) => {
+    if (warnOnOverwrite && savedContent.hasExistingPattern(title)) {
+      setOverwritePending({ title, content, type: 'pattern' })
+      setDontShowAgain(false)
+      setOverwriteDialogOpen(true)
+    } else {
+      commitSave(title, content, 'pattern')
+    }
+  }, [warnOnOverwrite, savedContent, commitSave])
+
+  const handleOverwriteConfirm = useCallback(() => {
+    if (overwritePending) {
+      if (dontShowAgain) {
+        setWarnOnOverwrite(false)
+      }
+      commitSave(overwritePending.title, overwritePending.content, overwritePending.type)
+    }
+    setOverwriteDialogOpen(false)
+    setOverwritePending(null)
+  }, [overwritePending, dontShowAgain, setWarnOnOverwrite, commitSave])
+
+  const handleOverwriteCancel = useCallback(() => {
+    setOverwriteDialogOpen(false)
+    setOverwritePending(null)
+  }, [])
+
   const showGlsl = viewMode === 'glsl'
   const showStrudel = viewMode === 'strudel'
 
@@ -284,7 +359,7 @@ export default function App() {
       >
         <TabButton value="glsl" variant="editor">GLSL</TabButton>
         <TabButton value="strudel" variant="editor">Strudel</TabButton>
-        <TabButton value="examples" variant="utility">Examples</TabButton>
+        <TabButton value="saved" variant="utility">Saved</TabButton>
         <TabButton value="settings" variant="utility">Settings</TabButton>
         <TabButton value="about" variant="utility">About</TabButton>
       </ToggleButtonGroup>
@@ -307,15 +382,23 @@ export default function App() {
           onThemeChange={handleThemeChange}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
+          warnOnOverwrite={warnOnOverwrite}
+          onWarnOnOverwriteChange={setWarnOnOverwrite}
         />
       )}
 
-      {/* Examples panel (combined GLSL + Strudel) */}
-      {viewMode === 'examples' && (
+      {/* Saved panel (Saved Content + Examples) */}
+      {viewMode === 'saved' && (
         <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          <CombinedExamplesPanel
-            onLoadGlsl={handleLoadGlslExample}
-            onLoadStrudel={handleLoadStrudelExample}
+          <SavedPane
+            savedShaders={savedContent.savedShaders}
+            savedPatterns={savedContent.savedPatterns}
+            onDeleteShader={savedContent.deleteShader}
+            onDeletePattern={savedContent.deletePattern}
+            onLoadShader={handleLoadSavedShader}
+            onLoadPattern={handleLoadSavedPattern}
+            onLoadGlslExample={handleLoadGlslExample}
+            onLoadStrudelExample={handleLoadStrudelExample}
           />
         </Box>
       )}
@@ -337,6 +420,7 @@ export default function App() {
           vimMode={vimMode}
           themeName={themeName}
           fontSize={fontSize}
+          onSave={handleSaveShader}
         />
       </Box>
 
@@ -356,12 +440,80 @@ export default function App() {
           volume={volume}
           muted={muted}
           fontSize={fontSize}
+          onSave={handleSavePattern}
         />
       </Box>
     </Box>
   )
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  // Overwrite dialog – shared across all layout renders
+  const overwriteDialog = (
+    <Dialog
+      open={overwriteDialogOpen}
+      onClose={handleOverwriteCancel}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: 'var(--pg-bg-header)',
+          color: 'var(--pg-text-primary)',
+          border: '1px solid var(--pg-border-default)',
+        },
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem', color: 'var(--pg-text-primary)' }}>
+          Overwrite entry?
+        </Typography>
+        <IconButton size="small" onClick={handleOverwriteCancel} aria-label="Close dialog" sx={{ color: 'var(--pg-text-muted)' }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 0 }}>
+        <Typography variant="body2" sx={{ color: 'var(--pg-text-muted)', fontFamily: 'monospace', mb: 1.5 }}>
+          A saved entry named <strong style={{ color: 'var(--pg-accent)' }}>{overwritePending?.title}</strong> already exists. Saving will overwrite it.
+        </Typography>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={dontShowAgain}
+              onChange={(e) => setDontShowAgain(e.target.checked)}
+              size="small"
+              sx={{
+                color: 'var(--pg-border-default)',
+                '&.Mui-checked': { color: 'var(--pg-accent)' },
+              }}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ color: 'var(--pg-text-muted)', fontSize: '0.8rem' }}>
+              Don't show this again
+            </Typography>
+          }
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 2, pb: 2 }}>
+        <Button
+          onClick={handleOverwriteCancel}
+          size="small"
+          sx={{ textTransform: 'none', color: 'var(--pg-text-muted)' }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleOverwriteConfirm}
+          variant="contained"
+          color="primary"
+          size="small"
+          sx={{ textTransform: 'none' }}
+        >
+          Overwrite
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
 
   // ── Immersive mode: shader fills the viewport, editor overlays on top ─────
   if (displayMode === 'immersive') {
@@ -431,6 +583,7 @@ export default function App() {
             onImmersiveOpacityChange={setImmersiveOpacity}
           />
         </Box>
+        {overwriteDialog}
       </Box>
     )
   }
@@ -491,6 +644,7 @@ export default function App() {
             {editorContent}
           </Box>
         </Collapse>
+        {overwriteDialog}
       </Box>
     )
   }
@@ -547,6 +701,8 @@ export default function App() {
           {editorContent}
         </Box>
       </Collapse>
+
+      {overwriteDialog}
     </Box>
   )
 }

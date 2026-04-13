@@ -69,10 +69,11 @@ interface StrudelPaneProps {
   volume?: number
   muted?: boolean
   fontSize?: number
+  onSave?: (title: string, content: string) => void
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', volume = 50, muted = false, fontSize = 13 },
+  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', volume = 50, muted = false, fontSize = 13, onSave },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -282,6 +283,13 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     mirrorRef.current?.stop().catch(console.error)
   }, [saveCode])
 
+  const handleSave = useCallback(() => {
+    if (onSave) {
+      const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
+      onSave(strudelTitle, code)
+    }
+  }, [onSave, strudelTitle])
+
   const handleExport = useCallback(() => {
     const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
     const blob = new Blob([code], { type: 'text/plain' })
@@ -356,6 +364,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
+        onSave={onSave ? handleSave : undefined}
         onShowSounds={() => setSoundsOpen(v => !v)}
         soundsActive={soundsOpen}
         onRun={handleRun}

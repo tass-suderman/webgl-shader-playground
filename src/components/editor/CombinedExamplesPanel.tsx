@@ -31,6 +31,8 @@ interface PendingExample {
 interface CombinedExamplesPanelProps {
   onLoadGlsl: (title: string, content: string) => void
   onLoadStrudel: (title: string, content: string) => void
+  /** When true, renders without an outer scroll container (for embedding inside another scrollable pane) */
+  embedded?: boolean
 }
 
 function ExampleSection({
@@ -128,7 +130,7 @@ function ExampleSection({
   )
 }
 
-export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel }: CombinedExamplesPanelProps) {
+export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embedded = false }: CombinedExamplesPanelProps) {
   const [pending, setPending] = useState<PendingExample | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -163,7 +165,7 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel }: Com
 
   return (
     <Box
-      sx={{
+      sx={embedded ? {} : {
         height: '100%',
         overflow: 'auto',
         bgcolor: 'var(--pg-bg-panel)',

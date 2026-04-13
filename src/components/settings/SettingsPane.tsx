@@ -23,9 +23,11 @@ interface SettingsPaneProps {
   onThemeChange: (name: string) => void
   fontSize: number
   onFontSizeChange: (size: number) => void
+  warnOnOverwrite: boolean
+  onWarnOnOverwriteChange: (v: boolean) => void
 }
 
-export default function SettingsPane({ vimMode, onVimModeChange, themeName, onThemeChange, fontSize, onFontSizeChange }: SettingsPaneProps) {
+export default function SettingsPane({ vimMode, onVimModeChange, themeName, onThemeChange, fontSize, onFontSizeChange, warnOnOverwrite, onWarnOnOverwriteChange }: SettingsPaneProps) {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   const handleResetConfirm = useCallback(() => {
@@ -64,28 +66,6 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
-
-        {/* ---- Reset Data ---- */}
-        <Box>
-          <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 0.5 }}>
-            Data
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', display: 'block', mb: 1 }}>
-            Remove all saved shaders, patterns, and preferences and restore the app to its default state.
-          </Typography>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            startIcon={<DeleteForeverIcon />}
-            onClick={() => setResetDialogOpen(true)}
-            sx={{ textTransform: 'none' }}
-          >
-            Reset data
-          </Button>
-        </Box>
-
-        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
 
         {/* ---- Editor ---- */}
         <Box>
@@ -246,6 +226,55 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
             </Box>
           ))}
         </Box>
+
+        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
+
+        {/* ---- Saved Content ---- */}
+        <Box>
+          <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 0.5 }}>
+            Saved Content
+          </Typography>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={warnOnOverwrite}
+                onChange={(e) => onWarnOnOverwriteChange(e.target.checked)}
+                size="small"
+                sx={{
+                  color: 'var(--pg-border-default)',
+                  '&.Mui-checked': { color: 'var(--pg-accent)' },
+                }}
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)' }}>
+                Warn before overwriting a saved entry
+              </Typography>
+            }
+          />
+        </Box>
+
+        <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
+
+        {/* ---- Reset Data ---- */}
+        <Box>
+          <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 0.5 }}>
+            Data
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'var(--pg-text-muted)', display: 'block', mb: 1 }}>
+            Remove all saved shaders, patterns, and preferences and restore the app to its default state.
+          </Typography>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={<DeleteForeverIcon />}
+            onClick={() => setResetDialogOpen(true)}
+            sx={{ textTransform: 'none' }}
+          >
+            Reset data
+          </Button>
+        </Box>
       </Box>
 
       {/* Reset confirmation dialog */}
@@ -263,7 +292,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
         <DialogTitle sx={{ color: 'var(--pg-text-primary)' }}>Reset all data?</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: 'var(--pg-text-muted)' }}>
-            This will permanently delete all saved shaders, patterns, and preferences. The page will
+            This will permanently delete all saved shaders, patterns, and preferences — including all entries in the Saved Content section. The page will
             reload and everything will return to its default state. This action cannot be undone.
           </DialogContentText>
         </DialogContent>

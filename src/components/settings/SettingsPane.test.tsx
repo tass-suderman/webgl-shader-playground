@@ -11,6 +11,8 @@ const DEFAULT_PROPS = {
   onThemeChange: vi.fn(),
   fontSize: 13,
   onFontSizeChange: vi.fn(),
+  warnOnOverwrite: true,
+  onWarnOnOverwriteChange: vi.fn(),
 }
 
 describe('SettingsPane', () => {

@@ -22,6 +22,7 @@ interface EditorPaneProps {
   vimMode: boolean
   themeName: string
   fontSize?: number
+  onSave?: (title: string, content: string) => void
 }
 
 export interface EditorPaneHandle {
@@ -29,7 +30,7 @@ export interface EditorPaneHandle {
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, fontSize = 13 },
+  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, fontSize = 13, onSave },
   ref,
 ) {
   const [shaderTitle, setShaderTitle] = useState(
@@ -138,6 +139,12 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     saveGlslTitle(e.target.value)
   }, [])
 
+  const handleSave = useCallback(() => {
+    if (onSave) {
+      onSave(shaderTitle, pendingSourceRef.current)
+    }
+  }, [onSave, shaderTitle])
+
   const handleExport = useCallback(() => {
     const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -219,6 +226,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
+        onSave={onSave ? handleSave : undefined}
         onRun={handleRun}
         titleAriaLabel="Shader title"
         importAriaLabel="Import shader from file"
