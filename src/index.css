@@ -26,3 +26,20 @@ html, body, #root {
   --pg-bg-disabled: color-mix(in srgb, var(--pg-bg-disabled-base) var(--pg-immersive-alpha, 100%), transparent);
   --pg-bg-hover:    color-mix(in srgb, var(--pg-bg-hover-base)    var(--pg-immersive-alpha, 100%), transparent);
 }
+
+/* Monaco editor backgrounds – the editor inlines its own colours from the
+   active theme and does not respect CSS custom properties.  Override every
+   background-related class so the shader canvas shows through. */
+:root[data-immersive='true'] .monaco-editor,
+:root[data-immersive='true'] .monaco-editor-background,
+:root[data-immersive='true'] .monaco-editor .margin,
+:root[data-immersive='true'] .monaco-editor .monaco-editor-background {
+  background-color: transparent !important;
+}
+
+/* CodeMirror (used by the Strudel pane) backgrounds */
+:root[data-immersive='true'] .cm-editor,
+:root[data-immersive='true'] .cm-scroller,
+:root[data-immersive='true'] .cm-gutters {
+  background-color: transparent !important;
+}

@@ -6,6 +6,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import type { SxProps, Theme } from '@mui/material/styles'
 import ShaderPane, { type ShaderPaneHandle } from './components/shader/ShaderPane'
+import ShaderControls from './components/shader/ShaderControls'
 import EditorPane, { type EditorPaneHandle } from './components/editor/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/strudel/StrudelPane'
 import SettingsPane from './components/settings/SettingsPane'
@@ -77,7 +78,11 @@ export default function App() {
   const [volume, setVolume] = useLocalStorage(LS_VOLUME, 50)
   const [muted, setMuted] = useLocalStorage(LS_MUTED, false)
   const [displayMode, setDisplayMode] = useLocalStorage<DisplayMode>(LS_DISPLAY_MODE, 'default')
-  const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(LS_IMMERSIVE_OPACITY, 100)
+  const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(LS_IMMERSIVE_OPACITY, 50)
+  // State mirrored from ShaderPane for use in the immersive controls bar
+  const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
+  const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
+  const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
   const editorRef = useRef<EditorPaneHandle>(null)
@@ -359,8 +364,8 @@ export default function App() {
         ref={outerContainerRef}
         sx={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}
       >
-        {/* Shader canvas – full viewport, behind the editor */}
-        <Box sx={{ position: 'absolute', inset: 0 }}>
+        {/* Layer 0 – Shader canvas, full viewport, behind everything */}
+        <Box sx={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <ShaderPane
             ref={shaderRef}
             shaderSource={shaderSource}
@@ -377,16 +382,44 @@ export default function App() {
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
             onShaderError={setShaderError}
-            editorCollapsed={editorCollapsed}
-            onToggleEditorCollapsed={() => setEditorCollapsed(c => !c)}
             isMobile={isMobile}
+            hideControls
+            onPlayStateChange={setImmersiveShaderPlaying}
+            onRecordingStateChange={setImmersiveShaderRecording}
+            onFullscreenStateChange={setImmersiveShaderFullscreen}
           />
         </Box>
 
-        {/* Editor overlay – full viewport, on top of the shader */}
+        {/* Layer 1 – Editor overlay, semi-transparent backgrounds */}
         <Box sx={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', flexDirection: 'column' }}>
           {tabBar}
-          {editorContent}
+          {/* Leave room at the bottom for the controls bar */}
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {editorContent}
+          </Box>
+        </Box>
+
+        {/* Layer 2 – ShaderControls bar, always on top */}
+        <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2 }}>
+          <ShaderControls
+            isPlaying={immersiveShaderPlaying}
+            isRecording={immersiveShaderRecording}
+            isFullscreen={immersiveShaderFullscreen}
+            webcamEnabled={webcamEnabled}
+            micEnabled={micEnabled}
+            strudelAnalyser={strudelAnalyser}
+            volume={volume}
+            muted={muted}
+            onTogglePlay={() => shaderRef.current?.togglePlay()}
+            onToggleWebcam={handleToggleWebcam}
+            onToggleMic={handleToggleMic}
+            onVolumeChange={handleVolumeChange}
+            onToggleMute={handleToggleMute}
+            onStartRecording={() => shaderRef.current?.startRecording()}
+            onStopRecording={() => shaderRef.current?.stopRecording()}
+            onToggleFullscreen={() => shaderRef.current?.toggleFullscreen()}
+            isMobile={isMobile}
+          />
         </Box>
       </Box>
     )
