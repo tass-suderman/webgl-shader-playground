@@ -146,6 +146,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       getTime: () => getAudioContext()?.currentTime ?? 0,
       transpiler,
       solo: false,
+      bgFill: false,
       onEvalError: (err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         // Only update the displayed error when the message changes (suppress repeated identical errors)
