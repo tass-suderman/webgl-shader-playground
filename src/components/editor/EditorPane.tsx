@@ -22,6 +22,7 @@ interface EditorPaneProps {
   shaderError: string | null
   vimMode: boolean
   themeName: string
+  fontSize?: number
 }
 
 export interface EditorPaneHandle {
@@ -29,7 +30,7 @@ export interface EditorPaneHandle {
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName },
+  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, fontSize = 13 },
   ref,
 ) {
   const [shaderTitle, setShaderTitle] = useState(
@@ -82,6 +83,11 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
       }
     }
   }, [vimMode])
+
+  // Update Monaco font size whenever it changes
+  useEffect(() => {
+    editorRef.current?.updateOptions({ fontSize })
+  }, [fontSize])
 
   // Forward vim status changes to the parent (used in split mode for a shared bar)
   // (Removed – vim status bar is no longer displayed)
@@ -251,7 +257,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
           theme={themeNameToMonaco(themeName)}
           options={{
             minimap: { enabled: false },
-            fontSize: 13,
+            fontSize: fontSize,
             lineNumbers: 'on',
             scrollBeyondLastLine: false,
             wordWrap: 'on',

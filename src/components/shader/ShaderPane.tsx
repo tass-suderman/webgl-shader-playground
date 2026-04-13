@@ -19,6 +19,9 @@ export interface ShaderPaneHandle {
   pause: () => void
   unpause: () => void
   togglePlay: () => void
+  startRecording: () => void
+  stopRecording: () => void
+  toggleFullscreen: () => void
 }
 
 interface ShaderPaneProps {
@@ -43,6 +46,23 @@ interface ShaderPaneProps {
   onToggleEditorCollapsed?: () => void
   /** True when on a narrow/mobile viewport */
   isMobile?: boolean
+  /** When true the built-in ShaderControls toolbar is not rendered (used in
+   *  immersive mode where the controls are lifted outside the pane). */
+  hideControls?: boolean
+  /** Notifies the parent whenever the playing state changes */
+  onPlayStateChange?: (playing: boolean) => void
+  /** Notifies the parent whenever the recording state changes */
+  onRecordingStateChange?: (recording: boolean) => void
+  /** Notifies the parent whenever the fullscreen state changes */
+  onFullscreenStateChange?: (fullscreen: boolean) => void
+  /** Whether immersive mode is currently active */
+  isImmersive?: boolean
+  /** Callback to toggle immersive mode */
+  onToggleImmersive?: () => void
+  /** Background opacity (0–100) used in immersive mode */
+  immersiveOpacity?: number
+  /** Callback when the immersive opacity slider changes */
+  onImmersiveOpacityChange?: (opacity: number) => void
 }
 
 export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane({
@@ -63,6 +83,14 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
   editorCollapsed,
   onToggleEditorCollapsed,
   isMobile,
+  hideControls = false,
+  onPlayStateChange,
+  onRecordingStateChange,
+  onFullscreenStateChange,
+  isImmersive,
+  onToggleImmersive,
+  immersiveOpacity,
+  onImmersiveOpacityChange,
 }: ShaderPaneProps, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -71,18 +99,6 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
-
-  useImperativeHandle(ref, () => ({
-    pause() {
-      setIsPlaying(false)
-    },
-    unpause() {
-      setIsPlaying(true)
-    },
-    togglePlay() {
-      setIsPlaying(p => !p)
-    },
-  }), [])
 
   useWebGL(canvasRef, {
     shaderSource,
@@ -179,6 +195,21 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
     setIsRecording(false)
   }, [])
 
+  // Expose imperative controls to parent (after handlers are defined)
+  useImperativeHandle(ref, () => ({
+    pause() { setIsPlaying(false) },
+    unpause() { setIsPlaying(true) },
+    togglePlay() { setIsPlaying(p => !p) },
+    startRecording: handleStartRecording,
+    stopRecording: handleStopRecording,
+    toggleFullscreen: handleFullscreen,
+  }), [handleStartRecording, handleStopRecording, handleFullscreen])
+
+  // Notify parent of state changes (used when controls are lifted outside the pane)
+  useEffect(() => { onPlayStateChange?.(isPlaying) }, [isPlaying, onPlayStateChange])
+  useEffect(() => { onRecordingStateChange?.(isRecording) }, [isRecording, onRecordingStateChange])
+  useEffect(() => { onFullscreenStateChange?.(isFullscreen) }, [isFullscreen, onFullscreenStateChange])
+
   // Stop any active recording when the component unmounts
   useEffect(() => {
     return () => {
@@ -215,27 +246,33 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
         />
       </Box>
 
-      <ShaderControls
-        isPlaying={isPlaying}
-        isRecording={isRecording}
-        isFullscreen={isFullscreen}
-        webcamEnabled={webcamEnabled}
-        micEnabled={micEnabled}
-        strudelAnalyser={strudelAnalyser}
-        volume={volume}
-        muted={muted}
-        onTogglePlay={() => setIsPlaying(p => !p)}
-        onToggleWebcam={onToggleWebcam}
-        onToggleMic={onToggleMic}
-        onVolumeChange={onVolumeChange}
-        onToggleMute={onToggleMute}
-        onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
-        onToggleFullscreen={handleFullscreen}
-        editorCollapsed={editorCollapsed}
-        onToggleEditorCollapsed={onToggleEditorCollapsed}
-        isMobile={isMobile}
-      />
+      {!hideControls && (
+        <ShaderControls
+          isPlaying={isPlaying}
+          isRecording={isRecording}
+          isFullscreen={isFullscreen}
+          webcamEnabled={webcamEnabled}
+          micEnabled={micEnabled}
+          strudelAnalyser={strudelAnalyser}
+          volume={volume}
+          muted={muted}
+          onTogglePlay={() => setIsPlaying(p => !p)}
+          onToggleWebcam={onToggleWebcam}
+          onToggleMic={onToggleMic}
+          onVolumeChange={onVolumeChange}
+          onToggleMute={onToggleMute}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
+          onToggleFullscreen={handleFullscreen}
+          editorCollapsed={editorCollapsed}
+          onToggleEditorCollapsed={onToggleEditorCollapsed}
+          isMobile={isMobile}
+          isImmersive={isImmersive}
+          onToggleImmersive={onToggleImmersive}
+          immersiveOpacity={immersiveOpacity}
+          onImmersiveOpacityChange={onImmersiveOpacityChange}
+        />
+      )}
     </Box>
   )
 })

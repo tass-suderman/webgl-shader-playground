@@ -79,7 +79,16 @@ export const ALL_THEMES: AppTheme[] = [KANAGAWA_THEME, ORIGINAL_DARK_THEME]
 export function applyTheme(theme: AppTheme): void {
   const root = document.documentElement
   for (const [prop, value] of Object.entries(theme.vars)) {
-    root.style.setProperty(prop, value)
+    if (prop.startsWith('--pg-bg-')) {
+      // Store only the -base variant.  The actual --pg-bg-* custom properties
+      // are defined in CSS (index.css) via var(--pg-bg-*-base) in normal mode
+      // and via color-mix() in immersive mode.  Setting the final var here as
+      // an inline style would have higher specificity than the CSS rule and
+      // would prevent the color-mix() from ever taking effect.
+      root.style.setProperty(`${prop}-base`, value)
+    } else {
+      root.style.setProperty(prop, value)
+    }
   }
 }
 

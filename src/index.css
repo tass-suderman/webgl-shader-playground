@@ -9,3 +9,59 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
 }
+
+/* ── Background variable chain ─────────────────────────────────────────────
+   applyTheme() only writes --pg-bg-*-base (inline styles).  These CSS rules
+   then derive the final --pg-bg-* values so that the immersive :root rule
+   below can override them without being beaten by inline-style specificity.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --pg-bg-app:      var(--pg-bg-app-base);
+  --pg-bg-panel:    var(--pg-bg-panel-base);
+  --pg-bg-header:   var(--pg-bg-header-base);
+  --pg-bg-button:   var(--pg-bg-button-base);
+  --pg-bg-card:     var(--pg-bg-card-base);
+  --pg-bg-disabled: var(--pg-bg-disabled-base);
+  --pg-bg-hover:    var(--pg-bg-hover-base);
+}
+
+/* ── Immersive mode ─────────────────────────────────────────────────────────
+   When data-immersive="true" is set on <html>, all --pg-bg-* variables are
+   replaced with colour-mix() equivalents that blend the original colour with
+   transparent at the percentage stored in --pg-immersive-alpha (e.g. "50%").
+   Text variables are intentionally left untouched so text always reads at
+   full opacity.
+   ────────────────────────────────────────────────────────────────────────── */
+:root[data-immersive='true'] {
+  --pg-bg-app:      color-mix(in srgb, var(--pg-bg-app-base)      var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-panel:    color-mix(in srgb, var(--pg-bg-panel-base)    var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-header:   color-mix(in srgb, var(--pg-bg-header-base)   var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-button:   color-mix(in srgb, var(--pg-bg-button-base)   var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-card:     color-mix(in srgb, var(--pg-bg-card-base)     var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-disabled: color-mix(in srgb, var(--pg-bg-disabled-base) var(--pg-immersive-alpha, 100%), transparent);
+  --pg-bg-hover:    color-mix(in srgb, var(--pg-bg-hover-base)    var(--pg-immersive-alpha, 100%), transparent);
+}
+
+/* Monaco editor backgrounds – the editor inlines its own colours from the
+   active theme and does not respect CSS custom properties.  Override every
+   background-related class so the shader canvas shows through. */
+:root[data-immersive='true'] .monaco-editor,
+:root[data-immersive='true'] .monaco-editor-background,
+:root[data-immersive='true'] .monaco-editor .margin,
+:root[data-immersive='true'] .monaco-editor .monaco-editor-background {
+  background-color: transparent !important;
+}
+
+/* CodeMirror (used by the Strudel pane) backgrounds.
+   Covers the root editor element, its scroller/content/gutters, and the
+   <strudel-editor> custom element that wraps it all.  Both background-color
+   and the background shorthand are reset so that theme injections are
+   overridden regardless of which property they use. */
+:root[data-immersive='true'] strudel-editor,
+:root[data-immersive='true'] .cm-editor,
+:root[data-immersive='true'] .cm-scroller,
+:root[data-immersive='true'] .cm-gutters,
+:root[data-immersive='true'] .cm-content {
+  background-color: transparent !important;
+  background: transparent !important;
+}

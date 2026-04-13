@@ -7,6 +7,7 @@ declare module '@strudel/codemirror' {
     getTime: () => number
     transpiler: unknown
     solo?: boolean
+    bgFill?: boolean
     onToggle?: (started: boolean) => void
     /** Called with the Error thrown when pattern evaluation fails */
     onEvalError?: (err: unknown) => void

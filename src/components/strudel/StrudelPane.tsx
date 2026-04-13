@@ -70,10 +70,11 @@ interface StrudelPaneProps {
   themeName?: string
   volume?: number
   muted?: boolean
+  fontSize?: number
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', volume = 50, muted = false },
+  { onAnalyserReady, onAudioStreamReady, vimMode = false, themeName = 'kanagawa', volume = 50, muted = false, fontSize = 13 },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -110,6 +111,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   volumeRef.current = volume
   const mutedRef = useRef(muted)
   mutedRef.current = muted
+  const fontSizeRef = useRef(fontSize)
+  fontSizeRef.current = fontSize
 
   useImperativeHandle(ref, () => ({
     play() {
@@ -143,6 +146,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       getTime: () => getAudioContext()?.currentTime ?? 0,
       transpiler,
       solo: false,
+      bgFill: false,
       onEvalError: (err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         // Only update the displayed error when the message changes (suppress repeated identical errors)
@@ -207,8 +211,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       },
     })
     mirrorRef.current = mirror as StrudelMirrorExt
-    // Apply initial keybindings and theme from current settings
+    // Apply initial keybindings, theme, and font size from current settings
     mirrorRef.current.changeSetting('keybindings', vimModeRef.current ? 'vim' : 'codemirror')
+    mirrorRef.current.changeSetting('fontSize', fontSizeRef.current)
     mirrorRef.current.setTheme(mapToStrudelTheme(themeNameRef.current))
     return () => {
       if (analyserRef.current) {
@@ -254,6 +259,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       dg.gain.value = muted ? 0 : volume / 100
     }
   }, [volume, muted])
+
+  // Update CodeMirror font size via changeSetting whenever the prop changes
+  useEffect(() => {
+    mirrorRef.current?.changeSetting('fontSize', fontSize)
+  }, [fontSize])
 
   // Persist the strudel code when the tab is hidden or the page is unloaded
   useEffect(() => {
@@ -383,7 +393,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           height: soundsOpen ? `${soundsSplitRatio}%` : undefined,
           overflow: 'hidden',
           cursor: 'text',
-          '& .cm-editor': { height: '100%', fontSize: '13px' },
+          '& .cm-editor': { height: '100%', fontSize: `${fontSize}px` },
           '& .cm-scroller': { fontFamily: 'monospace', overflow: 'auto !important' },
         }}
       />

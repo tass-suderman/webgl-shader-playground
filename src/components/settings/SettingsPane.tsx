@@ -21,9 +21,11 @@ interface SettingsPaneProps {
   onVimModeChange: (enabled: boolean) => void
   themeName: string
   onThemeChange: (name: string) => void
+  fontSize: number
+  onFontSizeChange: (size: number) => void
 }
 
-export default function SettingsPane({ vimMode, onVimModeChange, themeName, onThemeChange }: SettingsPaneProps) {
+export default function SettingsPane({ vimMode, onVimModeChange, themeName, onThemeChange, fontSize, onFontSizeChange }: SettingsPaneProps) {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   const handleResetConfirm = useCallback(() => {
@@ -85,7 +87,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
 
-        {/* ---- Vim keybindings ---- */}
+        {/* ---- Editor ---- */}
         <Box>
           <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 0.5 }}>
             Editor
@@ -108,11 +110,52 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
               </Typography>
             }
           />
+          <Box sx={{ mt: 1.5 }}>
+            <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', mb: 0.75 }}>
+              Font size
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={fontSize}
+                onChange={(e) => onFontSizeChange(Number(e.target.value))}
+                sx={{
+                  color: 'var(--pg-text-primary)',
+                  bgcolor: 'var(--pg-bg-button)',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--pg-border-default)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--pg-border-hover)' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--pg-accent)' },
+                  '& .MuiSvgIcon-root': { color: 'var(--pg-text-muted)' },
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: 'var(--pg-bg-header)',
+                      color: 'var(--pg-text-primary)',
+                      border: '1px solid var(--pg-border-default)',
+                    },
+                  },
+                }}
+              >
+                {[11, 12, 13, 14, 16, 18, 20].map(size => (
+                  <MenuItem
+                    key={size}
+                    value={size}
+                    sx={{
+                      color: 'var(--pg-text-primary)',
+                      '&:hover': { bgcolor: 'var(--pg-bg-button)' },
+                      '&.Mui-selected': { bgcolor: 'var(--pg-bg-button)' },
+                      '&.Mui-selected:hover': { bgcolor: 'var(--pg-divider-default)' },
+                    }}
+                  >
+                    {size}px
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
         <Divider sx={{ borderColor: 'var(--pg-border-faint)' }} />
-
-        {/* ---- Theme ---- */}
         <Box>
           <Typography variant="body2" sx={{ color: 'var(--pg-text-primary)', fontWeight: 600, mb: 1 }}>
             Theme

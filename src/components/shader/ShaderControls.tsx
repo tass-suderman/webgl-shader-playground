@@ -1,7 +1,10 @@
+import { useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
+import Popover from '@mui/material/Popover'
 import Slider from '@mui/material/Slider'
 import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
 import FullscreenIcon from '@mui/icons-material/Fullscreen'
@@ -19,6 +22,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import PreviewIcon from '@mui/icons-material/Preview'
 import ChannelStatusChips from './ChannelStatusChips'
 
 interface ShaderControlsProps {
@@ -44,6 +48,14 @@ interface ShaderControlsProps {
   onToggleEditorCollapsed?: () => void
   /** True when on a narrow/mobile viewport (affects icon direction) */
   isMobile?: boolean
+  /** Whether immersive mode is currently active */
+  isImmersive?: boolean
+  /** Callback to toggle immersive mode */
+  onToggleImmersive?: () => void
+  /** Background opacity (0–100) used in immersive mode */
+  immersiveOpacity?: number
+  /** Callback when the immersive opacity slider changes */
+  onImmersiveOpacityChange?: (opacity: number) => void
 }
 
 export default function ShaderControls({
@@ -66,12 +78,24 @@ export default function ShaderControls({
   editorCollapsed,
   onToggleEditorCollapsed,
   isMobile = false,
+  isImmersive = false,
+  onToggleImmersive,
+  immersiveOpacity = 50,
+  onImmersiveOpacityChange,
 }: ShaderControlsProps) {
   const VolumeIcon = muted
     ? VolumeOffIcon
     : volume === 0 || volume <= 50
       ? VolumeDownIcon
       : VolumeUpIcon
+
+  const previewBtnRef = useRef<HTMLButtonElement>(null)
+  const [opacityPopoverOpen, setOpacityPopoverOpen] = useState(false)
+
+  const handlePreviewClick = () => {
+    onToggleImmersive?.()
+    setOpacityPopoverOpen(true)
+  }
 
   return (
     <Box
@@ -142,6 +166,74 @@ export default function ShaderControls({
           {isRecording ? <StopCircleIcon /> : <FiberManualRecordIcon />}
         </IconButton>
       </Tooltip>
+
+      {onToggleImmersive !== undefined && (
+        <>
+          <Tooltip title={isImmersive ? 'Exit immersive mode' : 'Immersive mode'}>
+            <IconButton
+              ref={previewBtnRef}
+              onClick={handlePreviewClick}
+              size="small"
+              aria-label={isImmersive ? 'Exit immersive mode' : 'Immersive mode'}
+              sx={{ color: isImmersive ? 'primary.light' : 'white' }}
+            >
+              <PreviewIcon />
+            </IconButton>
+          </Tooltip>
+
+          {isImmersive && (
+            <Tooltip title={`Opacity: ${immersiveOpacity}%`}>
+              <Slider
+                value={immersiveOpacity}
+                onChange={(_e, val) => onImmersiveOpacityChange?.(val as number)}
+                min={0}
+                max={100}
+                step={1}
+                size="small"
+                aria-label="Background opacity"
+                sx={{
+                  width: 80,
+                  color: 'primary.light',
+                  '& .MuiSlider-thumb': { width: 12, height: 12 },
+                  '& .MuiSlider-rail': { opacity: 0.3 },
+                }}
+              />
+            </Tooltip>
+          )}
+
+          <Popover
+            open={opacityPopoverOpen}
+            anchorEl={previewBtnRef.current}
+            onClose={() => setOpacityPopoverOpen(false)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            slotProps={{ paper: { sx: { bgcolor: 'rgba(0,0,0,0.85)', color: 'white', p: 2, minWidth: 200, border: '1px solid rgba(255,255,255,0.15)' } } }}
+          >
+            <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+              Background opacity: {immersiveOpacity}%
+            </Typography>
+            <Slider
+              value={immersiveOpacity}
+              onChange={(_e, val) => onImmersiveOpacityChange?.(val as number)}
+              min={0}
+              max={100}
+              step={1}
+              size="small"
+              disabled={!isImmersive}
+              sx={{
+                color: 'white',
+                '& .MuiSlider-thumb': { width: 12, height: 12 },
+                '& .MuiSlider-rail': { opacity: 0.3 },
+              }}
+            />
+            {!isImmersive && (
+              <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'rgba(255,255,255,0.5)' }}>
+                Enable immersive mode to adjust
+              </Typography>
+            )}
+          </Popover>
+        </>
+      )}
 
       <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
         <IconButton onClick={onToggleFullscreen} size="small" sx={{ color: 'white' }}>
