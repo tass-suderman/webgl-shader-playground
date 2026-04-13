@@ -83,9 +83,9 @@ export default function ShaderControls({
   immersiveOpacity = 50,
   onImmersiveOpacityChange,
 }: ShaderControlsProps) {
-  const VolumeIcon = muted
+  const VolumeIcon = (muted || volume === 0)
     ? VolumeOffIcon
-    : volume === 0 || volume <= 50
+    : volume <= 50
       ? VolumeDownIcon
       : VolumeUpIcon
 

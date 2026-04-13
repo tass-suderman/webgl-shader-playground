@@ -9,9 +9,8 @@ import ShaderError from '../shader/ShaderError'
 import UniformsPanel from '../shader/UniformsPanel'
 import { GLSL_MONARCH_TOKENS, GLSL_LANGUAGE_CONFIG } from './glslLanguage'
 import { ensureMonacoThemes, themeNameToMonaco } from './monacoThemes'
+import { saveGlslCode, saveGlslTitle, getInitialGlslTitle } from '../../hooks/useAppStorage'
 
-const LS_GLSL_CODE = 'shader-playground:glsl-code'
-const LS_GLSL_TITLE = 'shader-playground:glsl-title'
 const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
 
 interface EditorPaneProps {
@@ -34,7 +33,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   ref,
 ) {
   const [shaderTitle, setShaderTitle] = useState(
-    () => localStorage.getItem(LS_GLSL_TITLE) ?? DEFAULT_SHADER_TITLE,
+    () => getInitialGlslTitle(DEFAULT_SHADER_TITLE),
   )
   const [uniformsOpen, setUniformsOpen] = useState(false)
   /** Ratio (20–80) of the uniforms split: editor top / uniforms bottom */
@@ -60,9 +59,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     loadExample(title: string, content: string) {
       editorRef.current?.setValue(content)
       onCodeChange(content)
-      localStorage.setItem(LS_GLSL_CODE, content)
+      saveGlslCode(content)
       setShaderTitle(title)
-      localStorage.setItem(LS_GLSL_TITLE, title)
+      saveGlslTitle(title)
       onRun(content)
     },
   }), [onCodeChange, onRun])
@@ -130,13 +129,13 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
       onCodeChange(value)
-      localStorage.setItem(LS_GLSL_CODE, value)
+      saveGlslCode(value)
     }
   }, [onCodeChange])
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setShaderTitle(e.target.value)
-    localStorage.setItem(LS_GLSL_TITLE, e.target.value)
+    saveGlslTitle(e.target.value)
   }, [])
 
   const handleExport = useCallback(() => {
@@ -172,11 +171,11 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         editorRef.current?.setValue(content)
         // Update parent state (also triggered by Monaco onChange, but set directly for safety)
         onCodeChange(content)
-        localStorage.setItem(LS_GLSL_CODE, content)
+        saveGlslCode(content)
         // Set title from filename, stripping the extension
         const name = file.name.replace(/\.[^.]+$/, '')
         setShaderTitle(name)
-        localStorage.setItem(LS_GLSL_TITLE, name)
+        saveGlslTitle(name)
       }
     }
     reader.readAsText(file)

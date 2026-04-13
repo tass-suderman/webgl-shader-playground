@@ -12,27 +12,21 @@ import StrudelPane, { type StrudelPaneHandle } from './components/strudel/Strude
 import SettingsPane from './components/settings/SettingsPane'
 import CombinedExamplesPanel from './components/editor/CombinedExamplesPanel'
 import AboutPane from './components/about/AboutPane'
-import { DEFAULT_SHADER } from './shaders/default'
 import { applyTheme, getThemeByName } from './themes/appThemes'
 import { useMediaStreams } from './hooks/useMediaStreams'
-import { useLocalStorage } from './hooks/useLocalStorage'
-
-export const LS_GLSL_CODE = 'shader-playground:glsl-code'
-const LS_THEME = 'shader-playground:theme'
-const LS_VIM_MODE = 'shader-playground:vim-mode'
-const LS_VOLUME = 'shader-playground:volume'
-const LS_MUTED = 'shader-playground:muted'
-const LS_IMMERSIVE_OPACITY = 'shader-playground:immersive-opacity'
-const LS_FONT_SIZE = 'shader-playground:font-size'
+import { useAppStorage, getInitialGlslCode } from './hooks/useAppStorage'
 
 type DisplayMode = 'default' | 'immersive'
 
 // Computed once at module load – used to seed the initial shader state so the
 // last-saved shader is both displayed in the editor and running on the GPU
 // without waiting for a user action.
-const initialShaderCode = localStorage.getItem(LS_GLSL_CODE) ?? DEFAULT_SHADER
+const initialShaderCode = getInitialGlslCode()
 
 type ViewMode = 'glsl' | 'strudel' | 'examples' | 'settings' | 'about'
+
+/** Controls the colour applied to a tab toggle button. */
+type ButtonVariant = 'editor' | 'utility'
 
 // Shared base styles for all top-bar toggle buttons
 const baseTabSx = {
@@ -53,14 +47,21 @@ const baseTabSx = {
   },
 } as const
 
-// Editor mode tabs (GLSL / Strudel) – primary text colour
-const editorTabSx = { ...baseTabSx, color: 'var(--pg-text-button)' } as const
+const tabSxByVariant: Record<ButtonVariant, object> = {
+  // Editor mode tabs (GLSL / Strudel) – primary text colour
+  editor: { ...baseTabSx, color: 'var(--pg-text-button)' },
+  // Utility tabs (Examples / Settings / About) – warm complementary text colour
+  utility: { ...baseTabSx, color: 'var(--pg-text-util-tab)' },
+}
 
-// Utility tabs (Examples / Settings) – warm complementary text colour
-const utilTabSx = { ...baseTabSx, color: 'var(--pg-text-util-tab)' } as const
-
-// About tab – a second warm complementary text colour
-const aboutTabSx = { ...baseTabSx, color: 'var(--pg-text-source-tab)' } as const
+/** A single tab in the top bar with a typed colour variant. */
+function TabButton({ value, variant, children }: { value: string; variant: ButtonVariant; children: React.ReactNode }) {
+  return (
+    <ToggleButton value={value} sx={tabSxByVariant[variant]}>
+      {children}
+    </ToggleButton>
+  )
+}
 
 export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
@@ -73,13 +74,15 @@ export default function App() {
   /** On mobile the canvas occupies this % of viewport height (editor gets the rest) */
   const [mobileShaderRatio, setMobileShaderRatio] = useState(50)
   const [editorCollapsed, setEditorCollapsed] = useState(false)
-  const [vimMode, setVimMode] = useLocalStorage(LS_VIM_MODE, false)
-  const [themeName, setThemeName] = useLocalStorage(LS_THEME, 'kanagawa')
-  const [volume, setVolume] = useLocalStorage(LS_VOLUME, 50)
-  const [muted, setMuted] = useLocalStorage(LS_MUTED, false)
+  const {
+    theme: themeName, setTheme: setThemeName,
+    vimMode, setVimMode,
+    volume, setVolume,
+    muted, setMuted,
+    immersiveOpacity, setImmersiveOpacity,
+    fontSize, setFontSize,
+  } = useAppStorage()
   const [displayMode, setDisplayMode] = useState<DisplayMode>('default')
-  const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(LS_IMMERSIVE_OPACITY, 50)
-  const [fontSize, setFontSize] = useLocalStorage(LS_FONT_SIZE, 13)
   // State mirrored from ShaderPane for use in the immersive controls bar
   const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
   const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
@@ -166,13 +169,11 @@ export default function App() {
       // Alt+Enter → Play Strudel
       if (e.altKey && e.key === 'Enter') {
 				handleKeyboardEvent(e, () => strudelRef.current?.play())
-        strudelRef.current?.play()
         return
       }
       // Alt+. → Pause Strudel
       if (e.altKey && e.key === '.') {
 				handleKeyboardEvent(e, () => strudelRef.current?.pause())
-        strudelRef.current?.pause()
       }
     }
     window.addEventListener('keydown', handler, { capture: true })
@@ -281,11 +282,11 @@ export default function App() {
         size="small"
         sx={{ flex: 1, minWidth: 0 }}
       >
-        <ToggleButton value="glsl" sx={editorTabSx}>GLSL</ToggleButton>
-        <ToggleButton value="strudel" sx={editorTabSx}>Strudel</ToggleButton>
-        <ToggleButton value="examples" sx={utilTabSx}>Examples</ToggleButton>
-        <ToggleButton value="settings" sx={utilTabSx}>Settings</ToggleButton>
-        <ToggleButton value="about" sx={aboutTabSx}>About</ToggleButton>
+        <TabButton value="glsl" variant="editor">GLSL</TabButton>
+        <TabButton value="strudel" variant="editor">Strudel</TabButton>
+        <TabButton value="examples" variant="utility">Examples</TabButton>
+        <TabButton value="settings" variant="utility">Settings</TabButton>
+        <TabButton value="about" variant="utility">About</TabButton>
       </ToggleButtonGroup>
     </Box>
   )

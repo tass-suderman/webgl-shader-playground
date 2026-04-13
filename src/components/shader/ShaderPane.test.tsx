@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event'
 // ---------------------------------------------------------------------------
 // Mock the WebGL hook so canvas setup doesn't throw in jsdom
 // ---------------------------------------------------------------------------
-vi.mock('../hooks/useWebGL', () => ({ useWebGL: vi.fn() }))
+vi.mock('../../hooks/useWebGL', () => ({ useWebGL: vi.fn() }))
 
 // ---------------------------------------------------------------------------
 // MediaRecorder mock (class so it is constructable with `new`)

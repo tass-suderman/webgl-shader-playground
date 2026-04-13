@@ -46,10 +46,6 @@ declare module '@strudel/tonal' {
   // Tonal (music theory) helpers for Strudel – no additional types needed
 }
 
-declare module '@strudel/repl' {
-  export function prebake(): Promise<void>
-}
-
 declare module '@strudel/transpiler' {
   const transpiler: unknown
   export { transpiler }

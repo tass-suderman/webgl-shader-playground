@@ -8,6 +8,7 @@ import EditorHeader from '../editor/EditorHeader'
 import StrudelError from '../strudel/StrudelError'
 import SoundsPanel from '../strudel/SoundsPanel'
 import { registerInstruments } from '../../strudel/instruments'
+import { saveStrudelCode, saveStrudelTitle, getInitialStrudelCode, getInitialStrudelTitle } from '../../hooks/useAppStorage'
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
   changeSetting: (key: string, value: unknown) => void
@@ -47,9 +48,6 @@ note("c3 [e3 g3] b3 [g3 e3]").sound("sawtooth").lpf(800).lpenv(2).slow(2)`
 
 const DEFAULT_STRUDEL_TITLE = 'Strudel Pattern'
 
-const LS_STRUDEL_CODE = 'shader-playground:strudel-code'
-const LS_STRUDEL_TITLE = 'shader-playground:strudel-title'
-
 // Map app theme names to CodeMirror / Strudel editor themes
 function mapToStrudelTheme(themeName: string): string {
   if (themeName === 'kanagawa') return 'tokyoNight'
@@ -86,10 +84,10 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   // Capture the saved code once at mount – used as StrudelMirror's initialCode
-  const savedStrudelCode = useRef(localStorage.getItem(LS_STRUDEL_CODE) ?? DEFAULT_STRUDEL_CODE)
+  const savedStrudelCode = useRef(getInitialStrudelCode(DEFAULT_STRUDEL_CODE))
   const [isPlaying, setIsPlaying] = useState(false)
   const [strudelTitle, setStrudelTitle] = useState(
-    () => localStorage.getItem(LS_STRUDEL_TITLE) ?? DEFAULT_STRUDEL_TITLE,
+    () => getInitialStrudelTitle(DEFAULT_STRUDEL_TITLE),
   )
   const [soundsOpen, setSoundsOpen] = useState(false)
   /** Ratio (20–80) of the strudel-only sounds split: editor top / sounds bottom */
@@ -126,9 +124,9 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         mirrorRef.current.setCode(content)
         mirrorRef.current.evaluate().catch(console.error)
       }
-      localStorage.setItem(LS_STRUDEL_CODE, content)
+      saveStrudelCode(content)
       setStrudelTitle(title)
-      localStorage.setItem(LS_STRUDEL_TITLE, title)
+      saveStrudelTitle(title)
     },
     closeSounds() {
       setSoundsOpen(false)
@@ -239,7 +237,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   }, [])
 
   const saveCode = useCallback(() => {
-    localStorage.setItem(LS_STRUDEL_CODE, mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE)
+    saveStrudelCode(mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE)
   }, [])
 
   // Apply vim/normal keybindings whenever the setting changes
@@ -314,10 +312,10 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       const content = evt.target?.result as string
       if (content !== undefined && mirrorRef.current) {
         mirrorRef.current.setCode(content)
-        localStorage.setItem(LS_STRUDEL_CODE, content)
+        saveStrudelCode(content)
         const name = file.name.replace(/\.[^.]+$/, '')
         setStrudelTitle(name)
-        localStorage.setItem(LS_STRUDEL_TITLE, name)
+        saveStrudelTitle(name)
       }
     }
     reader.readAsText(file)
@@ -326,7 +324,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setStrudelTitle(e.target.value)
-    localStorage.setItem(LS_STRUDEL_TITLE, e.target.value)
+    saveStrudelTitle(e.target.value)
   }, [])
 
   /** Drag handler for the sounds-split divider (strudel-only mode) */

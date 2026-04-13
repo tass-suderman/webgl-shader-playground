@@ -33,7 +33,7 @@ vi.mock('@monaco-editor/react', () => {
         },
       }
       beforeMount?.(mockedMonaco)
-      const mockEditor = { setValue: mockSetValue, getValue: () => 'void main() {}', onDidDispose: vi.fn() }
+      const mockEditor = { setValue: mockSetValue, getValue: () => 'void main() {}', onDidDispose: vi.fn(), updateOptions: vi.fn() }
       onMount?.(mockEditor, mockedMonaco)
     }, [])
     return (

@@ -73,6 +73,13 @@ export function useWebGL(
   const onErrorRef = useRef(onError)
   onErrorRef.current = onError
 
+  // Reusable typed arrays for audio FFT data – allocated once per channel to
+  // avoid creating thousands of short-lived objects per second in the render loop.
+  const fftBufferRef = useRef<Uint8Array | null>(null)
+  const fftRgbaBufferRef = useRef<Uint8Array | null>(null)
+  const fftBuffer2Ref = useRef<Uint8Array | null>(null)
+  const fftRgbaBuffer2Ref = useRef<Uint8Array | null>(null)
+
   const compileProgram = useCallback((gl: WebGLRenderingContext, fragSrc: string) => {
     if (programRef.current) {
       gl.deleteProgram(programRef.current)
@@ -142,9 +149,18 @@ export function useWebGL(
     compileProgram(gl, shaderSource)
 
     return () => {
+      cancelAnimationFrame(rafRef.current)
       if (programRef.current) {
         gl.deleteProgram(programRef.current)
+        programRef.current = null
       }
+      gl.deleteTexture(textureRef.current)
+      gl.deleteTexture(texture1Ref.current)
+      gl.deleteTexture(texture2Ref.current)
+      textureRef.current = null
+      texture1Ref.current = null
+      texture2Ref.current = null
+      glRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -167,7 +183,16 @@ export function useWebGL(
       video.play().catch(console.error)
       videoRef.current = video
     } else {
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
       videoRef.current = null
+    }
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+        videoRef.current = null
+      }
     }
   }, [webcamStream])
 
@@ -294,9 +319,14 @@ export function useWebGL(
       const ch1EnabledLoc = gl.getUniformLocation(program, 'iChannel1Enabled')
       if (audioStream && analyserRef.current) {
         const bufferLength = analyserRef.current.frequencyBinCount
-        const dataArray = new Uint8Array(bufferLength)
+        // Reuse typed arrays to avoid per-frame allocations
+        if (!fftBufferRef.current || fftBufferRef.current.length !== bufferLength) {
+          fftBufferRef.current = new Uint8Array(bufferLength)
+          fftRgbaBufferRef.current = new Uint8Array(bufferLength * 4)
+        }
+        const dataArray = fftBufferRef.current
+        const rgba = fftRgbaBufferRef.current!
         analyserRef.current.getByteFrequencyData(dataArray)
-        const rgba = new Uint8Array(bufferLength * 4)
         for (let i = 0; i < bufferLength; i++) {
           rgba[i * 4] = dataArray[i]
           rgba[i * 4 + 1] = dataArray[i]
@@ -317,9 +347,14 @@ export function useWebGL(
       const ch2EnabledLoc = gl.getUniformLocation(program, 'iChannel2Enabled')
       if (strudelAnalyser) {
         const bufferLength2 = strudelAnalyser.frequencyBinCount
-        const dataArray2 = new Uint8Array(bufferLength2)
+        // Reuse typed arrays to avoid per-frame allocations
+        if (!fftBuffer2Ref.current || fftBuffer2Ref.current.length !== bufferLength2) {
+          fftBuffer2Ref.current = new Uint8Array(bufferLength2)
+          fftRgbaBuffer2Ref.current = new Uint8Array(bufferLength2 * 4)
+        }
+        const dataArray2 = fftBuffer2Ref.current
+        const rgba2 = fftRgbaBuffer2Ref.current!
         strudelAnalyser.getByteFrequencyData(dataArray2)
-        const rgba2 = new Uint8Array(bufferLength2 * 4)
         for (let i = 0; i < bufferLength2; i++) {
           rgba2[i * 4] = dataArray2[i]
           rgba2[i * 4 + 1] = dataArray2[i]

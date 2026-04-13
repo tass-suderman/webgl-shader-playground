@@ -17,7 +17,7 @@ const { mockShaderPane, mockEditorPane, mockPlay, mockPause, mockShaderPause, mo
   mockShaderTogglePlay: vi.fn(),
 }))
 
-vi.mock('./components/ShaderPane', () => ({
+vi.mock('./components/shader/ShaderPane', () => ({
   default: forwardRef((props: { shaderSource: string }, ref: React.Ref<{ pause: () => void; unpause: () => void; togglePlay: () => void }>) => {
     mockShaderPane(props)
     useImperativeHandle(ref, () => ({ pause: mockShaderPause, unpause: mockShaderUnpause, togglePlay: mockShaderTogglePlay }), [])
@@ -25,14 +25,14 @@ vi.mock('./components/ShaderPane', () => ({
   }),
 }))
 
-vi.mock('./components/EditorPane', () => ({
+vi.mock('./components/editor/EditorPane', () => ({
   default: forwardRef((props: { pendingSource: string; onCodeChange: (c: string) => void }, _ref: React.Ref<unknown>) => {
     mockEditorPane(props)
     return <div data-testid="editor-pane" />
   }),
 }))
 
-vi.mock('./components/StrudelPane', () => ({
+vi.mock('./components/strudel/StrudelPane', () => ({
   default: forwardRef((_props: unknown, ref: React.Ref<{ play: () => void; pause: () => void }>) => {
     useImperativeHandle(ref, () => ({ play: mockPlay, pause: mockPause }), [])
     return <div data-testid="strudel-pane" />
