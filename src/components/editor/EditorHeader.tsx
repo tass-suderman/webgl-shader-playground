@@ -1,10 +1,10 @@
 import { Box, Button, IconButton, InputBase, Tooltip } from '@mui/material'
-import BookmarkIcon from '@mui/icons-material/Bookmark'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import SaveIcon from '@mui/icons-material/Save'
 import StopIcon from '@mui/icons-material/Stop'
 
 export interface EditorHeaderProps {
@@ -101,18 +101,18 @@ export default function EditorHeader({
         </Tooltip>
       )}
 
+      {onSave && (
+        <Tooltip title="Save to Saved tab">
+          <IconButton size="small" onClick={onSave} aria-label="Save" sx={{ color: 'var(--pg-text-primary)' }}>
+            <SaveIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
       <Tooltip title={importAriaLabel}>
         <IconButton size="small" onClick={onImport} aria-label={importAriaLabel} sx={{ color: 'var(--pg-text-primary)' }}>
           <FileUploadIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      {onSave && (
-        <Tooltip title="Save to Saved tab">
-          <IconButton size="small" onClick={onSave} aria-label="Save" sx={{ color: 'var(--pg-text-primary)' }}>
-            <BookmarkIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
       <Tooltip title={exportAriaLabel}>
         <IconButton size="small" onClick={onExport} aria-label={exportAriaLabel} sx={{ color: 'var(--pg-text-primary)' }}>
           <FileDownloadIcon fontSize="small" />
