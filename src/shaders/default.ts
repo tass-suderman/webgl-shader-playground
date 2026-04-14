@@ -7,6 +7,9 @@ export const DEFAULT_SHADER = `// WebGL Shader Playground
 //   iChannel0   - webcam texture (if enabled)
 //   iChannel1   - microphone / system audio frequency texture (if enabled)
 //   iChannel2   - Strudel live-coding audio frequency texture (if enabled)
+//   iChannel3   - Buffer A offscreen pass output (edit in the Buffer A tab)
+//   iChannel4   - Buffer B offscreen pass output (edit in the Buffer B tab)
+//   iChannel6   - Buffer C offscreen pass output (edit in the Buffer C tab)
 
 precision highp float;
 
@@ -20,6 +23,9 @@ uniform sampler2D iChannel1;
 uniform bool iChannel1Enabled;
 uniform sampler2D iChannel2;
 uniform bool iChannel2Enabled;
+uniform sampler2D iChannel3;
+uniform sampler2D iChannel4;
+uniform sampler2D iChannel6;
 
 void main() {
   vec2 uv = gl_FragCoord.xy / iResolution.xy;

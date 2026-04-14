@@ -18,13 +18,23 @@ import type { SxProps, Theme } from '@mui/material/styles'
 import ShaderPane, { type ShaderPaneHandle } from './components/shader/ShaderPane'
 import ShaderControls from './components/shader/ShaderControls'
 import EditorPane, { type EditorPaneHandle } from './components/editor/EditorPane'
+import BufferEditorPane from './components/editor/BufferEditorPane'
 import StrudelPane, { type StrudelPaneHandle } from './components/strudel/StrudelPane'
 import SettingsPane from './components/settings/SettingsPane'
 import SavedPane from './components/editor/SavedPane'
 import AboutPane from './components/about/AboutPane'
 import { applyTheme, getThemeByName } from './themes/appThemes'
 import { useMediaStreams } from './hooks/useMediaStreams'
-import { useAppStorage, getInitialGlslCode } from './hooks/useAppStorage'
+import {
+  useAppStorage,
+  getInitialGlslCode,
+  getInitialBuffer3Code,
+  getInitialBuffer4Code,
+  getInitialBuffer6Code,
+  saveBuffer3Code,
+  saveBuffer4Code,
+  saveBuffer6Code,
+} from './hooks/useAppStorage'
 import { useSavedContent } from './hooks/useSavedContent'
 
 type DisplayMode = 'default' | 'immersive'
@@ -33,8 +43,11 @@ type DisplayMode = 'default' | 'immersive'
 // last-saved shader is both displayed in the editor and running on the GPU
 // without waiting for a user action.
 const initialShaderCode = getInitialGlslCode()
+const initialBuffer3Code = getInitialBuffer3Code()
+const initialBuffer4Code = getInitialBuffer4Code()
+const initialBuffer6Code = getInitialBuffer6Code()
 
-type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
+type ViewMode = 'glsl' | 'strudel' | 'buffer3' | 'buffer4' | 'buffer6' | 'saved' | 'settings' | 'about'
 
 /** Controls the colour applied to a tab toggle button. */
 type ButtonVariant = 'editor' | 'utility'
@@ -81,6 +94,13 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
   const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
   const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
+  // Buffer pass sources: active (running on GPU) and pending (editor content)
+  const [bufferSources, setBufferSources] = useState<[string | null, string | null, string | null]>([
+    initialBuffer3Code, initialBuffer4Code, initialBuffer6Code,
+  ])
+  const [pendingBuffer3, setPendingBuffer3] = useState<string>(initialBuffer3Code)
+  const [pendingBuffer4, setPendingBuffer4] = useState<string>(initialBuffer4Code)
+  const [pendingBuffer6, setPendingBuffer6] = useState<string>(initialBuffer6Code)
   const [leftRatio, setLeftRatio] = useState(50)
   /** On mobile the canvas occupies this % of viewport height (editor gets the rest) */
   const [mobileShaderRatio, setMobileShaderRatio] = useState(50)
@@ -162,6 +182,18 @@ export default function App() {
 
   const handleRun = useCallback((code: string) => {
     setShaderSource(code)
+  }, [])
+
+  const handleRunBuffer3 = useCallback((code: string) => {
+    setBufferSources(prev => [code, prev[1], prev[2]])
+  }, [])
+
+  const handleRunBuffer4 = useCallback((code: string) => {
+    setBufferSources(prev => [prev[0], code, prev[2]])
+  }, [])
+
+  const handleRunBuffer6 = useCallback((code: string) => {
+    setBufferSources(prev => [prev[0], prev[1], code])
   }, [])
 
   // Global keyboard shortcuts (capture phase so they fire before Monaco / CodeMirror)
@@ -311,6 +343,9 @@ export default function App() {
 
   const showGlsl = viewMode === 'glsl'
   const showStrudel = viewMode === 'strudel'
+  const showBuffer3 = viewMode === 'buffer3'
+  const showBuffer4 = viewMode === 'buffer4'
+  const showBuffer6 = viewMode === 'buffer6'
 
   // Sx helpers for the animated editor panel Collapse – extracted for readability
   const mobileEditorCollapseSx = {
@@ -359,6 +394,9 @@ export default function App() {
       >
         <TabButton value="glsl" variant="editor">GLSL</TabButton>
         <TabButton value="strudel" variant="editor">Strudel</TabButton>
+        <TabButton value="buffer3" variant="editor">Buffer A</TabButton>
+        <TabButton value="buffer4" variant="editor">Buffer B</TabButton>
+        <TabButton value="buffer6" variant="editor">Buffer C</TabButton>
         <TabButton value="saved" variant="utility">Saved</TabButton>
         <TabButton value="settings" variant="utility">Settings</TabButton>
         <TabButton value="about" variant="utility">About</TabButton>
@@ -441,6 +479,72 @@ export default function App() {
           muted={muted}
           fontSize={fontSize}
           onSave={handleSavePattern}
+        />
+      </Box>
+
+      {/* Buffer A (iChannel3) – hidden but mounted when not visible to preserve state */}
+      <Box sx={{
+        display: showBuffer3 ? 'flex' : 'none',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+      }}>
+        <BufferEditorPane
+          label="Buffer A"
+          channelName="iChannel3"
+          initialCode={initialBuffer3Code}
+          onRun={handleRunBuffer3}
+          pendingSource={pendingBuffer3}
+          onCodeChange={setPendingBuffer3}
+          onSave={saveBuffer3Code}
+          shaderError={shaderError}
+          vimMode={vimMode}
+          themeName={themeName}
+          fontSize={fontSize}
+        />
+      </Box>
+
+      {/* Buffer B (iChannel4) – hidden but mounted when not visible to preserve state */}
+      <Box sx={{
+        display: showBuffer4 ? 'flex' : 'none',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+      }}>
+        <BufferEditorPane
+          label="Buffer B"
+          channelName="iChannel4"
+          initialCode={initialBuffer4Code}
+          onRun={handleRunBuffer4}
+          pendingSource={pendingBuffer4}
+          onCodeChange={setPendingBuffer4}
+          onSave={saveBuffer4Code}
+          shaderError={shaderError}
+          vimMode={vimMode}
+          themeName={themeName}
+          fontSize={fontSize}
+        />
+      </Box>
+
+      {/* Buffer C (iChannel6) – hidden but mounted when not visible to preserve state */}
+      <Box sx={{
+        display: showBuffer6 ? 'flex' : 'none',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+      }}>
+        <BufferEditorPane
+          label="Buffer C"
+          channelName="iChannel6"
+          initialCode={initialBuffer6Code}
+          onRun={handleRunBuffer6}
+          pendingSource={pendingBuffer6}
+          onCodeChange={setPendingBuffer6}
+          onSave={saveBuffer6Code}
+          shaderError={shaderError}
+          vimMode={vimMode}
+          themeName={themeName}
+          fontSize={fontSize}
         />
       </Box>
     </Box>
@@ -527,6 +631,7 @@ export default function App() {
           <ShaderPane
             ref={shaderRef}
             shaderSource={shaderSource}
+            bufferSources={bufferSources}
             webcamStream={webcamStream}
             audioStream={audioStream}
             strudelAnalyser={strudelAnalyser}
@@ -600,6 +705,7 @@ export default function App() {
           <ShaderPane
             ref={shaderRef}
             shaderSource={shaderSource}
+            bufferSources={bufferSources}
             webcamStream={webcamStream}
             audioStream={audioStream}
             strudelAnalyser={strudelAnalyser}
@@ -657,6 +763,7 @@ export default function App() {
         <ShaderPane
           ref={shaderRef}
           shaderSource={shaderSource}
+          bufferSources={bufferSources}
           webcamStream={webcamStream}
           audioStream={audioStream}
           strudelAnalyser={strudelAnalyser}

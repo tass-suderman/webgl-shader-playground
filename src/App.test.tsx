@@ -39,6 +39,10 @@ vi.mock('./components/strudel/StrudelPane', () => ({
   }),
 }))
 
+vi.mock('./components/editor/BufferEditorPane', () => ({
+  default: (_props: unknown) => <div data-testid="buffer-editor-pane" />,
+}))
+
 // ---------------------------------------------------------------------------
 // Component under test (imported after mocks)
 // ---------------------------------------------------------------------------

@@ -26,6 +26,7 @@ export interface ShaderPaneHandle {
 
 interface ShaderPaneProps {
   shaderSource: string
+  bufferSources?: [string | null, string | null, string | null]
   webcamStream: MediaStream | null
   audioStream: MediaStream | null
   strudelAnalyser?: AnalyserNode | null
@@ -67,6 +68,7 @@ interface ShaderPaneProps {
 
 export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane({
   shaderSource,
+  bufferSources,
   webcamStream,
   audioStream,
   strudelAnalyser,
@@ -102,6 +104,7 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
 
   useWebGL(canvasRef, {
     shaderSource,
+    bufferSources,
     webcamStream,
     audioStream,
     strudelAnalyser,

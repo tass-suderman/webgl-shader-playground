@@ -1,5 +1,6 @@
 import { useLocalStorage } from './useLocalStorage'
 import { DEFAULT_SHADER } from '../shaders/default'
+import { DEFAULT_BUFFER3_SHADER, DEFAULT_BUFFER4_SHADER, DEFAULT_BUFFER6_SHADER } from '../shaders/buffers'
 
 // ---------------------------------------------------------------------------
 // Private key constants – no other file should reference these strings
@@ -10,6 +11,9 @@ const KEYS = {
   glslTitle: 'shader-playground:glsl-title',
   strudelCode: 'shader-playground:strudel-code',
   strudelTitle: 'shader-playground:strudel-title',
+  buffer3Code: 'shader-playground:buffer3-code',
+  buffer4Code: 'shader-playground:buffer4-code',
+  buffer6Code: 'shader-playground:buffer6-code',
   theme: 'shader-playground:theme',
   vimMode: 'shader-playground:vim-mode',
   volume: 'shader-playground:volume',
@@ -40,6 +44,18 @@ export function saveStrudelTitle(title: string): void {
   try { localStorage.setItem(KEYS.strudelTitle, title) } catch { /* quota exceeded */ }
 }
 
+export function saveBuffer3Code(code: string): void {
+  try { localStorage.setItem(KEYS.buffer3Code, code) } catch { /* quota exceeded */ }
+}
+
+export function saveBuffer4Code(code: string): void {
+  try { localStorage.setItem(KEYS.buffer4Code, code) } catch { /* quota exceeded */ }
+}
+
+export function saveBuffer6Code(code: string): void {
+  try { localStorage.setItem(KEYS.buffer6Code, code) } catch { /* quota exceeded */ }
+}
+
 // ---------------------------------------------------------------------------
 // Read-once helpers (for values needed before React state is initialised)
 // ---------------------------------------------------------------------------
@@ -58,6 +74,18 @@ export function getInitialStrudelCode(defaultCode: string): string {
 
 export function getInitialStrudelTitle(defaultTitle: string): string {
   return localStorage.getItem(KEYS.strudelTitle) ?? defaultTitle
+}
+
+export function getInitialBuffer3Code(): string {
+  return localStorage.getItem(KEYS.buffer3Code) ?? DEFAULT_BUFFER3_SHADER
+}
+
+export function getInitialBuffer4Code(): string {
+  return localStorage.getItem(KEYS.buffer4Code) ?? DEFAULT_BUFFER4_SHADER
+}
+
+export function getInitialBuffer6Code(): string {
+  return localStorage.getItem(KEYS.buffer6Code) ?? DEFAULT_BUFFER6_SHADER
 }
 
 export function getInitialTheme(): string {

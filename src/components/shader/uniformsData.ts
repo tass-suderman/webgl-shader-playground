@@ -59,4 +59,19 @@ export const UNIFORMS: readonly UniformEntry[] = [
     type: 'bool',
     description: 'True when Strudel audio is active and iChannel2 contains data.',
   },
+  {
+    name: 'iChannel3',
+    type: 'sampler2D',
+    description: 'Buffer A offscreen pass output texture. Edit the buffer shader in the Buffer A tab. Available in all passes.',
+  },
+  {
+    name: 'iChannel4',
+    type: 'sampler2D',
+    description: 'Buffer B offscreen pass output texture. Edit the buffer shader in the Buffer B tab. Available in all passes.',
+  },
+  {
+    name: 'iChannel6',
+    type: 'sampler2D',
+    description: 'Buffer C offscreen pass output texture. Edit the buffer shader in the Buffer C tab. Available in all passes.',
+  },
 ] as const
