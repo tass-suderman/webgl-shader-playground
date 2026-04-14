@@ -47,7 +47,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
           flexShrink: 0,
         }}
       >
-        <Typography variant="subtitle2" sx={{ color: 'textColor.primary', fontFamily: 'monospace' }}>
+        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
           Settings
         </Typography>
       </Box>
@@ -57,7 +57,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         {/* ---- Editor ---- */}
         <Box>
-          <Typography variant="body2" sx={{ color: 'textColor.primary', fontWeight: 600, mb: 0.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Editor
           </Typography>
           <FormControlLabel
@@ -73,13 +73,13 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
               />
             }
             label={
-              <Typography variant="body2" sx={{ color: 'textColor.primary' }}>
+              <Typography variant="body2">
                 Vim keybindings
               </Typography>
             }
           />
           <Box sx={{ mt: 1.5 }}>
-            <Typography variant="body2" sx={{ color: 'textColor.primary', mb: 0.75 }}>
+            <Typography variant="body2" sx={{ mb: 0.75 }}>
               Font size
             </Typography>
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -126,7 +126,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         <Divider sx={{ borderColor: 'border.faint' }} />
         <Box>
-          <Typography variant="body2" sx={{ color: 'textColor.primary', fontWeight: 600, mb: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
             Theme
           </Typography>
           <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -182,7 +182,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         {/* ---- Keyboard shortcuts ---- */}
         <Box>
-          <Typography variant="body2" sx={{ color: 'textColor.primary', fontWeight: 600, mb: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
             Keyboard Shortcuts
           </Typography>
           {[
@@ -196,7 +196,6 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
                 variant="caption"
                 sx={{
                   fontFamily: 'monospace',
-                  color: 'textColor.primary',
                   bgcolor: 'background.button',
                   px: 0.75,
                   py: 0.25,
@@ -222,7 +221,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         {/* ---- Saved Content ---- */}
         <Box>
-          <Typography variant="body2" sx={{ color: 'textColor.primary', fontWeight: 600, mb: 0.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Saved Content
           </Typography>
           <FormControlLabel
@@ -238,7 +237,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
               />
             }
             label={
-              <Typography variant="body2" sx={{ color: 'textColor.primary' }}>
+              <Typography variant="body2">
                 Warn before overwriting a saved entry
               </Typography>
             }
@@ -249,7 +248,7 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
 
         {/* ---- Reset Data ---- */}
         <Box>
-          <Typography variant="body2" sx={{ color: 'textColor.primary', fontWeight: 600, mb: 0.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Data
           </Typography>
           <Typography variant="caption" sx={{ color: 'textColor.muted', display: 'block', mb: 1 }}>

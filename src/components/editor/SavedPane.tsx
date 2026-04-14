@@ -198,7 +198,7 @@ export default function SavedPane({
           justifyContent: 'space-between',
         }}
       >
-        <Typography variant="subtitle2" sx={{ color: 'textColor.primary', fontFamily: 'monospace' }}>
+        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
           Saved
         </Typography>
         {hasSavedContent && (
@@ -232,7 +232,6 @@ export default function SavedPane({
               <Typography
                 variant="subtitle2"
                 sx={{
-                  color: 'textColor.primary',
                   fontFamily: 'monospace',
                   fontSize: '0.75rem',
                   fontWeight: 700,
@@ -273,7 +272,6 @@ export default function SavedPane({
           <Typography
             variant="subtitle2"
             sx={{
-              color: 'textColor.primary',
               fontFamily: 'monospace',
               fontSize: '0.75rem',
               fontWeight: 700,
@@ -305,7 +303,7 @@ export default function SavedPane({
         }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem', color: 'textColor.primary' }}>
+          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
             Delete entry?
           </Typography>
           <IconButton size="small" onClick={handleDeleteCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted' }}>

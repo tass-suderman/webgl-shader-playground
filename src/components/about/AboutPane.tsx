@@ -1,5 +1,5 @@
-import { Box, Link } from '@mui/material'
-import Typography from '@mui/material/Typography'
+import { Box, Link, Typography } from '@mui/material'
+import AboutPaneSection from './AboutPaneSection'
 
 export default function AboutPane() {
   return (
@@ -15,112 +15,104 @@ export default function AboutPane() {
         lineHeight: 1.7,
       }}
     >
-      <Typography variant="h6" sx={{ fontFamily: 'monospace', mb: 2, color: 'textColor.primary' }}>
-        About Shades & Waves
-      </Typography>
+			<AboutPaneSection title="About Shades & Waves">
+				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
+					Shades &amp; Waves is a live-coding playground that combines real-time GLSL fragment
+					shaders with{' '}
+					<Link href="https://strudel.cc" target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
+						Strudel
+					</Link>{' '}
+					music patterns.
+				</Typography>
+			</AboutPaneSection>
 
-      <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2, color: 'textColor.primary' }}>
-        Shades &amp; Waves is a live-coding playground that combines real-time GLSL fragment
-        shaders with{' '}
-        <Link href="https://strudel.cc" target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
-          Strudel
-        </Link>{' '}
-        music patterns.
-      </Typography>
+			<AboutPaneSection title="License">
+				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
+					Shades &amp; Waves is free/open source software: you can redistribute and/or modify it
+					under the terms of the{' '}
+					<Link
+						href="https://www.gnu.org/licenses/agpl-3.0.html"
+						target="_blank"
+						rel="noopener noreferrer"
+						sx={{ color: 'accent' }}
+					>
+						GNU Affero General Public License
+					</Link>
+					. You can find the source code on{' '}
+					<Link
+						href="https://github.com/tass-suderman/shades-and-waves"
+						target="_blank"
+						rel="noopener noreferrer"
+						sx={{ color: 'accent' }}
+					>
+						GitHub
+					</Link>
+					.
+				</Typography>
+			</AboutPaneSection>
 
-      <Typography variant="h6" sx={{ fontFamily: 'monospace', mt: 3, mb: 1, fontSize: '0.95rem', color: 'textColor.primary' }}>
-        License
-      </Typography>
+      <AboutPaneSection title="Strudel">
+				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
+					This app uses{' '}
+					<Link href="https://strudel.cc" target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
+						Strudel
+					</Link>{' '}
+					(
+					<Link
+						href="https://codeberg.org/uzu/strudel"
+						target="_blank"
+						rel="noopener noreferrer"
+						sx={{ color: 'accent' }}
+					>
+						source
+					</Link>
+					), which is free/open source software licensed under the{' '}
+					<Link
+						href="https://www.gnu.org/licenses/agpl-3.0.html"
+						target="_blank"
+						rel="noopener noreferrer"
+						sx={{ color: 'accent' }}
+					>
+						GNU AGPL
+					</Link>
+					.
+				</Typography>
+			</AboutPaneSection>
 
-      <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2, color: 'textColor.primary' }}>
-        Shades &amp; Waves is free/open source software: you can redistribute and/or modify it
-        under the terms of the{' '}
-        <Link
-          href="https://www.gnu.org/licenses/agpl-3.0.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{ color: 'accent' }}
-        >
-          GNU Affero General Public License
-        </Link>
-        . You can find the source code on{' '}
-        <Link
-          href="https://github.com/tass-suderman/shades-and-waves"
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{ color: 'accent' }}
-        >
-          GitHub
-        </Link>
-        .
-      </Typography>
+      <AboutPaneSection title="Sound Banks">
+				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 1 }}>
+					The built-in synthesised drum and bass sounds (TR-909 and TB-303 models, ZZFX procedural sounds)
+					are original implementations and carry no additional licensing requirements.
+				</Typography>
 
-      <Typography variant="h6" sx={{ fontFamily: 'monospace', mt: 3, mb: 1, fontSize: '0.95rem', color: 'textColor.primary' }}>
-        Strudel
-      </Typography>
+				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 1 }}>
+					When Strudel&apos;s default sample banks load successfully they may include samples from the
+					following sources. Please refer to their respective repositories for licensing details:
+				</Typography>
 
-      <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2, color: 'textColor.primary' }}>
-        This app uses{' '}
-        <Link href="https://strudel.cc" target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
-          Strudel
-        </Link>{' '}
-        (
-        <Link
-          href="https://codeberg.org/uzu/strudel"
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{ color: 'accent' }}
-        >
-          source
-        </Link>
-        ), which is free/open source software licensed under the{' '}
-        <Link
-          href="https://www.gnu.org/licenses/agpl-3.0.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{ color: 'accent' }}
-        >
-          GNU AGPL
-        </Link>
-        .
-      </Typography>
-
-      <Typography variant="h6" sx={{ fontFamily: 'monospace', mt: 3, mb: 1, fontSize: '0.95rem', color: 'textColor.primary' }}>
-        Sound Banks
-      </Typography>
-
-      <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 1, color: 'textColor.primary' }}>
-        The built-in synthesised drum and bass sounds (TR-909 and TB-303 models, ZZFX procedural sounds)
-        are original implementations and carry no additional licensing requirements.
-      </Typography>
-
-      <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 1, color: 'textColor.primary' }}>
-        When Strudel&apos;s default sample banks load successfully they may include samples from the
-        following sources. Please refer to their respective repositories for licensing details:
-      </Typography>
-
-      <Box component="ul" sx={{ pl: 3, mb: 2 }}>
-        {[
-          {
-            label: 'Dirt-Samples',
-            href: 'https://github.com/tidalcycles/Dirt-Samples',
-          },
-          {
-            label: 'dough-samples (piano, vcsl, mridangam, tidal-drum-machines)',
-            href: 'https://github.com/felixroos/dough-samples',
-          },
-          {
-            label: 'uzu-drumkit',
-            href: 'https://github.com/tidalcycles/uzu-drumkit',
-          },
-        ].map(({ label, href }) => (
-          <Typography key={href} component="li" variant="body2" sx={{ fontFamily: 'monospace', color: 'textColor.primary' }}>
-            <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
-              {label}
-            </Link>
-          </Typography>
-        ))}
-      </Box>
-    </Box>
+				<Box component="ul" sx={{ pl: 3, mb: 2 }}>
+					{[
+						{
+							label: 'Dirt-Samples',
+							href: 'https://github.com/tidalcycles/Dirt-Samples',
+						},
+						{
+							label: 'dough-samples (piano, vcsl, mridangam, tidal-drum-machines)',
+							href: 'https://github.com/felixroos/dough-samples',
+						},
+						{
+							label: 'uzu-drumkit',
+							href: 'https://github.com/tidalcycles/uzu-drumkit',
+						},
+					].map(({ label, href }) => (
+						<Typography key={href} component="li" variant="body2" sx={{ fontFamily: 'monospace' }}>
+							<Link href={href} target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
+								{label}
+							</Link>
+						</Typography>
+					))}
+				</Box>
+			</AboutPaneSection>
+		</Box>
   )
 }

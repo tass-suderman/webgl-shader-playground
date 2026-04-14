@@ -199,7 +199,7 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
         }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem', color: 'textColor.primary' }}>
+          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
             Load example?
           </Typography>
           <IconButton size="small" onClick={handleCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted'}}>

@@ -1,4 +1,4 @@
-import { createTheme, useTheme as useMuiTheme } from "@mui/material";
+import { createTheme } from "@mui/material";
 import { Theme, themes } from "../themes/Theme";
 import { useState, useEffect } from "react";
 import { useAppStorage } from "./useAppStorage";

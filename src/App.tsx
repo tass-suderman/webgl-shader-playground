@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, ThemeProvider, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, GlobalStyles, IconButton, ThemeProvider, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import type { SxProps, Theme } from '@mui/material/styles'
@@ -16,16 +16,13 @@ import { useSavedContent } from './hooks/useSavedContent'
 import { useTheme } from './hooks/useTheme'
 
 type DisplayMode = 'default' | 'immersive'
+type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
+type ButtonVariant = 'editor' | 'utility'
 
 // Computed once at module load – used to seed the initial shader state so the
 // last-saved shader is both displayed in the editor and running on the GPU
 // without waiting for a user action.
 const initialShaderCode = getInitialGlslCode()
-
-type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
-
-/** Controls the colour applied to a tab toggle button. */
-type ButtonVariant = 'editor' | 'utility'
 
 // Shared base styles for all top-bar toggle buttons
 const baseTabSx = {
@@ -449,7 +446,7 @@ export default function App() {
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-        <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem', color: 'textColor.primary' }}>
+        <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
           Overwrite entry?
         </Typography>
         <IconButton size="small" onClick={handleOverwriteCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted' }}>
@@ -637,6 +634,11 @@ export default function App() {
   // Desktop: horizontal layout – shader on left, editor on right
   return (
 		<ThemeProvider theme={muiTheme}>
+			<GlobalStyles styles={{
+				'.MuiTypography-root': {
+					color: muiTheme.palette.textColor.primary,
+				},
+			}} />
 			<Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'background.app' }}>
 				{/* Left: shader canvas */}
 				<Box sx={{ width: editorCollapsed ? '100%' : `${leftRatio}%`, minWidth: 0, flexShrink: 0 }}>

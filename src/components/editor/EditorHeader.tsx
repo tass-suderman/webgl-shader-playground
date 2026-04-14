@@ -19,15 +19,11 @@ export interface EditorHeaderProps {
   exportAriaLabel?: string
   runLabel?: string
   runColor?: 'primary' | 'success'
-  // Strudel-specific optional props
   isPlaying?: boolean
   onStop?: () => void
   onShowSounds?: () => void
-  /** When true the music-note button is rendered in the accent colour to show it is active */
   soundsActive?: boolean
-  // GLSL-specific optional props
   onShowUniforms?: () => void
-  /** When true the uniforms button is rendered in the accent colour to show it is active */
   uniformsActive?: boolean
 }
 

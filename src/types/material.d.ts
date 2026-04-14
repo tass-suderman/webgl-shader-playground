@@ -30,4 +30,23 @@ declare module '@mui/material/styles'
 		}
 		accent: string
 	}
+	interface Palette extends MuiPalette {
+		textColor: {
+			primary: string
+			muted: string
+			button: string
+			hover: string
+			disabled: string
+			utilTab: string
+			sourceTab: string
+		}
+		border: {
+			subtle: string
+			faint: string
+			default: string
+			hover: string
+			disabled: string
+		}
+		accent: string
+	}
 }
