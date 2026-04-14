@@ -459,9 +459,9 @@ export function useWebGL(
           const loc = gl.getUniformLocation(prog, name)
           if (loc) gl.uniform2f(loc, x, y)
         }
-        const u4f = (name: string, x: number, y: number, z: number, ww: number) => {
+        const u4f = (name: string, x: number, y: number, z: number, w: number) => {
           const loc = gl.getUniformLocation(prog, name)
-          if (loc) gl.uniform4f(loc, x, y, z, ww)
+          if (loc) gl.uniform4f(loc, x, y, z, w)
         }
         u1f('iTime', iTime)
         u2f('iResolution', w, h)

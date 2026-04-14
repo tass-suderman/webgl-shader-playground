@@ -47,7 +47,6 @@ export const DEFAULT_BUFFER3_SHADER = BUFFER_SHADER_HEADER + `void main() {
 export const DEFAULT_BUFFER4_SHADER = BUFFER_SHADER_HEADER + `void main() {
   vec2 uv = gl_FragCoord.xy / iResolution.xy;
   // Buffer B (iChannel4) – sample Buffer A and add a ripple
-  vec3 bufA = texture2D(iChannel3, uv).rgb;
   float wave = sin(uv.x * 20.0 + iTime * 3.0) * 0.05;
   vec2 distUV = vec2(uv.x, uv.y + wave);
   vec3 col = texture2D(iChannel3, distUV).rgb;
