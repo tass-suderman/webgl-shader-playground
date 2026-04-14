@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
-import CloseIcon from '@mui/icons-material/Close'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import LoadExampleDialog from './LoadExampleDialog'
 
 interface ExampleMeta {
   id: string
@@ -184,53 +178,7 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
       <ExampleSection heading="Shaders" type="glsl" onSelect={handleSelect} />
       <ExampleSection heading="Patterns" type="strudel" onSelect={handleSelect} />
 
-      <Dialog
-        open={confirmOpen}
-        onClose={handleCancel}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.header',
-            color: 'textColor.primary',
-						borderColor: 'border.default',
-            border: '1px solid',
-          },
-        }}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
-            Load example?
-          </Typography>
-          <IconButton size="small" onClick={handleCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted'}}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 0 }}>
-          <Typography variant="body2" sx={{ color: 'textColor.muted', fontFamily: 'monospace' }}>
-            Loading <strong style={{ color: 'accent' }}>{pending?.meta.title}</strong> will replace
-            your current {itemLabel}. Any unsaved progress will be lost.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 2, pb: 2 }}>
-          <Button
-            onClick={handleCancel}
-            size="small"
-            sx={{ textTransform: 'none', color: 'textColor.muted' }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            variant="contained"
-            color="primary"
-            size="small"
-            sx={{ textTransform: 'none' }}
-          >
-            Load
-          </Button>
-        </DialogActions>
-      </Dialog>
+			<LoadExampleDialog confirmOpen={confirmOpen} title={pending?.meta.title ?? ""} itemLabel={itemLabel} onConfirm={handleConfirm} onCancel={handleCancel} />
     </Box>
   )
 }

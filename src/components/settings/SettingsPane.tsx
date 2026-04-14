@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react'
-import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, FormControlLabel, MenuItem, Select, Typography} from '@mui/material'
+import { Box, Button, Checkbox, FormControl, FormControlLabel, MenuItem, Select, Typography} from '@mui/material'
 import { DeleteForever } from '@mui/icons-material'
 import { themes } from '../../themes/Theme'
+import ResetConfirmationDialog from './ResetConfirmationDialog'
+import SettingsDivider from './SettingsDivider'
+import SettingsSection from './SettingsSection'
+import { shortcuts } from './keyboardShortcuts'
 
 interface SettingsPaneProps {
   vimMode: boolean
@@ -47,19 +51,14 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
           flexShrink: 0,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
-          Settings
-        </Typography>
+        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }} children="Settings" />
       </Box>
 
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
         {/* ---- Editor ---- */}
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Editor
-          </Typography>
+				<SettingsSection title="Editor">
           <FormControlLabel
             control={
               <Checkbox
@@ -72,16 +71,10 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
                 }}
               />
             }
-            label={
-              <Typography variant="body2">
-                Vim keybindings
-              </Typography>
-            }
+            label={ <Typography variant="body2" children="Vim keybindings" /> }
           />
           <Box sx={{ mt: 1.5 }}>
-            <Typography variant="body2" sx={{ mb: 0.75 }}>
-              Font size
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 0.75 }} children="Font size" />
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select
                 value={fontSize}
@@ -121,14 +114,12 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
                 ))}
               </Select>
             </FormControl>
-          </Box>
-        </Box>
+					</Box>
+				</SettingsSection>
 
-        <Divider sx={{ borderColor: 'border.faint' }} />
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-            Theme
-          </Typography>
+				<SettingsDivider />
+
+				<SettingsSection title="Theme">
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <Select
               value={themeName}
@@ -170,27 +161,18 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
                     '&.Mui-selected': { bgcolor: 'background.button' },
                     '&.Mui-selected:hover': { bgcolor: 'border.faint' },
                   }}
-                >
-                  {t.label}
-                </MenuItem>
+									children={t.label}
+                />
               ))}
             </Select>
           </FormControl>
-        </Box>
+				</SettingsSection>
 
-        <Divider sx={{ borderColor: 'border.faint' }} />
+				<SettingsDivider />
 
         {/* ---- Keyboard shortcuts ---- */}
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-            Keyboard Shortcuts
-          </Typography>
-          {[
-            { keys: 'Ctrl + Enter', desc: 'Run / compile GLSL shader' },
-            { keys: 'Ctrl + .', desc: 'Pause shader animation' },
-            { keys: 'Alt + Enter', desc: 'Play Strudel pattern' },
-            { keys: 'Alt + .', desc: 'Pause Strudel pattern' },
-          ].map(({ keys, desc }) => (
+				<SettingsSection title="Keyboard Shortcuts">
+          {shortcuts.map(({ keys, desc }) => (
             <Box key={keys} sx={{ display: 'flex', gap: 2, mb: 0.75, alignItems: 'center' }}>
               <Typography
                 variant="caption"
@@ -207,23 +189,15 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
                   minWidth: 110,
                   display: 'inline-block'
                 }}
-              >
-                {keys}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'textColor.muted' }}>
-                {desc}
-              </Typography>
+								children={keys}
+              />
+              <Typography variant="caption" sx={{ color: 'textColor.muted' }} children={desc} />
             </Box>
           ))}
-        </Box>
+				</SettingsSection>
 
-        <Divider sx={{ borderColor: 'border.faint' }} />
-
-        {/* ---- Saved Content ---- */}
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Saved Content
-          </Typography>
+				<SettingsDivider />
+				<SettingsSection title="Saved Content">
           <FormControlLabel
             control={
               <Checkbox
@@ -237,23 +211,16 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
               />
             }
             label={
-              <Typography variant="body2">
-                Warn before overwriting a saved entry
-              </Typography>
+              <Typography variant="body2" children="Warn before overwriting a saved entry" />
             }
           />
-        </Box>
+				</SettingsSection>
 
-        <Divider sx={{ borderColor: 'border.faint' }} />
+				<SettingsDivider />
 
         {/* ---- Reset Data ---- */}
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Data
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'textColor.muted', display: 'block', mb: 1 }}>
-            Remove all saved shaders, patterns, and preferences and restore the app to its default state.
-          </Typography>
+				<SettingsSection title="Data">
+          <Typography variant="caption" sx={{ color: 'textColor.muted', display: 'block', mb: 1 }} children="Remove all saved shaders, patterns, and preferences and restore the app to its default state." />
           <Button
             variant="outlined"
             color="error"
@@ -261,49 +228,12 @@ export default function SettingsPane({ vimMode, onVimModeChange, themeName, onTh
             startIcon={<DeleteForever />}
             onClick={() => setResetDialogOpen(true)}
             sx={{ textTransform: 'none' }}
-          >
-            Reset data
-          </Button>
-        </Box>
+						children="Reset data"
+          />
+				</SettingsSection>
       </Box>
 
-      {/* Reset confirmation dialog */}
-      <Dialog
-        open={resetDialogOpen}
-        onClose={() => setResetDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.header',
-            color: 'textColor.primary',
-            border: '1px solid',
-						borderColor: 'border.default',
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: 'textColor.primary' }}>Reset all data?</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: 'textColor.muted' }}>
-            This will permanently delete all saved shaders, patterns, and preferences — including all entries in the Saved Content section. The page will
-            reload and everything will return to its default state. This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setResetDialogOpen(false)}
-            sx={{ color: 'textColor.muted', textTransform: 'none' }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleResetConfirm}
-            color="error"
-            variant="contained"
-            sx={{ textTransform: 'none' }}
-          >
-            Reset
-          </Button>
-        </DialogActions>
-      </Dialog>
+			<ResetConfirmationDialog open={resetDialogOpen} onCancel={() => setResetDialogOpen(false)} onConfirm={handleResetConfirm} />
     </Box>
   )
 }

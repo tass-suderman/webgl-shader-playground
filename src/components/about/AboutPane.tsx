@@ -17,7 +17,7 @@ export default function AboutPane() {
     >
 			<AboutPaneSection title="About Shades & Waves">
 				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
-					Shades &amp; Waves is a live-coding playground that combines real-time GLSL fragment
+					Shades & Waves is a live-coding playground that combines real-time GLSL fragment
 					shaders with{' '}
 					<Link href="https://strudel.cc" target="_blank" rel="noopener noreferrer" sx={{ color: 'accent' }}>
 						Strudel
@@ -28,7 +28,7 @@ export default function AboutPane() {
 
 			<AboutPaneSection title="License">
 				<Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
-					Shades &amp; Waves is free/open source software: you can redistribute and/or modify it
+					Shades & Waves is free/open source software: you can redistribute and/or modify it
 					under the terms of the{' '}
 					<Link
 						href="https://www.gnu.org/licenses/agpl-3.0.html"

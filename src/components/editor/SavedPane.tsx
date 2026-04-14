@@ -1,24 +1,11 @@
+
 import { useState } from 'react'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import Divider from '@mui/material/Divider'
-import IconButton from '@mui/material/IconButton'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemText from '@mui/material/ListItemText'
-import Tooltip from '@mui/material/Tooltip'
-import Typography from '@mui/material/Typography'
-import CloseIcon from '@mui/icons-material/Close'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
-import DownloadIcon from '@mui/icons-material/Download'
+import { Box, Divider, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material'
+import { DeleteOutline, Download } from '@mui/icons-material'
 import { zipSync, strToU8 } from 'fflate'
 import CombinedExamplesPanel from './CombinedExamplesPanel'
 import type { SavedEntry } from '../../hooks/useSavedContent'
+import DeleteItemDialog from './DeleteItemDialog'
 
 interface SavedPaneProps {
   savedShaders: SavedEntry[]
@@ -92,7 +79,7 @@ function SavedSection({
                   onClick={() => onDelete(entry.title)}
                   sx={{ color: 'textColor.muted', '&:hover': { color: '#ff8080' } }}
                 >
-                  <DeleteOutlineIcon fontSize="small" />
+                  <DeleteOutline fontSize="small" />
                 </IconButton>
               </Tooltip>
             }
@@ -209,7 +196,7 @@ export default function SavedPane({
               aria-label="Export all saved content"
               sx={{ color: 'textColor.primary' }}
             >
-              <DownloadIcon fontSize="small" />
+              <Download fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -286,54 +273,12 @@ export default function SavedPane({
           onLoadStrudel={onLoadStrudelExample}
         />
       </Box>
-
-      {/* Delete confirmation dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.header',
-            color: 'textColor.primary',
-            border: '1px solid',
-						borderColor: 'border.default',
-          },
-        }}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
-            Delete entry?
-          </Typography>
-          <IconButton size="small" onClick={handleDeleteCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted' }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 0 }}>
-          <Typography variant="body2" sx={{ color: 'textColor.muted', fontFamily: 'monospace' }}>
-            Delete <strong style={{ color: 'accent' }}>{pendingDelete?.title}</strong>? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 2, pb: 2 }}>
-          <Button
-            onClick={handleDeleteCancel}
-            size="small"
-            sx={{ textTransform: 'none', color: 'textColor.muted' }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            variant="contained"
-            color="error"
-            size="small"
-            sx={{ textTransform: 'none' }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+			<DeleteItemDialog
+				open={deleteDialogOpen}
+				title={pendingDelete?.type || 'shader'}
+				onConfirm={handleDeleteConfirm}
+				onCancel={handleDeleteCancel}
+			/>
     </Box>
   )
 }
