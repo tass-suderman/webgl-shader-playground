@@ -24,6 +24,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import PreviewIcon from '@mui/icons-material/Preview'
 import ChannelStatusChips from './ChannelStatusChips'
+import { useAppStorage } from '../../hooks/useAppStorage'
 
 interface ShaderControlsProps {
   isPlaying: boolean
@@ -32,8 +33,6 @@ interface ShaderControlsProps {
   webcamEnabled: boolean
   micEnabled: boolean
   strudelAnalyser?: AnalyserNode | null
-  volume: number
-  muted: boolean
   onTogglePlay: () => void
   onToggleWebcam: () => void
   onToggleMic: () => void
@@ -65,8 +64,6 @@ export default function ShaderControls({
   webcamEnabled,
   micEnabled,
   strudelAnalyser,
-  volume,
-  muted,
   onTogglePlay,
   onToggleWebcam,
   onToggleMic,
@@ -83,6 +80,8 @@ export default function ShaderControls({
   immersiveOpacity = 50,
   onImmersiveOpacityChange,
 }: ShaderControlsProps) {
+	const { muted, volume } = useAppStorage()
+
   const VolumeIcon = (muted || volume === 0)
     ? VolumeOffIcon
     : volume <= 50

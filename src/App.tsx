@@ -1,84 +1,45 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, GlobalStyles, IconButton, ThemeProvider, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, GlobalStyles, IconButton, ThemeProvider, Typography } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import type { SxProps, Theme } from '@mui/material/styles'
 import ShaderPane, { type ShaderPaneHandle } from './components/shader/ShaderPane'
 import ShaderControls from './components/shader/ShaderControls'
-import EditorPane, { type EditorPaneHandle } from './components/editor/EditorPane'
-import StrudelPane, { type StrudelPaneHandle } from './components/strudel/StrudelPane'
-import SettingsPane from './components/settings/SettingsPane'
-import SavedPane from './components/editor/SavedPane'
-import AboutPane from './components/about/AboutPane'
+import { type StrudelPaneHandle } from './components/strudel/StrudelPane'
 import { useMediaStreams } from './hooks/useMediaStreams'
 import { useAppStorage, getInitialGlslCode } from './hooks/useAppStorage'
 import { useSavedContent } from './hooks/useSavedContent'
 import { useTheme } from './hooks/useTheme'
+import { TabBar } from './components/header/TabBar'
+import { type ViewMode } from './constants/tabConfigs'
+import { EditorContent } from './components/editor/EditorContent'
+import { StrudelAnalyzerProvider } from './hooks/useStrudelAnalyzer'
+import { StrudelAudioStreamProvider } from './hooks/useStrudelAudioStream'
 
 type DisplayMode = 'default' | 'immersive'
-type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
-type ButtonVariant = 'editor' | 'utility'
 
 // Computed once at module load – used to seed the initial shader state so the
 // last-saved shader is both displayed in the editor and running on the GPU
 // without waiting for a user action.
 const initialShaderCode = getInitialGlslCode()
 
-// Shared base styles for all top-bar toggle buttons
-const baseTabSx = {
-  backgroundColor: 'background.button',
-  borderRadius: '15px',
-  fontSize: '0.75rem',
-  py: 0.25,
-  px: 1.5,
-  textTransform: 'none',
-  flex: 1,
-  '&.Mui-selected': {
-    backgroundColor: 'accent',
-    color: 'textColor.hover',
-  },
-  '&:hover': {
-    backgroundColor: 'background.hover',
-    color: 'textColor.hover',
-  },
-} as const
-
-const tabSxByVariant: Record<ButtonVariant, object> = {
-  // Editor mode tabs (GLSL / Strudel) – primary text colour
-  editor: { ...baseTabSx, color: 'textColor.button'},
-  // Utility tabs (Examples / Settings / About) – warm complementary text colour
-  utility: { ...baseTabSx, color: 'textColor.utilTab' },
-}
-
-/** A single tab in the top bar with a typed colour variant. */
-function TabButton({ value, variant, children }: { value: string; variant: ButtonVariant; children: React.ReactNode }) {
-  return (
-    <ToggleButton value={value} sx={tabSxByVariant[variant]}>
-      {children}
-    </ToggleButton>
-  )
-}
 
 export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
-  const [pendingSource, setPendingSource] = useState<string>(initialShaderCode)
   const [shaderError, setShaderError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
-  const [strudelAnalyser, setStrudelAnalyser] = useState<AnalyserNode | null>(null)
-  const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
   const [leftRatio, setLeftRatio] = useState(50)
   /** On mobile the canvas occupies this % of viewport height (editor gets the rest) */
   const [mobileShaderRatio, setMobileShaderRatio] = useState(50)
   const [editorCollapsed, setEditorCollapsed] = useState(false)
   const {
     vimMode, setVimMode,
-    volume, setVolume,
+		setVolume,
     muted, setMuted,
     immersiveOpacity, setImmersiveOpacity,
     fontSize, setFontSize,
     warnOnOverwrite, setWarnOnOverwrite,
   } = useAppStorage()
-  const savedContent = useSavedContent()
   // Overwrite warning dialog state
   const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false)
   const [overwritePending, setOverwritePending] = useState<{ title: string; content: string; type: 'shader' | 'pattern' } | null>(null)
@@ -90,16 +51,13 @@ export default function App() {
   const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const strudelRef = useRef<StrudelPaneHandle>(null)
-  const editorRef = useRef<EditorPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
-  // Keep a ref to pendingSource for the global keydown handler (avoids stale closure)
-  const pendingSourceRef = useRef(pendingSource)
-  pendingSourceRef.current = pendingSource
 
   /** True when the viewport is narrow enough to be considered a phone/small device */
   const isMobile = useMediaQuery('(max-width: 600px)')
 	
-	const { muiTheme, currentTheme, changeTheme } = useTheme();
+	const { muiTheme, changeTheme } = useTheme();
+  const savedContent = useSavedContent()
 
   const {
     webcamEnabled,
@@ -141,10 +99,6 @@ export default function App() {
     setMuted(!muted)
   }, [muted, setMuted])
 
-  const handleRun = useCallback((code: string) => {
-    setShaderSource(code)
-  }, [])
-
   // Global keyboard shortcuts (capture phase so they fire before Monaco / CodeMirror)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -155,6 +109,7 @@ export default function App() {
 			}
 
       // Ctrl+Enter / Cmd+Enter → Play Shader (run/compile) and unpause if paused
+			// // TODO --> This is not working for compiling the shader right now
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
 				handleKeyboardEvent(e, () => shaderRef.current?.unpause())
         return
@@ -220,30 +175,6 @@ export default function App() {
     document.addEventListener('mouseup', onUp)
   }, [mobileShaderRatio])
 
-  // ── Examples loading ───────────────────────────────────────────────────────
-
-  const handleLoadGlslExample = useCallback((title: string, content: string) => {
-    editorRef.current?.loadExample(title, content)
-    setViewMode('glsl')
-  }, [])
-
-  const handleLoadStrudelExample = useCallback((title: string, content: string) => {
-    strudelRef.current?.loadExample(title, content)
-    setViewMode('strudel')
-  }, [])
-
-  // ── Saved content: load saved entries into editors ─────────────────────────
-
-  const handleLoadSavedShader = useCallback((title: string, content: string) => {
-    editorRef.current?.loadExample(title, content)
-    setViewMode('glsl')
-  }, [])
-
-  const handleLoadSavedPattern = useCallback((title: string, content: string) => {
-    strudelRef.current?.loadExample(title, content)
-    setViewMode('strudel')
-  }, [])
-
   // ── Save flow with optional overwrite confirmation ─────────────────────────
 
   const commitSave = useCallback((title: string, content: string, type: 'shader' | 'pattern') => {
@@ -253,26 +184,6 @@ export default function App() {
       savedContent.savePattern(title, content)
     }
   }, [savedContent])
-
-  const handleSaveShader = useCallback((title: string, content: string) => {
-    if (warnOnOverwrite && savedContent.hasExistingShader(title)) {
-      setOverwritePending({ title, content, type: 'shader' })
-      setDontShowAgain(false)
-      setOverwriteDialogOpen(true)
-    } else {
-      commitSave(title, content, 'shader')
-    }
-  }, [warnOnOverwrite, savedContent, commitSave])
-
-  const handleSavePattern = useCallback((title: string, content: string) => {
-    if (warnOnOverwrite && savedContent.hasExistingPattern(title)) {
-      setOverwritePending({ title, content, type: 'pattern' })
-      setDontShowAgain(false)
-      setOverwriteDialogOpen(true)
-    } else {
-      commitSave(title, content, 'pattern')
-    }
-  }, [warnOnOverwrite, savedContent, commitSave])
 
   const handleOverwriteConfirm = useCallback(() => {
     if (overwritePending) {
@@ -290,8 +201,6 @@ export default function App() {
     setOverwritePending(null)
   }, [])
 
-  const showGlsl = viewMode === 'glsl'
-  const showStrudel = viewMode === 'strudel'
 
   // Sx helpers for the animated editor panel Collapse – extracted for readability
   const mobileEditorCollapseSx = {
@@ -315,117 +224,34 @@ export default function App() {
   } as SxProps<Theme>
 
   // ── Tab bar ────────────────────────────────────────────────────────────────
+	const tabBar = (
+		<TabBar viewMode={viewMode} setViewMode={setViewMode} strudelRef={strudelRef} />
+	)
 
-  const tabBar = (
-    <Box sx={{
-      px: 1,
-      py: 0.5,
-      bgcolor: 'background.header',
-      borderBottom: 'border.subtle',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-    }}>
-      <ToggleButtonGroup
-        value={viewMode}
-        exclusive
-        onChange={(_e, val: string | null) => {
-          if (!val) return
-          setViewMode(val as ViewMode)
-          strudelRef.current?.closeSounds()
-        }}
-        size="small"
-        sx={{ flex: 1, minWidth: 0 }}
-      >
-        <TabButton value="glsl" variant="editor">GLSL</TabButton>
-        <TabButton value="strudel" variant="editor">Strudel</TabButton>
-        <TabButton value="saved" variant="utility">Saved</TabButton>
-        <TabButton value="settings" variant="utility">Settings</TabButton>
-        <TabButton value="about" variant="utility">About</TabButton>
-      </ToggleButtonGroup>
-    </Box>
-  )
 
   // ── Editor content area (shared between mobile and desktop) ───────────────
+	const editorContent = (
+		<EditorContent
+			viewMode={viewMode}
+			vimMode={vimMode}
+			fontSize={fontSize}
+			warnOnOverwrite={warnOnOverwrite}
+			initialShaderCode={initialShaderCode}
+			shaderError={shaderError}
+			strudelRef={strudelRef}
+			handleVimModeChange={handleVimModeChange}
+			handleThemeChange={handleThemeChange}
+			setFontSize={setFontSize}
+			setWarnOnOverwrite={setWarnOnOverwrite}
+			setShaderSource={setShaderSource}
+			setViewMode={setViewMode}
+			setOverwritePending={setOverwritePending}
+			setOverwriteDialogOpen={setOverwriteDialogOpen}
+			setDontShowAgain={setDontShowAgain}
+			commitSave={commitSave}
+		/>
+	)
 
-  const editorContent = (
-    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      {/* About panel */}
-      {viewMode === 'about' && <AboutPane />}
-
-      {/* Settings panel */}
-      {viewMode === 'settings' && (
-        <SettingsPane
-          vimMode={vimMode}
-          onVimModeChange={handleVimModeChange}
-          themeName={currentTheme.name}
-          onThemeChange={handleThemeChange}
-          fontSize={fontSize}
-          onFontSizeChange={setFontSize}
-          warnOnOverwrite={warnOnOverwrite}
-          onWarnOnOverwriteChange={setWarnOnOverwrite}
-        />
-      )}
-
-      {/* Saved panel (Saved Content + Examples) */}
-      {viewMode === 'saved' && (
-        <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          <SavedPane
-            savedShaders={savedContent.savedShaders}
-            savedPatterns={savedContent.savedPatterns}
-            onDeleteShader={savedContent.deleteShader}
-            onDeletePattern={savedContent.deletePattern}
-            onLoadShader={handleLoadSavedShader}
-            onLoadPattern={handleLoadSavedPattern}
-            onLoadGlslExample={handleLoadGlslExample}
-            onLoadStrudelExample={handleLoadStrudelExample}
-          />
-        </Box>
-      )}
-
-      {/* GLSL editor – hidden but mounted when not visible to preserve state */}
-      <Box sx={{
-        display: showGlsl ? 'flex' : 'none',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: 0,
-      }}>
-        <EditorPane
-          ref={editorRef}
-          initialCode={initialShaderCode}
-          onRun={handleRun}
-          pendingSource={pendingSource}
-          onCodeChange={setPendingSource}
-          shaderError={shaderError}
-          vimMode={vimMode}
-          themeName={currentTheme.name}
-          fontSize={fontSize}
-          onSave={handleSaveShader}
-        />
-      </Box>
-
-      {/* Strudel pane – hidden but mounted when not visible to preserve state */}
-      <Box sx={{
-        display: showStrudel ? 'flex' : 'none',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: 0,
-      }}>
-        <StrudelPane
-          ref={strudelRef}
-          onAnalyserReady={setStrudelAnalyser}
-          onAudioStreamReady={setStrudelAudioStream}
-          vimMode={vimMode}
-          themeName={currentTheme.name}
-          volume={volume}
-          muted={muted}
-          fontSize={fontSize}
-          onSave={handleSavePattern}
-        />
-      </Box>
-    </Box>
-  )
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -511,12 +337,8 @@ export default function App() {
             shaderSource={shaderSource}
             webcamStream={webcamStream}
             audioStream={audioStream}
-            strudelAnalyser={strudelAnalyser}
-            strudelAudioStream={strudelAudioStream}
             webcamEnabled={webcamEnabled}
             micEnabled={micEnabled}
-            volume={volume}
-            muted={muted}
             onToggleWebcam={handleToggleWebcam}
             onToggleMic={handleToggleMic}
             onVolumeChange={handleVolumeChange}
@@ -534,10 +356,8 @@ export default function App() {
         <Box sx={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Editor area – flex:1 so it fills space above the controls bar */}
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {tabBar}
-            <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              {editorContent}
-            </Box>
+						{tabBar}
+						{editorContent}
           </Box>
 
           {/* Controls bar sits at the bottom and takes its natural height */}
@@ -547,9 +367,6 @@ export default function App() {
             isFullscreen={immersiveShaderFullscreen}
             webcamEnabled={webcamEnabled}
             micEnabled={micEnabled}
-            strudelAnalyser={strudelAnalyser}
-            volume={volume}
-            muted={muted}
             onTogglePlay={() => shaderRef.current?.togglePlay()}
             onToggleWebcam={handleToggleWebcam}
             onToggleMic={handleToggleMic}
@@ -584,12 +401,8 @@ export default function App() {
             shaderSource={shaderSource}
             webcamStream={webcamStream}
             audioStream={audioStream}
-            strudelAnalyser={strudelAnalyser}
-            strudelAudioStream={strudelAudioStream}
             webcamEnabled={webcamEnabled}
             micEnabled={micEnabled}
-            volume={volume}
-            muted={muted}
             onToggleWebcam={handleToggleWebcam}
             onToggleMic={handleToggleMic}
             onVolumeChange={handleVolumeChange}
@@ -622,7 +435,7 @@ export default function App() {
         {/* Bottom: editor panel */}
         <Collapse in={!editorCollapsed} sx={mobileEditorCollapseSx}>
           <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            {tabBar}
+						{tabBar}
             {editorContent}
           </Box>
         </Collapse>
@@ -634,6 +447,8 @@ export default function App() {
   // Desktop: horizontal layout – shader on left, editor on right
   return (
 		<ThemeProvider theme={muiTheme}>
+			<StrudelAnalyzerProvider>
+			<StrudelAudioStreamProvider>
 			<GlobalStyles styles={{
 				'.MuiTypography-root': {
 					color: muiTheme.palette.textColor.primary,
@@ -647,12 +462,8 @@ export default function App() {
 						shaderSource={shaderSource}
 						webcamStream={webcamStream}
 						audioStream={audioStream}
-						strudelAnalyser={strudelAnalyser}
-						strudelAudioStream={strudelAudioStream}
 						webcamEnabled={webcamEnabled}
 						micEnabled={micEnabled}
-						volume={volume}
-						muted={muted}
 						onToggleWebcam={handleToggleWebcam}
 						onToggleMic={handleToggleMic}
 						onVolumeChange={handleVolumeChange}
@@ -684,7 +495,7 @@ export default function App() {
 
 				{/* Right: editor panel */}
 				<Collapse orientation="horizontal" in={!editorCollapsed} sx={desktopEditorCollapseSx}>
-					<Box sx={{ width: '100%', minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+					<Box sx={{ flex: 1, height: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 						{tabBar}
 						{editorContent}
 					</Box>
@@ -692,6 +503,8 @@ export default function App() {
 
 				{overwriteDialog}
 			</Box>
+			</StrudelAudioStreamProvider>
+			</StrudelAnalyzerProvider>
 		</ThemeProvider>
   )
 }
