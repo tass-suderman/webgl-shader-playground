@@ -1,8 +1,10 @@
 import { Box } from '@mui/material';
+import { UniformEntry } from '../shader/uniformsData';
+import { SoundCategory } from '../strudel/soundCategories';
 
 export interface InformationPanelProps {
-	renderer: (item: any) => React.ReactNode;
-	items: readonly any[];
+	renderer: (item: UniformEntry|SoundCategory) => React.ReactNode;
+	items: readonly (UniformEntry|SoundCategory)[];
 	footer: React.ReactNode;
 }
 

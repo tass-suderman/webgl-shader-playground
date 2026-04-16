@@ -1,10 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, GlobalStyles, IconButton, ThemeProvider, Typography } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import { GlobalStyles, ThemeProvider } from '@mui/material'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import type { SxProps, Theme } from '@mui/material/styles'
-import ShaderPane, { type ShaderPaneHandle } from './components/shader/ShaderPane'
-import ShaderControls from './components/shader/ShaderControls'
+import { type ShaderPaneHandle } from './components/shader/ShaderPane'
 import { type StrudelPaneHandle } from './components/strudel/StrudelPane'
 import { useMediaStreams } from './hooks/useMediaStreams'
 import { useAppStorage, getInitialGlslCode } from './hooks/useAppStorage'
@@ -15,6 +12,10 @@ import { type ViewMode } from './constants/tabConfigs'
 import { EditorContent } from './components/editor/EditorContent'
 import { StrudelAnalyzerProvider } from './hooks/useStrudelAnalyzer'
 import { StrudelAudioStreamProvider } from './hooks/useStrudelAudioStream'
+import { ImmersiveView } from './views/ImmersiveView'
+import { MobileView } from './views/MobileView'
+import { DesktopView } from './views/DesktopView'
+import { OverwriteDialog } from './components/dialog/OverwriteDialog'
 
 type DisplayMode = 'default' | 'immersive'
 
@@ -28,9 +29,6 @@ export default function App() {
   const [shaderSource, setShaderSource] = useState<string>(initialShaderCode)
   const [shaderError, setShaderError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('glsl')
-  const [leftRatio, setLeftRatio] = useState(50)
-  /** On mobile the canvas occupies this % of viewport height (editor gets the rest) */
-  const [mobileShaderRatio, setMobileShaderRatio] = useState(50)
   const [editorCollapsed, setEditorCollapsed] = useState(false)
   const {
     vimMode, setVimMode,
@@ -67,17 +65,6 @@ export default function App() {
     handleToggleWebcam,
     handleToggleMic,
   } = useMediaStreams()
-
-  // Apply / remove immersive mode CSS variable and data attribute
-  useEffect(() => {
-    if (displayMode === 'immersive') {
-      document.documentElement.dataset.immersive = 'true'
-      document.documentElement.style.setProperty('--pg-immersive-alpha', `${immersiveOpacity}%`)
-    } else {
-      delete document.documentElement.dataset.immersive
-      document.documentElement.style.removeProperty('--pg-immersive-alpha')
-    }
-  }, [displayMode, immersiveOpacity])
 
   const handleThemeChange = ((name: string) => {
 		changeTheme(name)
@@ -134,46 +121,8 @@ export default function App() {
   }, [])
 
   /** Horizontal divider between shader and editor (desktop side-by-side layout) */
-  const handleHorizontalDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const container = outerContainerRef.current
-    if (!container) return
-    const startX = e.clientX
-    const startRatio = leftRatio
-    const containerW = container.getBoundingClientRect().width
-    const onMove = (me: MouseEvent) => {
-      const delta = me.clientX - startX
-      const newRatio = Math.min(80, Math.max(20, startRatio + (delta / containerW) * 100))
-      setLeftRatio(newRatio)
-    }
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-  }, [leftRatio])
 
   /** Horizontal divider between shader (top) and editor (bottom) on mobile */
-  const handleMobileDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const container = outerContainerRef.current
-    if (!container) return
-    const startY = e.clientY
-    const startRatio = mobileShaderRatio
-    const containerH = container.getBoundingClientRect().height
-    const onMove = (me: MouseEvent) => {
-      const delta = me.clientY - startY
-      const newRatio = Math.min(80, Math.max(20, startRatio + (delta / containerH) * 100))
-      setMobileShaderRatio(newRatio)
-    }
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-  }, [mobileShaderRatio])
 
   // ── Save flow with optional overwrite confirmation ─────────────────────────
 
@@ -202,26 +151,6 @@ export default function App() {
   }, [])
 
 
-  // Sx helpers for the animated editor panel Collapse – extracted for readability
-  const mobileEditorCollapseSx = {
-    flex: !editorCollapsed ? 1 : undefined,
-    minHeight: 0,
-    display: !editorCollapsed ? 'flex' : undefined,
-    flexDirection: 'column',
-  } as const
-
-  const desktopEditorCollapseSx = {
-    flex: !editorCollapsed ? 1 : undefined,
-    minWidth: 0,
-    display: !editorCollapsed ? 'flex' : undefined,
-    flexDirection: 'column',
-    '& .MuiCollapse-wrapper, & .MuiCollapse-wrapperInner': {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    },
-  } as SxProps<Theme>
 
   // ── Tab bar ────────────────────────────────────────────────────────────────
 	const tabBar = (
@@ -251,200 +180,97 @@ export default function App() {
 			commitSave={commitSave}
 		/>
 	)
+	//
+	const overwriteDialog = (
+		<OverwriteDialog
+			overwriteDialogOpen={overwriteDialogOpen}
+			overwritePending={overwritePending}
+			dontShowAgain={dontShowAgain}
+			setDontShowAgain={setDontShowAgain}
+			handleOverwriteConfirm={handleOverwriteConfirm}
+			handleOverwriteCancel={handleOverwriteCancel}
+		/>
+	)
 
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+	// ── Render ─────────────────────────────────────────────────────────────────
+	const viewTypeDisplay = 
+		displayMode === 'immersive' ? (
+			<ImmersiveView
+				shaderSource={shaderSource}
+				webcamStream={webcamStream}
+				audioStream={audioStream}
+				webcamEnabled={webcamEnabled}
+				micEnabled={micEnabled}
+				handleToggleWebcam={handleToggleWebcam}
+				handleToggleMic={handleToggleMic}
+				handleVolumeChange={handleVolumeChange}
+				handleToggleMute={handleToggleMute}
+				setShaderError={setShaderError}
+				immersiveShaderPlaying={immersiveShaderPlaying}
+				setImmersiveShaderPlaying={setImmersiveShaderPlaying}
+				immersiveShaderRecording={immersiveShaderRecording}
+				setImmersiveShaderRecording={setImmersiveShaderRecording}
+				immersiveShaderFullscreen={immersiveShaderFullscreen}
+				setImmersiveShaderFullscreen={setImmersiveShaderFullscreen}
+				handleToggleImmersive={handleToggleImmersive}
+				immersiveOpacity={immersiveOpacity}
+				setImmersiveOpacity={setImmersiveOpacity}
+				isMobile={isMobile}
+				outerContainerRef={outerContainerRef}
+				shaderRef={shaderRef}
+				tabBar={tabBar}
+				editorContent={editorContent}
+				overwriteDialog={overwriteDialog}
+			/>
+		) : isMobile ? (
+			<MobileView
+				shaderSource={shaderSource}
+				webcamStream={webcamStream}
+				audioStream={audioStream}
+				webcamEnabled={webcamEnabled}
+				micEnabled={micEnabled}
+				handleToggleWebcam={handleToggleWebcam}
+				handleToggleMic={handleToggleMic}
+				handleVolumeChange={handleVolumeChange}
+				handleToggleMute={handleToggleMute}
+				setShaderError={setShaderError}
+				handleToggleImmersive={handleToggleImmersive}
+				immersiveOpacity={immersiveOpacity}
+				setImmersiveOpacity={setImmersiveOpacity}
+				editorCollapsed={editorCollapsed}
+				setEditorCollapsed={setEditorCollapsed}
+				outerContainerRef={outerContainerRef}
+				shaderRef={shaderRef}
+				tabBar={tabBar}
+				editorContent={editorContent}
+				overwriteDialog={overwriteDialog}
+			/>
+    ) : (
+			<DesktopView
+				shaderSource={shaderSource}
+				webcamStream={webcamStream}
+				audioStream={audioStream}
+				webcamEnabled={webcamEnabled}
+				micEnabled={micEnabled}
+				handleToggleWebcam={handleToggleWebcam}
+				handleToggleMic={handleToggleMic}
+				handleVolumeChange={handleVolumeChange}
+				handleToggleMute={handleToggleMute}
+				setShaderError={setShaderError}
+				handleToggleImmersive={handleToggleImmersive}
+				immersiveOpacity={immersiveOpacity}
+				setImmersiveOpacity={setImmersiveOpacity}
+				editorCollapsed={editorCollapsed}
+				setEditorCollapsed={setEditorCollapsed}
+				outerContainerRef={outerContainerRef}
+				shaderRef={shaderRef}
+				tabBar={tabBar}
+				editorContent={editorContent}
+				overwriteDialog={overwriteDialog}
+			/>
+		)
 
-  // Overwrite dialog – shared across all layout renders
-  const overwriteDialog = (
-    <Dialog
-      open={overwriteDialogOpen}
-      onClose={handleOverwriteCancel}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: 'background.header',
-          color: 'textColor.primary',
-          border: '1px solid',
-					borderColor: 'border.default',
-        },
-      }}
-    >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-        <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '1rem' }}>
-          Overwrite entry?
-        </Typography>
-        <IconButton size="small" onClick={handleOverwriteCancel} aria-label="Close dialog" sx={{ color: 'textColor.muted' }}>
-          <Close fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ pt: 0 }}>
-        <Typography variant="body2" sx={{ color: 'textColor.muted', fontFamily: 'monospace', mb: 1.5 }}>
-          A saved entry named <strong style={{ color: 'accent' }}>{overwritePending?.title}</strong> already exists. Saving will overwrite it.
-        </Typography>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={dontShowAgain}
-              onChange={(e) => setDontShowAgain(e.target.checked)}
-              size="small"
-              sx={{
-                color: 'border.default',
-                '&.Mui-checked': { color: 'accent' },
-              }}
-            />
-          }
-          label={
-            <Typography variant="body2" sx={{ color: 'textColor.muted', fontSize: '0.8rem' }}>
-              Don't show this again
-            </Typography>
-          }
-        />
-      </DialogContent>
-      <DialogActions sx={{ px: 2, pb: 2 }}>
-        <Button
-          onClick={handleOverwriteCancel}
-          size="small"
-          sx={{ textTransform: 'none', color: 'textColor.muted' }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleOverwriteConfirm}
-          variant="contained"
-          color="primary"
-          size="small"
-          sx={{ textTransform: 'none' }}
-        >
-          Overwrite
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
-
-  // ── Immersive mode: shader fills the viewport, editor overlays on top ─────
-  if (displayMode === 'immersive') {
-    return (
-      <Box
-        ref={outerContainerRef}
-        sx={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}
-      >
-        {/* Layer 0 – Shader canvas, full viewport, behind everything */}
-        <Box sx={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <ShaderPane
-            ref={shaderRef}
-            shaderSource={shaderSource}
-            webcamStream={webcamStream}
-            audioStream={audioStream}
-            webcamEnabled={webcamEnabled}
-            micEnabled={micEnabled}
-            onToggleWebcam={handleToggleWebcam}
-            onToggleMic={handleToggleMic}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={handleToggleMute}
-            onShaderError={setShaderError}
-            isMobile={isMobile}
-            hideControls
-            onPlayStateChange={setImmersiveShaderPlaying}
-            onRecordingStateChange={setImmersiveShaderRecording}
-            onFullscreenStateChange={setImmersiveShaderFullscreen}
-          />
-        </Box>
-
-        {/* Layer 1 – Editor overlay + controls bar stacked in one flex column */}
-        <Box sx={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Editor area – flex:1 so it fills space above the controls bar */}
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-						{tabBar}
-						{editorContent}
-          </Box>
-
-          {/* Controls bar sits at the bottom and takes its natural height */}
-          <ShaderControls
-            isPlaying={immersiveShaderPlaying}
-            isRecording={immersiveShaderRecording}
-            isFullscreen={immersiveShaderFullscreen}
-            webcamEnabled={webcamEnabled}
-            micEnabled={micEnabled}
-            onTogglePlay={() => shaderRef.current?.togglePlay()}
-            onToggleWebcam={handleToggleWebcam}
-            onToggleMic={handleToggleMic}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={handleToggleMute}
-            onStartRecording={() => shaderRef.current?.startRecording()}
-            onStopRecording={() => shaderRef.current?.stopRecording()}
-            onToggleFullscreen={() => shaderRef.current?.toggleFullscreen()}
-            isMobile={isMobile}
-            isImmersive={true}
-            onToggleImmersive={handleToggleImmersive}
-            immersiveOpacity={immersiveOpacity}
-            onImmersiveOpacityChange={setImmersiveOpacity}
-          />
-        </Box>
-        {overwriteDialog}
-      </Box>
-    )
-  }
-
-  if (isMobile) {
-    // Mobile: vertical stack – shader on top, editor panel below
-    return (
-      <Box
-        ref={outerContainerRef}
-        sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'background.app' }}
-      >
-        {/* Top: shader canvas */}
-        <Box sx={{ height: editorCollapsed ? '100%' : `${mobileShaderRatio}%`, flexShrink: 0, minHeight: 0 }}>
-          <ShaderPane
-            ref={shaderRef}
-            shaderSource={shaderSource}
-            webcamStream={webcamStream}
-            audioStream={audioStream}
-            webcamEnabled={webcamEnabled}
-            micEnabled={micEnabled}
-            onToggleWebcam={handleToggleWebcam}
-            onToggleMic={handleToggleMic}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={handleToggleMute}
-            onShaderError={setShaderError}
-            editorCollapsed={editorCollapsed}
-            onToggleEditorCollapsed={() => setEditorCollapsed(c => !c)}
-            isMobile={true}
-            isImmersive={false}
-            onToggleImmersive={handleToggleImmersive}
-            immersiveOpacity={immersiveOpacity}
-            onImmersiveOpacityChange={setImmersiveOpacity}
-          />
-        </Box>
-
-        {/* Horizontal drag divider */}
-        {!editorCollapsed && (
-          <Box
-            onMouseDown={handleMobileDividerMouseDown}
-            sx={{
-              height: '4px',
-              cursor: 'row-resize',
-              bgcolor: 'border.faint',
-              flexShrink: 0,
-              '&:hover': { bgcolor: 'border.hover' },
-            }}
-          />
-        )}
-
-        {/* Bottom: editor panel */}
-        <Collapse in={!editorCollapsed} sx={mobileEditorCollapseSx}>
-          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-						{tabBar}
-            {editorContent}
-          </Box>
-        </Collapse>
-        {overwriteDialog}
-      </Box>
-    )
-  }
-
-  // Desktop: horizontal layout – shader on left, editor on right
   return (
 		<ThemeProvider theme={muiTheme}>
 			<StrudelAnalyzerProvider>
@@ -454,55 +280,7 @@ export default function App() {
 					color: muiTheme.palette.textColor.primary,
 				},
 			}} />
-			<Box ref={outerContainerRef} sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: 'background.app' }}>
-				{/* Left: shader canvas */}
-				<Box sx={{ width: editorCollapsed ? '100%' : `${leftRatio}%`, minWidth: 0, flexShrink: 0 }}>
-					<ShaderPane
-						ref={shaderRef}
-						shaderSource={shaderSource}
-						webcamStream={webcamStream}
-						audioStream={audioStream}
-						webcamEnabled={webcamEnabled}
-						micEnabled={micEnabled}
-						onToggleWebcam={handleToggleWebcam}
-						onToggleMic={handleToggleMic}
-						onVolumeChange={handleVolumeChange}
-						onToggleMute={handleToggleMute}
-						onShaderError={setShaderError}
-						editorCollapsed={editorCollapsed}
-						onToggleEditorCollapsed={() => setEditorCollapsed(c => !c)}
-						isMobile={false}
-						isImmersive={false}
-						onToggleImmersive={handleToggleImmersive}
-						immersiveOpacity={immersiveOpacity}
-						onImmersiveOpacityChange={setImmersiveOpacity}
-					/>
-				</Box>
-
-				{/* Horizontal drag divider between shader and editor */}
-				{!editorCollapsed && (
-					<Box
-						onMouseDown={handleHorizontalDividerMouseDown}
-						sx={{
-							width: '4px',
-							cursor: 'col-resize',
-							bgcolor: 'border.default',
-							flexShrink: 0,
-							'&:hover': { bgcolor: 'border.faint'},
-						}}
-					/>
-				)}
-
-				{/* Right: editor panel */}
-				<Collapse orientation="horizontal" in={!editorCollapsed} sx={desktopEditorCollapseSx}>
-					<Box sx={{ flex: 1, height: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-						{tabBar}
-						{editorContent}
-					</Box>
-				</Collapse>
-
-				{overwriteDialog}
-			</Box>
+				{viewTypeDisplay}
 			</StrudelAudioStreamProvider>
 			</StrudelAnalyzerProvider>
 		</ThemeProvider>

@@ -1,9 +1,9 @@
 import { Box, Typography }from '@mui/material'
-import { UNIFORMS } from './uniformsData'
+import { UniformEntry, UNIFORMS } from './uniformsData'
 import { InformationPanel } from '../informationPanel/InformationPanel';
 
 export default function UniformsPanel() {
-	const renderUniform = (u: any) => (
+	const renderUniform = (u: UniformEntry) => (
 		<Box key={u.name} sx={{ mb: 1.5 }}>
 			<Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
 				<Typography

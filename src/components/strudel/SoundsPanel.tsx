@@ -1,11 +1,11 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { SOUND_CATEGORIES } from './soundCategories'
+import { SOUND_CATEGORIES, SoundCategory } from './soundCategories'
 import { InformationPanel } from '../informationPanel/InformationPanel'
 
 /** Inline sounds reference panel – shown in-pane instead of a modal. */
 export default function SoundsPanel() {
-	const renderCategory = (cat: any) => (
+	const renderCategory = (cat: SoundCategory) => (
 		<Box key={cat.label} sx={{ mb: 2 }}>
 			<Typography
 				variant="caption"
