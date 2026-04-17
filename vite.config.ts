@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
 	server: {
-		port: 7455,
+		port: 7456,
 	},
   test: {
     environment: 'jsdom',

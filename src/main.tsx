@@ -1,26 +1,27 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import App from './components/App/App'
 import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
 import './index.css'
-import { applyTheme, getThemeByName } from './themes/appThemes.ts'
-import { getInitialTheme } from './hooks/useAppStorage.ts'
-
-// Apply the stored (or default) theme before first render so there's no flash
-applyTheme(getThemeByName(getInitialTheme()))
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-})
+import { AppStorageProvider } from './hooks/useAppStorage'
+import { MediaStreamsProvider } from './hooks/useMediaStreams'
+import { StrudelAnalyzerProvider } from './hooks/useStrudelAnalyzer'
+import { StrudelAudioStreamProvider } from './hooks/useStrudelAudioStream'
+import { SavedContentProvider } from './hooks/useSavedContent'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+		<StrudelAnalyzerProvider>
+			<StrudelAudioStreamProvider>
+				<MediaStreamsProvider>
+					<SavedContentProvider>
+						<AppStorageProvider>	
+							<CssBaseline />
+							<App />
+						</AppStorageProvider>
+					</SavedContentProvider>
+				</MediaStreamsProvider>
+			</StrudelAudioStreamProvider>
+		</StrudelAnalyzerProvider>
   </React.StrictMode>,
 )
