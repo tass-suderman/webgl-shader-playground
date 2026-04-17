@@ -33,3 +33,10 @@ html, body, #root {
   background-color: transparent !important;
   background: transparent !important;
 }
+
+/* Constrain the CodeMirror autocomplete info panel so it doesn't overflow
+   outside the editor into adjacent panels. */
+.cm-tooltip.cm-completionInfo {
+  max-width: 320px;
+  overflow: hidden;
+}

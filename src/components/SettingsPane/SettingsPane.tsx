@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react'
-import { Box, Button, Checkbox, FormControl, FormControlLabel, MenuItem, Select, Typography} from '@mui/material'
+import { Box, Button, FormControl, MenuItem, Select, Typography} from '@mui/material'
 import { DeleteForever } from '@mui/icons-material'
 import { themes } from '../../themes/Theme'
 import ResetConfirmationDialog from '../ResetConfirmationDialog/ResetConfirmationDialog'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
 import SettingsSection from '../SettingsSection/SettingsSection'
+import SettingsCheckbox from '../SettingsCheckbox/SettingsCheckbox'
 import { shortcuts } from '../../utility/keyboardShortcuts'
 import { useTheme } from '../../hooks/useTheme'
 import { useAppStorage } from '../../hooks/useAppStorage'
@@ -25,6 +26,7 @@ export default () => {
 		fontSize, setFontSize,
 		warnOnOverwrite, setWarnOnOverwrite,
 		strudelAutocomplete, setStrudelAutocomplete,
+		glslAutocomplete, setGlslAutocomplete,
 	} = useAppStorage()
 
   return (
@@ -46,34 +48,11 @@ export default () => {
 
         {/* ---- Editor ---- */}
 				<SettingsSection title="Editor">
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={vimMode}
-                onChange={(e) => setVimMode(e.target.checked)}
-                size="small"
-                sx={{
-                  color: 'border.default',
-                  '&.Mui-checked': { color: 'accent' },
-                }}
-              />
-            }
-            label={ <Typography variant="body2" children="Vim keybindings" /> }
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={strudelAutocomplete}
-                onChange={(e) => setStrudelAutocomplete(e.target.checked)}
-                size="small"
-                sx={{
-                  color: 'border.default',
-                  '&.Mui-checked': { color: 'accent' },
-                }}
-              />
-            }
-            label={ <Typography variant="body2" children="Strudel autocomplete" /> }
-          />
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5, mb: 1.5 }}>
+            <SettingsCheckbox checked={vimMode} onChange={setVimMode} label="Vim keybindings" />
+            <SettingsCheckbox checked={glslAutocomplete} onChange={setGlslAutocomplete} label="GLSL autocomplete" />
+            <SettingsCheckbox checked={strudelAutocomplete} onChange={setStrudelAutocomplete} label="Strudel autocomplete" />
+          </Box>
           <Box sx={{ mt: 1.5 }}>
             <Typography variant="body2" sx={{ mb: 0.75 }} children="Font size" />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -200,21 +179,10 @@ export default () => {
 
 				<SettingsDivider />
 				<SettingsSection title="Saved Content">
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={warnOnOverwrite}
-                onChange={(e) => setWarnOnOverwrite(e.target.checked)}
-                size="small"
-                sx={{
-                  color: 'border.default',
-                  '&.Mui-checked': { color: 'accent' },
-                }}
-              />
-            }
-            label={
-              <Typography variant="body2" children="Warn before overwriting a saved entry" />
-            }
+          <SettingsCheckbox
+            checked={warnOnOverwrite}
+            onChange={setWarnOnOverwrite}
+            label="Warn before overwriting a saved entry"
           />
 				</SettingsSection>
 
