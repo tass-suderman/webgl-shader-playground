@@ -5,6 +5,7 @@ import { zipSync, strToU8 } from 'fflate'
 import CombinedExamplesPanel from '../CombinedExamplesPanel/CombinedExamplesPanel'
 import { useSavedContent } from '../../hooks/useSavedContent'
 import DeleteItemDialog from '../DeleteItemDialog/DeleteItemDialog'
+import ConfirmationDialog from '../ConfirmationDialog/ConfirmationDialog'
 import SavedSection from './SavedSection'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
 import PaneHeader from '../PaneHeader/PaneHeader'
@@ -18,6 +19,12 @@ interface SavedPaneProps {
 
 interface PendingDelete {
   title: string
+  type: 'shader' | 'pattern'
+}
+
+interface PendingLoad {
+  title: string
+  content: string
   type: 'shader' | 'pattern'
 }
 
@@ -39,6 +46,8 @@ export default function SavedPane({
 }: SavedPaneProps) {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [pendingLoad, setPendingLoad] = useState<PendingLoad | null>(null)
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false)
 
 	const { 
 		savedShaders, deleteShader,
@@ -66,6 +75,27 @@ export default function SavedPane({
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false)
     setPendingDelete(null)
+  }
+
+  const handleLoadRequest = (title: string, content: string, type: 'shader' | 'pattern') => {
+    setPendingLoad({ title, content, type })
+    setLoadDialogOpen(true)
+  }
+
+  const handleLoadConfirm = () => {
+    if (!pendingLoad) return
+    if (pendingLoad.type === 'shader') {
+      onLoadShader(pendingLoad.title, pendingLoad.content)
+    } else {
+      onLoadPattern(pendingLoad.title, pendingLoad.content)
+    }
+    setLoadDialogOpen(false)
+    setPendingLoad(null)
+  }
+
+  const handleLoadCancel = () => {
+    setLoadDialogOpen(false)
+    setPendingLoad(null)
   }
 
   const handleExportAll = () => {
@@ -134,14 +164,14 @@ export default function SavedPane({
               heading="Shaders"
               entries={savedShaders}
               ext="glsl"
-              onLoad={onLoadShader}
+              onLoad={(title, content) => handleLoadRequest(title, content, 'shader')}
               onDelete={(title) => handleDeleteRequest(title, 'shader')}
             />
             <SavedSection
               heading="Patterns"
               entries={savedPatterns}
               ext="strudel"
-              onLoad={onLoadPattern}
+              onLoad={(title, content) => handleLoadRequest(title, content, 'pattern')}
               onDelete={(title) => handleDeleteRequest(title, 'pattern')}
             />
 
@@ -178,6 +208,14 @@ export default function SavedPane({
 				title={pendingDelete?.type || 'shader'}
 				onConfirm={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
+			/>
+			<ConfirmationDialog
+				open={loadDialogOpen}
+				heading="Load saved content?"
+				body={<>Loading <strong style={{ color: 'accent' }}>{pendingLoad?.title}</strong> will replace your current {pendingLoad?.type === 'shader' ? 'shader' : 'pattern'}. Any unsaved progress will be lost.</>}
+				confirmLabel="Load"
+				onCancel={handleLoadCancel}
+				onConfirm={handleLoadConfirm}
 			/>
     </Box>
   )
