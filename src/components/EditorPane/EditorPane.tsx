@@ -23,6 +23,7 @@ interface EditorPaneProps {
 
 export interface EditorPaneHandle {
   loadExample: (title: string, content: string) => void
+  run: () => void
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
@@ -63,6 +64,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
       setShaderTitle(title)
       saveGlslTitle(title)
       onRun(content)
+    },
+    run() {
+      onRun(pendingSourceRef.current)
     },
   }), [setPendingSource, onRun])
 

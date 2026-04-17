@@ -2,12 +2,14 @@ import { useEffect, useRef } from 'react'
 import { GlobalStyles, ThemeProvider } from '@mui/material'
 import { type ShaderPaneHandle } from '../ShaderPane/ShaderPane'
 import { type StrudelPaneHandle } from '../StrudelPane/StrudelPane'
+import { type EditorPaneHandle } from '../EditorPane/EditorPane'
 import { useTheme } from '../../hooks/useTheme'
 import { ViewReducer } from '../ViewReducer/ViewReducer'
 
 export default function App() {
   const strudelRef = useRef<StrudelPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
+  const editorRef = useRef<EditorPaneHandle>(null)
 	const { muiTheme } = useTheme();
 
   useEffect(() => {
@@ -18,9 +20,11 @@ export default function App() {
 				keyboardAction()
 			}
 
-			// // TODO --> This is not working for compiling the shader right now
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-				handleKeyboardEvent(e, () => shaderRef.current?.unpause())
+				handleKeyboardEvent(e, () => {
+					editorRef.current?.run()
+					shaderRef.current?.unpause()
+				})
         return
       }
       if ((e.ctrlKey || e.metaKey) && e.key === '.') {
@@ -49,8 +53,8 @@ export default function App() {
 							<ViewReducer
 								strudelRef={strudelRef}
 								shaderRef={shaderRef}
+								editorRef={editorRef}
 							/>
 		</ThemeProvider>
   )
 }
-

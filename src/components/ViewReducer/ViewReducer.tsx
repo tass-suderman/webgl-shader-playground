@@ -12,11 +12,14 @@ import { OverwriteDialog } from '../OverwriteDialog/OverwriteDialog'
 import { StrudelPaneHandle } from '../StrudelPane/StrudelPane'
 import { ShaderPaneHandle } from '../ShaderPane/ShaderPane'
 
+import { type EditorPaneHandle } from '../EditorPane/EditorPane'
+
 type DisplayMode = 'default' | 'immersive'
 
 interface ViewReducerProps {
 	shaderRef: React.RefObject<ShaderPaneHandle>
 	strudelRef: React.RefObject<StrudelPaneHandle>
+	editorRef: React.RefObject<EditorPaneHandle>
 }
 
 const initialShaderCode = getInitialGlslCode()
@@ -24,6 +27,7 @@ const initialShaderCode = getInitialGlslCode()
 export const ViewReducer = ({
 	shaderRef,
 	strudelRef,
+	editorRef,
 }: ViewReducerProps) => {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('default')
   const [editorCollapsed, setEditorCollapsed] = useState(false)
@@ -76,6 +80,7 @@ export const ViewReducer = ({
 			viewMode={viewMode}
 			initialShaderCode={initialShaderCode}
 			shaderError={shaderError}
+			editorRef={editorRef}
 			strudelRef={strudelRef}
 			setShaderSource={setShaderSource}
 			setViewMode={setViewMode}
