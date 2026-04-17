@@ -17,7 +17,6 @@ type DisplayMode = 'default' | 'immersive'
 interface ViewReducerProps {
 	shaderRef: React.RefObject<ShaderPaneHandle>
 	strudelRef: React.RefObject<StrudelPaneHandle>
-	changeTheme: (themeName: string) => void
 }
 
 const initialShaderCode = getInitialGlslCode()

@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, InputBase, Tooltip } from '@mui/material'
+import { Button, IconButton, InputBase, Tooltip } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
@@ -6,6 +6,7 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SaveIcon from '@mui/icons-material/Save'
 import StopIcon from '@mui/icons-material/Stop'
+import PaneHeader from '../PaneHeader/PaneHeader'
 
 export interface EditorHeaderProps {
   title: string
@@ -47,20 +48,7 @@ export default function EditorHeader({
   uniformsActive = false,
 }: EditorHeaderProps) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: 2,
-        py: 1,
-        bgcolor: 'background.header',
-        borderBottom: '1px solid',
-				borderColor: 'border.subtle',
-        flexShrink: 0,
-        gap: 1,
-      }}
-    >
+    <PaneHeader>
       <InputBase
         value={title}
         onChange={onTitleChange}
@@ -128,7 +116,7 @@ export default function EditorHeader({
       </Button>
 
       {/* Stop button – only for Strudel */}
-      {onStop !== undefined && (
+      {onStop && (
         <Button
           variant="outlined"
           color="error"
@@ -136,11 +124,11 @@ export default function EditorHeader({
           startIcon={<StopIcon />}
           onClick={onStop}
           disabled={!isPlaying}
-          sx={{ textTransform: 'none', flexShrink: 0 }}
+          sx={{ textTransform: 'none', flexShrink: 0, ':disabled': { borderColor: 'border.disabled', color: 'border.disabled' } }}
         >
           Stop
         </Button>
       )}
-    </Box>
+    </PaneHeader>
   )
 }

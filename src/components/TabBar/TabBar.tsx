@@ -37,10 +37,10 @@ export const TabBar = ({
 				children={
 					tabConfigs.map(({ value, label, variant }) => (
 						<ToggleButton
-						key={value}
-						value={value}
-						sx={getTabSx(variant)}
-						children={label}
+							key={value}
+							value={value}
+							sx={getTabSx(variant)}
+							children={label}
 						/>
 					))
 				}

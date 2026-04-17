@@ -1,16 +1,15 @@
 import { useState } from 'react'
-import { Box, Divider, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material'
-import { DeleteOutline, Download } from '@mui/icons-material'
+import { Box, IconButton, Tooltip, Typography } from '@mui/material'
+import { Download } from '@mui/icons-material'
 import { zipSync, strToU8 } from 'fflate'
 import CombinedExamplesPanel from '../CombinedExamplesPanel/CombinedExamplesPanel'
-import type { SavedEntry } from '../../hooks/useSavedContent'
+import { useSavedContent } from '../../hooks/useSavedContent'
 import DeleteItemDialog from '../DeleteItemDialog/DeleteItemDialog'
+import SavedSection from './SavedSection'
+import SettingsDivider from '../SettingsDivider/SettingsDivider'
+import PaneHeader from '../PaneHeader/PaneHeader'
 
 interface SavedPaneProps {
-  savedShaders: SavedEntry[]
-  savedPatterns: SavedEntry[]
-  onDeleteShader: (title: string) => void
-  onDeletePattern: (title: string) => void
   onLoadShader: (title: string, content: string) => void
   onLoadPattern: (title: string, content: string) => void
   onLoadGlslExample: (title: string, content: string) => void
@@ -32,91 +31,7 @@ function sanitizeFilename(title: string, fallback: string): string {
   )
 }
 
-function SavedSection({
-  heading,
-  entries,
-  ext,
-  onLoad,
-  onDelete,
-}: {
-  heading: string
-  entries: SavedEntry[]
-  ext: string
-  onLoad: (title: string, content: string) => void
-  onDelete: (title: string) => void
-}) {
-  if (entries.length === 0) return null
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography
-        variant="subtitle2"
-        sx={{
-          px: 2,
-          py: 1,
-          color: 'textColor.muted',
-          fontFamily: 'monospace',
-          fontSize: '0.7rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          borderBottom: '1px solid',
-					borderColor: 'border.faint',
-        }}
-      >
-        {heading}
-      </Typography>
-      <List dense disablePadding>
-        {entries.map(entry => (
-          <ListItem
-            key={entry.title}
-            disablePadding
-            secondaryAction={
-              <Tooltip title={`Delete ${ext === 'glsl' ? 'shader' : 'pattern'}`}>
-                <IconButton
-                  size="small"
-                  edge="end"
-                  aria-label={`Delete ${entry.title}`}
-                  onClick={() => onDelete(entry.title)}
-                  sx={{ color: 'textColor.muted', '&:hover': { color: '#ff8080' } }}
-                >
-                  <DeleteOutline fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            }
-          >
-            <ListItemButton
-              onClick={() => onLoad(entry.title, entry.content)}
-              sx={{
-                px: 2,
-                py: 0.75,
-                pr: 6,
-                '&:hover': { bgcolor: 'background.button' },
-              }}
-            >
-              <ListItemText
-                primary={entry.title}
-                slotProps={{
-									primary: {
-										sx: {
-											color: 'textColor.primary',
-											fontFamily: 'monospace',
-											fontSize: '0.875rem',
-										},
-									}
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </Box>
-  )
-}
-
 export default function SavedPane({
-  savedShaders,
-  savedPatterns,
-  onDeleteShader,
-  onDeletePattern,
   onLoadShader,
   onLoadPattern,
   onLoadGlslExample,
@@ -124,6 +39,11 @@ export default function SavedPane({
 }: SavedPaneProps) {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+	const { 
+		savedShaders, deleteShader,
+		savedPatterns, deletePattern 
+	}= useSavedContent();
 
   const hasSavedContent = savedShaders.length > 0 || savedPatterns.length > 0
 
@@ -135,9 +55,9 @@ export default function SavedPane({
   const handleDeleteConfirm = () => {
     if (!pendingDelete) return
     if (pendingDelete.type === 'shader') {
-      onDeleteShader(pendingDelete.title)
+      deleteShader(pendingDelete.title)
     } else {
-      onDeletePattern(pendingDelete.title)
+      deletePattern(pendingDelete.title)
     }
     setDeleteDialogOpen(false)
     setPendingDelete(null)
@@ -173,22 +93,7 @@ export default function SavedPane({
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.panel' }}>
       {/* Header */}
-      <Box
-        sx={{
-          px: 2,
-          py: 1,
-          bgcolor: 'background.header',
-          borderBottom: '1px solid',
-					borderColor: 'border.subtle',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
-          Saved
-        </Typography>
+			<PaneHeader title="Saved">
         {hasSavedContent && (
           <Tooltip title="Export all saved content as zip">
             <IconButton
@@ -201,7 +106,7 @@ export default function SavedPane({
             </IconButton>
           </Tooltip>
         )}
-      </Box>
+      </PaneHeader>
 
       {/* Scrollable content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
@@ -212,9 +117,6 @@ export default function SavedPane({
               sx={{
                 px: 2,
                 py: 0.75,
-                bgcolor: 'background.header',
-                borderBottom: '1px solid',
-								borderColor: 'border.faint',
               }}
             >
               <Typography
@@ -223,12 +125,11 @@ export default function SavedPane({
                   fontFamily: 'monospace',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+									color: 'textColor.primary',
                 }}
-              >
-                Saved Content
-              </Typography>
+								children="Saved Content"
+              />
             </Box>
-
             <SavedSection
               heading="Shaders"
               entries={savedShaders}
@@ -244,7 +145,7 @@ export default function SavedPane({
               onDelete={(title) => handleDeleteRequest(title, 'pattern')}
             />
 
-            <Divider sx={{ borderColor: 'border.faint', my: 1 }} />
+						<SettingsDivider />
           </>
         )}
 
@@ -253,8 +154,6 @@ export default function SavedPane({
           sx={{
             px: 2,
             py: 0.75,
-            bgcolor: 'background.header',
-            borderBottom: 'border.faint',
           }}
         >
           <Typography
@@ -263,10 +162,10 @@ export default function SavedPane({
               fontFamily: 'monospace',
               fontSize: '0.75rem',
               fontWeight: 700,
+							color: 'textColor.primary',
             }}
-          >
-            Examples
-          </Typography>
+						children="Examples"
+          />
         </Box>
         <CombinedExamplesPanel
           embedded

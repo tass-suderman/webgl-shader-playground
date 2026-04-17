@@ -3,16 +3,12 @@ import { GlobalStyles, ThemeProvider } from '@mui/material'
 import { type ShaderPaneHandle } from '../ShaderPane/ShaderPane'
 import { type StrudelPaneHandle } from '../StrudelPane/StrudelPane'
 import { useTheme } from '../../hooks/useTheme'
-import { MediaStreamsProvider } from '../../hooks/useMediaStreams'
-import { StrudelAnalyzerProvider } from '../../hooks/useStrudelAnalyzer'
-import { StrudelAudioStreamProvider } from '../../hooks/useStrudelAudioStream'
 import { ViewReducer } from '../ViewReducer/ViewReducer'
-import { SavedContentProvider } from '../../hooks/useSavedContent'
 
 export default function App() {
   const strudelRef = useRef<StrudelPaneHandle>(null)
   const shaderRef = useRef<ShaderPaneHandle>(null)
-	const { muiTheme, changeTheme } = useTheme();
+	const { muiTheme } = useTheme();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -45,24 +41,15 @@ export default function App() {
 
   return (
 		<ThemeProvider theme={muiTheme}>
-			<StrudelAnalyzerProvider>
-			<StrudelAudioStreamProvider>
-			<MediaStreamsProvider>
-			<SavedContentProvider>
-			<GlobalStyles styles={{
-				'.MuiTypography-root': {
-					color: 'textColor.primary',
-				},
-			}} />
-				<ViewReducer
-					strudelRef={strudelRef}
-					shaderRef={shaderRef}
-					changeTheme={changeTheme}
-				/>
-				</SavedContentProvider>
-				</MediaStreamsProvider>
-			</StrudelAudioStreamProvider>
-			</StrudelAnalyzerProvider>
+							<GlobalStyles styles={{
+								'.MuiTypography-root': {
+									color: 'textColor.primary',
+								},
+							}} />
+							<ViewReducer
+								strudelRef={strudelRef}
+								shaderRef={shaderRef}
+							/>
 		</ThemeProvider>
   )
 }

@@ -283,10 +283,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   }, [saveCode])
 
   const handleSave = useCallback(() => {
-    if (onSave) {
-      const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
-      onSave(strudelTitle, code)
-    }
+		const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
+		onSave(strudelTitle, code)
   }, [onSave, strudelTitle])
 
   const handleExport = useCallback(() => {
@@ -363,7 +361,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
-        onSave={onSave ? handleSave : undefined}
+        onSave={handleSave}
         onShowSounds={() => setSoundsOpen(v => !v)}
         soundsActive={soundsOpen}
         onRun={handleRun}

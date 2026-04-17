@@ -91,11 +91,11 @@ export const DesktopView = ({
 				<Box
 					onMouseDown={handleHorizontalDividerMouseDown}
 					sx={{
-						width: '4px',
+						width: '3px',
 						cursor: 'col-resize',
-						bgcolor: 'border.default',
+						bgcolor: 'border.subtle',
 						flexShrink: 0,
-						'&:hover': { bgcolor: 'border.faint'},
+						'&:hover': { bgcolor: 'border.hover'},
 					}}
 				/>
 			)}

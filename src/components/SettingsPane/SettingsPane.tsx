@@ -8,6 +8,7 @@ import SettingsSection from '../SettingsSection/SettingsSection'
 import { shortcuts } from '../../utility/keyboardShortcuts'
 import { useTheme } from '../../hooks/useTheme'
 import { useAppStorage } from '../../hooks/useAppStorage'
+import PaneHeader from '../PaneHeader/PaneHeader'
 
 export default () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
@@ -37,18 +38,7 @@ export default () => {
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          px: 2,
-          py: 1,
-          bgcolor: 'background.header',
-					borderColor: 'border.subtle',
-          borderBottom: '1px solid',
-          flexShrink: 0,
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }} children="Settings" />
-      </Box>
+			<PaneHeader title="Settings" />
 
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

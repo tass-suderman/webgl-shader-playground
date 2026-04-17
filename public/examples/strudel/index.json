@@ -1,5 +1,6 @@
 [
-  { "id": "default-pattern", "title": "Default Pattern", "aiGenerated": false },
+  { "id": "default-pattern", "title": "Default Pattern", "aiGenerated": true },
+  { "id": "first-bass-drop", "title": "First Bass Drop", "aiGenerated": false },
   { "id": "techno-beat", "title": "Techno Beat", "aiGenerated": true },
   { "id": "melodic-arp", "title": "Melodic Arp", "aiGenerated": true },
   { "id": "tr909-kit", "title": "TR-909 Drum Kit", "aiGenerated": true },

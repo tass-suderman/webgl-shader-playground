@@ -5,18 +5,8 @@ import ShaderControls from '../ShaderControls/ShaderControls'
 import { useStrudelAnalyzer } from '../../hooks/useStrudelAnalyzer'
 import { useStrudelAudioStream } from '../../hooks/useStrudelAudioStream'
 import { useMediaStreams } from '../../hooks/useMediaStreams'
-
-// Download a blob via a temporary anchor element (fallback when showSaveFilePicker is unavailable)
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
+import { downloadBlob } from '../../utility/download'
+import { useAppStorage } from '../../hooks/useAppStorage'
 
 export interface ShaderPaneHandle {
   pause: () => void
@@ -29,32 +19,16 @@ export interface ShaderPaneHandle {
 
 interface ShaderPaneProps {
   shaderSource: string
-  /** MediaStream carrying the Strudel audio output – used for recording */
-  strudelAudioStream?: MediaStream | null
   onShaderError?: (error: string | null) => void
-  /** Whether the editor panel is currently collapsed */
   editorCollapsed?: boolean
-  /** Callback to toggle editor collapse/expand */
   onToggleEditorCollapsed?: () => void
-  /** True when on a narrow/mobile viewport */
   isMobile?: boolean
-  /** When true the built-in ShaderControls toolbar is not rendered (used in
-   *  immersive mode where the controls are lifted outside the pane). */
   hideControls?: boolean
-  /** Notifies the parent whenever the playing state changes */
   onPlayStateChange?: (playing: boolean) => void
-  /** Notifies the parent whenever the recording state changes */
   onRecordingStateChange?: (recording: boolean) => void
-  /** Notifies the parent whenever the fullscreen state changes */
   onFullscreenStateChange?: (fullscreen: boolean) => void
-  /** Whether immersive mode is currently active */
   isImmersive?: boolean
-  /** Callback to toggle immersive mode */
   onToggleImmersive?: () => void
-  /** Background opacity (0–100) used in immersive mode */
-  immersiveOpacity?: number
-  /** Callback when the immersive opacity slider changes */
-  onImmersiveOpacityChange?: (opacity: number) => void
 }
 
 export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane({
@@ -69,7 +43,6 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
   onFullscreenStateChange,
   isImmersive,
   onToggleImmersive,
-	immersiveOpacity
 }: ShaderPaneProps, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -81,6 +54,8 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
 	const { analyzer } = useStrudelAnalyzer()
 	const { strudelAudioStream } = useStrudelAudioStream()
 	const { webcamStream, audioStream } = useMediaStreams()
+
+	const { immersiveOpacity } = useAppStorage()
 
   useWebGL(canvasRef, {
     shaderSource,

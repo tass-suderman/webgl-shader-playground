@@ -65,8 +65,6 @@ function ExampleSection({
           fontSize: '0.7rem',
           textTransform: 'uppercase',
           letterSpacing: '0.08em',
-					borderColor: 'border.faint',
-          borderBottom: '1px solid',
         }}
       >
         {heading}

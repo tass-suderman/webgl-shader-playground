@@ -1,14 +1,14 @@
 import { Typography } from '@mui/material'
 
 export interface AboutPaneSectionProps {
-	title: string
+	title?: string
 	children: React.ReactNode
 }
 
 const AboutPaneSection: React.FC<AboutPaneSectionProps> = ({ title, children }) => {
 	return (
 		<>
-      <Typography variant="h6" sx={{ fontFamily: 'monospace', mb: 2 }} children={title} />
+			{title && <Typography variant="h6" sx={{ fontFamily: 'monospace', mb: 2 }} children={title} />}
 			{children}
 		</>
 	)

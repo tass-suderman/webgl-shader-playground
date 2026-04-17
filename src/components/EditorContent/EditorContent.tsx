@@ -1,11 +1,10 @@
 import {Box} from '@mui/material'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import EditorPane, { type EditorPaneHandle } from '../EditorPane/EditorPane'
 import StrudelPane, { type StrudelPaneHandle } from '../StrudelPane/StrudelPane'
 import SettingsPane from '../SettingsPane/SettingsPane'
 import SavedPane from '../SavedPane/SavedPane'
 import AboutPane from '../AboutPane/AboutPane'
-import { useTheme } from '../../hooks/useTheme'
 import { ViewMode } from '../../constants/tabConfigs'
 import { useSavedContent } from '../../hooks/useSavedContent'
 import { useStrudelAnalyzer } from '../../hooks/useStrudelAnalyzer'
@@ -31,30 +30,23 @@ export const EditorContent = ({
 	shaderError,
 	strudelRef,
 	setShaderSource,
-	setViewMode,
 	setOverwritePending,
-  setOverwriteDialogOpen,
 	setDontShowAgain,
+	setOverwriteDialogOpen,
+	setViewMode,
 	commitSave
 }: EditorContentProps) => {
-  const [pendingSource, setPendingSource] = useState<string>(initialShaderCode)
 
   const savedContent = useSavedContent()
-	const { currentTheme } = useTheme()
 
   const showGlsl = useMemo(() => viewMode === 'glsl', [viewMode])
   const showStrudel = useMemo(() => viewMode === 'strudel', [viewMode])
-	//
-  const pendingSourceRef = useRef(pendingSource)
-  pendingSourceRef.current = pendingSource
 
   const handleRun = useCallback((code: string) => {
     setShaderSource(code)
   }, [])
 
 	const { 
-		vimMode,
-		fontSize,
 		warnOnOverwrite,
 	} = useAppStorage()
 
@@ -120,10 +112,6 @@ export const EditorContent = ({
 				{viewMode === 'saved' && (
 					<Box sx={{ flex: 1, overflow: 'hidden' }}>
 						<SavedPane
-							savedShaders={savedContent.savedShaders}
-							savedPatterns={savedContent.savedPatterns}
-							onDeleteShader={savedContent.deleteShader}
-							onDeletePattern={savedContent.deletePattern}
 							onLoadShader={handleLoadSavedShader}
 							onLoadPattern={handleLoadSavedPattern}
 							onLoadGlslExample={handleLoadGlslExample}
@@ -143,12 +131,7 @@ export const EditorContent = ({
 						ref={editorRef}
 						initialCode={initialShaderCode}
 						onRun={handleRun}
-						pendingSource={pendingSource}
-						onCodeChange={setPendingSource}
 						shaderError={shaderError}
-						vimMode={vimMode}
-						themeName={currentTheme.name}
-						fontSize={fontSize}
 						onSave={handleSaveShader}
 					/>
 				</Box>
@@ -164,9 +147,6 @@ export const EditorContent = ({
 						ref={strudelRef}
 						onAnalyserReady={setAnalyzer}
 						onAudioStreamReady={setStrudelAudioStream}
-						vimMode={vimMode}
-						themeName={currentTheme.name}
-						fontSize={fontSize}
 						onSave={handleSavePattern}
 					/>
 				</Box>

@@ -17,13 +17,15 @@ export default function LoadExampleDialog({ confirmOpen, title, itemLabel, onCan
         onClose={onCancel}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.header',
-            color: 'textColor.primary',
-						borderColor: 'border.default',
-            border: '1px solid',
-          },
+        slotProps={{
+					paper: {
+						sx: {
+							bgcolor: 'background.header',
+							color: 'textColor.primary',
+							borderColor: 'border.default',
+							border: '1px solid',
+						}
+					}
         }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>

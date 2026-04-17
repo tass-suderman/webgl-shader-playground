@@ -69,7 +69,6 @@ export const ImmersiveView = ({
 			{/* Layer 0 – Shader canvas, full viewport, behind everything */}
 			<Box sx={{ position: 'absolute', inset: 0, zIndex: 0 }}>
 				<ShaderPane
-					immersiveOpacity={immersiveOpacity}
 					ref={shaderRef}
 					shaderSource={shaderSource}
 					onShaderError={setShaderError}

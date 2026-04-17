@@ -3,6 +3,7 @@ import { UniformEntry } from '../../utility/shader/uniformsData';
 import { SoundCategory } from '../../utility/strudel/soundCategories';
 
 export interface InformationPanelProps {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	renderer: any;
 	items: readonly (UniformEntry|SoundCategory)[];
 	footer: React.ReactNode;

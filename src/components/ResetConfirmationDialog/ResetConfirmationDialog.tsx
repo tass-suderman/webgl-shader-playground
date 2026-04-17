@@ -11,13 +11,15 @@ export default function ResetConfirmationDialog({ open, onCancel, onConfirm }: R
       <Dialog
         open={open}
         onClose={onCancel}
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.header',
-            color: 'textColor.primary',
-            border: '1px solid',
-						borderColor: 'border.default',
-          },
+        slotProps={{
+					paper: {
+						sx: {
+							bgcolor: 'background.header',
+							color: 'textColor.primary',
+							border: '1px solid',
+							borderColor: 'border.default',
+						},
+					}
         }}
       >
         <DialogTitle sx={{ color: 'textColor.primary' }}>Reset all data?</DialogTitle>

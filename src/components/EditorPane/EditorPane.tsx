@@ -9,20 +9,16 @@ import ShaderError from '../ShaderError/ShaderError'
 import UniformsPanel from '../UniformsPanel/UniformsPanel'
 import { GLSL_MONARCH_TOKENS, GLSL_LANGUAGE_CONFIG } from '../../utility/shader/glslLanguage'
 import { ensureMonacoThemes, themeNameToMonaco } from '../../utility/shader/monacoThemes'
-import { saveGlslCode, saveGlslTitle, getInitialGlslTitle } from '../../hooks/useAppStorage'
+import { saveGlslCode, saveGlslTitle, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
+import { useTheme } from '../../hooks/useTheme'
 
 const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
 
 interface EditorPaneProps {
   initialCode: string
   onRun: (code: string) => void
-  pendingSource: string
-  onCodeChange: (code: string) => void
   shaderError: string | null
-  vimMode: boolean
-  themeName: string
-  fontSize?: number
-  onSave?: (title: string, content: string) => void
+  onSave: (title: string, content: string) => void
 }
 
 export interface EditorPaneHandle {
@@ -30,14 +26,14 @@ export interface EditorPaneHandle {
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, pendingSource, onCodeChange, shaderError, vimMode, themeName, fontSize = 13, onSave },
+  { initialCode, onRun, shaderError, onSave },
   ref,
 ) {
+  const [pendingSource, setPendingSource] = useState<string>(initialCode)
   const [shaderTitle, setShaderTitle] = useState(
     () => getInitialGlslTitle(DEFAULT_SHADER_TITLE),
   )
   const [uniformsOpen, setUniformsOpen] = useState(false)
-  /** Ratio (20–80) of the uniforms split: editor top / uniforms bottom */
   const [uniformsSplitRatio, setUniformsSplitRatio] = useState(50)
   const editorPaneRef = useRef<HTMLDivElement>(null)
   // TODO -- Fix me
@@ -55,17 +51,20 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
 
+	const { vimMode, fontSize } = useAppStorage()
+	const { currentTheme } = useTheme()
+
   // Expose loadExample imperatively (used by App when a GLSL example is selected)
   useImperativeHandle(ref, () => ({
     loadExample(title: string, content: string) {
       editorRef.current?.setValue(content)
-      onCodeChange(content)
+      setPendingSource(content)
       saveGlslCode(content)
       setShaderTitle(title)
       saveGlslTitle(title)
       onRun(content)
     },
-  }), [onCodeChange, onRun])
+  }), [setPendingSource, onRun])
 
   // Enable / disable vim mode whenever the prop changes or the editor mounts
   useEffect(() => {
@@ -107,8 +106,8 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
 
   // Switch Monaco editor theme whenever the app theme changes
   useEffect(() => {
-    monacoRef.current?.editor.setTheme(themeNameToMonaco(themeName))
-  }, [themeName])
+    monacoRef.current?.editor.setTheme(themeNameToMonaco(currentTheme.name))
+  }, [currentTheme.name])
 
   const handleEditorMount = useCallback<OnMount>((editor) => {
     editorRef.current = editor
@@ -129,10 +128,10 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   // directly here avoids extra debounce logic while keeping localStorage current.
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
-      onCodeChange(value)
+      setPendingSource(value)
       saveGlslCode(value)
     }
-  }, [onCodeChange])
+  }, [setPendingSource])
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setShaderTitle(e.target.value)
@@ -177,7 +176,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         // Update the editor display
         editorRef.current?.setValue(content)
         // Update parent state (also triggered by Monaco onChange, but set directly for safety)
-        onCodeChange(content)
+        setPendingSource(content)
         saveGlslCode(content)
         // Set title from filename, stripping the extension
         const name = file.name.replace(/\.[^.]+$/, '')
@@ -188,7 +187,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     reader.readAsText(file)
     // Reset so the same file can be re-imported
     e.target.value = ''
-  }, [onCodeChange])
+  }, [setPendingSource])
 
   /** Drag handler for the uniforms-split divider */
   const handleUniformsDividerMouseDown = useCallback((e: React.MouseEvent) => {
@@ -226,7 +225,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         onTitleChange={handleTitleChange}
         onImport={handleImportClick}
         onExport={handleExport}
-        onSave={onSave}
+        onSave={handleSave}
         onRun={handleRun}
         titleAriaLabel="Shader title"
         importAriaLabel="Import shader from file"
@@ -261,7 +260,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
           onChange={handleEditorChange}
           beforeMount={handleBeforeMount}
           onMount={handleEditorMount}
-          theme={themeNameToMonaco(themeName)}
+          theme={themeNameToMonaco(currentTheme.name)}
           options={{
             minimap: { enabled: false },
             fontSize: fontSize,

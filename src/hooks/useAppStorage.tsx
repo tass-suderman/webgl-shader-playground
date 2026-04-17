@@ -1,5 +1,6 @@
 import { useLocalStorage } from './useLocalStorage'
 import { DEFAULT_SHADER } from '../utility/shader/defaultShader'
+import { createContext, useContext } from 'react'
 
 // ---------------------------------------------------------------------------
 // Private key constants – no other file should reference these strings
@@ -68,7 +69,7 @@ export function getInitialTheme(): string {
 // Reactive hook for all persisted settings
 // ---------------------------------------------------------------------------
 
-export interface AppStorage {
+export interface AppStorageReturn {
   theme: string
   setTheme: (v: string) => void
   vimMode: boolean
@@ -85,7 +86,10 @@ export interface AppStorage {
   setWarnOnOverwrite: (v: boolean) => void
 }
 
-export function useAppStorage(): AppStorage {
+const AppStorageContext = createContext<AppStorageReturn | null>(null)
+
+
+export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
   const [theme, setTheme] = useLocalStorage(KEYS.theme, 'kanagawa')
   const [vimMode, setVimMode] = useLocalStorage(KEYS.vimMode, false)
   const [volume, setVolume] = useLocalStorage(KEYS.volume, 50)
@@ -94,13 +98,26 @@ export function useAppStorage(): AppStorage {
   const [fontSize, setFontSize] = useLocalStorage(KEYS.fontSize, 13)
   const [warnOnOverwrite, setWarnOnOverwrite] = useLocalStorage(KEYS.warnOnOverwrite, true)
 
-  return {
-    theme, setTheme,
-    vimMode, setVimMode,
-    volume, setVolume,
-    muted, setMuted,
-    immersiveOpacity, setImmersiveOpacity,
-    fontSize, setFontSize,
-    warnOnOverwrite, setWarnOnOverwrite,
-  }
+  return (
+		<AppStorageContext.Provider value={{
+			theme, setTheme,
+			vimMode, setVimMode,
+			volume, setVolume,
+			muted, setMuted,
+			immersiveOpacity, setImmersiveOpacity,
+			fontSize, setFontSize,
+			warnOnOverwrite, setWarnOnOverwrite,
+		}}>
+			{children}
+		</AppStorageContext.Provider>
+	)
 }
+
+export const useAppStorage = () => {
+	const context = useContext(AppStorageContext)
+	if (!context) {
+		throw new Error('useAppStorage must be used within an AppStorageProvider')
+	}
+	return context
+}
+
