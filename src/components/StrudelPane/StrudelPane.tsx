@@ -211,6 +211,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     mirrorRef.current = mirror as StrudelMirrorExt
     // Apply initial keybindings, theme, and font size from current settings
     mirrorRef.current.changeSetting('keybindings', vimModeRef.current ? 'vim' : 'codemirror')
+    mirrorRef.current.changeSetting('isTabIndentationEnabled', true)
     mirrorRef.current.changeSetting('fontSize', fontSizeRef.current)
     mirrorRef.current.setTheme(mapToStrudelTheme(themeNameRef.current))
     return () => {
