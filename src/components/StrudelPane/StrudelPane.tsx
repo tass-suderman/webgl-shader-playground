@@ -153,6 +153,13 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
           setStrudelError(msg)
         }
       },
+      afterEval: () => {
+        // Clear any previously shown eval error when evaluation succeeds
+        if (lastErrorRef.current !== null) {
+          lastErrorRef.current = null
+          setStrudelError(null)
+        }
+      },
       onToggle: (started: boolean) => {
         isPlayingRef.current = started
         setIsPlaying(started)

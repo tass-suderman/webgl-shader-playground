@@ -11,6 +11,8 @@ declare module '@strudel/codemirror' {
     onToggle?: (started: boolean) => void
     /** Called with the Error thrown when pattern evaluation fails */
     onEvalError?: (err: unknown) => void
+    /** Called after a successful pattern evaluation */
+    afterEval?: (options: { code: string; pattern: unknown; meta: unknown }) => void
   }
   export class StrudelMirror {
     constructor(options: StrudelMirrorOptions)
