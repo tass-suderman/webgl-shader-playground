@@ -236,7 +236,7 @@ export default function ShaderControls({
             sx={{ color: 'white' }}
           >
             {isMobile
-              ? (editorCollapsed ? <ExpandMore /> : <ExpandLess />)
+              ? (editorCollapsed ? <ExpandLess /> : <ExpandMore />)
               : (editorCollapsed ? <ChevronLeft /> : <ChevronRight />)
             }
           </IconButton>
