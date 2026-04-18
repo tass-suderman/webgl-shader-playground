@@ -30,6 +30,7 @@ export const ImmersiveView = ({
   const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
   const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
   const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
+  const [topBarHidden, setTopBarHidden] = useState(false)
 
 	const {
 		immersiveOpacity,
@@ -81,9 +82,22 @@ export const ImmersiveView = ({
 			</Box>
 
 			{/* Layer 1 – Editor overlay + controls bar stacked in one flex column */}
-			<Box sx={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', flexDirection: 'column' }}>
-				{/* Editor area – flex:1 so it fills space above the controls bar */}
-				<Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+			<Box sx={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+				{/* Editor area – flex:1 so it fills space above the controls bar; slides up when top bar is hidden */}
+				<Box
+					sx={{
+						flex: 1,
+						minHeight: 0,
+						overflow: 'hidden',
+						display: 'flex',
+						flexDirection: 'column',
+						transform: topBarHidden ? 'translateY(-100%)' : 'translateY(0)',
+						transition: 'transform 0.3s ease-in-out',
+						pointerEvents: topBarHidden ? 'none' : 'auto',
+						visibility: topBarHidden ? 'hidden' : 'visible',
+					}}
+					aria-hidden={topBarHidden}
+				>
 				<ThemeProvider theme={immersiveTheme}>
 					{tabBar}
 					{editorContent}
@@ -102,6 +116,8 @@ export const ImmersiveView = ({
 					isMobile={isMobile}
 					isImmersive={true}
 					onToggleImmersive={handleToggleImmersive}
+					topBarHidden={topBarHidden}
+					onToggleTopBar={() => setTopBarHidden(h => !h)}
 				/>
 			</Box>
 		</Box>

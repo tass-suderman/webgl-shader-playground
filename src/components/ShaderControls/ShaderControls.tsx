@@ -44,6 +44,8 @@ interface ShaderControlsProps {
   isMobile?: boolean
   isImmersive?: boolean
   onToggleImmersive?: () => void
+  topBarHidden?: boolean
+  onToggleTopBar?: () => void
 }
 
 export default function ShaderControls({
@@ -59,6 +61,8 @@ export default function ShaderControls({
   isMobile = false,
   isImmersive = false,
   onToggleImmersive,
+  topBarHidden = false,
+  onToggleTopBar,
 }: ShaderControlsProps) {
 	const { 
 		muted, setMuted,
@@ -226,6 +230,19 @@ export default function ShaderControls({
           {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
         </IconButton>
       </Tooltip>
+
+      {isImmersive && onToggleTopBar !== undefined && (
+        <Tooltip title={topBarHidden ? 'Show top bar' : 'Hide top bar'}>
+          <IconButton
+            onClick={onToggleTopBar}
+            size="small"
+            aria-label={topBarHidden ? 'Show top bar' : 'Hide top bar'}
+            sx={{ color: 'white' }}
+          >
+            {topBarHidden ? <ExpandMore /> : <ExpandLess />}
+          </IconButton>
+        </Tooltip>
+      )}
 
       {onToggleEditorCollapsed !== undefined && (
         <Tooltip title={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}>
