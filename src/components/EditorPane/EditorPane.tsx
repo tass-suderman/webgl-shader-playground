@@ -24,6 +24,7 @@ interface EditorPaneProps {
 export interface EditorPaneHandle {
   loadExample: (title: string, content: string) => void
   run: () => void
+  closeUniforms: () => void
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
@@ -67,6 +68,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     },
     run() {
       onRun(pendingSourceRef.current)
+    },
+    closeUniforms() {
+      setUniformsOpen(false)
     },
   }), [setPendingSource, onRun])
 
