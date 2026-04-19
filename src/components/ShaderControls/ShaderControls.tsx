@@ -227,7 +227,7 @@ export default function ShaderControls({
         </IconButton>
       </Tooltip>
 
-      {onToggleEditorCollapsed !== undefined && (
+      {onToggleEditorCollapsed !== undefined && !isFullscreen && (
         <Tooltip title={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}>
           <IconButton
             onClick={onToggleEditorCollapsed}
@@ -236,7 +236,7 @@ export default function ShaderControls({
             sx={{ color: 'white' }}
           >
             {isMobile
-              ? (editorCollapsed ? <ExpandMore /> : <ExpandLess />)
+              ? (editorCollapsed ? <ExpandLess /> : <ExpandMore />)
               : (editorCollapsed ? <ChevronLeft /> : <ChevronRight />)
             }
           </IconButton>

@@ -20,6 +20,13 @@ html, body, #root {
   background-color: transparent !important;
 }
 
+/* CodeMirror Vim command-line panel: the <input> inside .cm-vim-panel inherits
+   the browser's default color (black) which is illegible on dark themes.
+   Reset it to inherit the surrounding editor text color instead. */
+.cm-vim-panel input {
+  color: inherit;
+}
+
 /* CodeMirror (used by the Strudel pane) backgrounds.
    Covers the root editor element, its scroller/content/gutters, and the
    <strudel-editor> custom element that wraps it all.  Both background-color
