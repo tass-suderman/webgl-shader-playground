@@ -6,10 +6,11 @@ export interface InformationPanelProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	renderer: any;
 	items: readonly (UniformEntry|SoundCategory)[];
+	header?: React.ReactNode;
 	footer: React.ReactNode;
 }
 
-export const InformationPanel = ({ renderer, items, footer}: InformationPanelProps) => {
+export const InformationPanel = ({ renderer, items, header, footer}: InformationPanelProps) => {
 	return (
     <Box
       sx={{
@@ -20,6 +21,7 @@ export const InformationPanel = ({ renderer, items, footer}: InformationPanelPro
         color: 'textColor.primary',
       }}
 		>
+			{header}
 			{items.map(renderer)}
 			{footer}
     </Box>

@@ -8,6 +8,7 @@ import EditorHeader from '../EditorHeader/EditorHeader'
 import StrudelError from '../StrudelError/StrudelError'
 import SoundsPanel from '../SoundsPanel/SoundsPanel'
 import { registerInstruments } from '../../utility/strudel/instruments'
+import { registerUserSampleSound, preloadUserSamples } from '../../utility/strudel/userSamples'
 import { saveStrudelCode, saveStrudelTitle, getInitialStrudelCode, getInitialStrudelTitle, useAppStorage } from '../../hooks/useAppStorage'
 import { useTheme } from '../../hooks/useTheme'
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
@@ -72,7 +73,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   { onAnalyserReady, onAudioStreamReady, onSave },
   ref,
 ) {
-	const { vimMode, muted, volume, fontSize } = useAppStorage()
+	const { vimMode, muted, volume, fontSize, userSamples } = useAppStorage()
 	const { currentTheme } = useTheme()
 	const themeName = useMemo(() => currentTheme.name, [currentTheme])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -279,6 +280,18 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     document.addEventListener('visibilitychange', onHide)
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [saveCode])
+
+  // Register user-uploaded samples with Strudel whenever the list changes
+  useEffect(() => {
+    for (const sample of userSamples) {
+      registerUserSampleSound(sample)
+    }
+    // Eagerly decode buffers once the AudioContext becomes available
+    const ctx = getAudioContext()
+    if (ctx) {
+      preloadUserSamples(userSamples)
+    }
+  }, [userSamples])
 
   const handleRun = useCallback(() => {
     saveCode()

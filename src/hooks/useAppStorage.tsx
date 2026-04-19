@@ -3,6 +3,18 @@ import { DEFAULT_SHADER } from '../utility/shader/defaultShader'
 import { createContext, useContext } from 'react'
 
 // ---------------------------------------------------------------------------
+// Public types
+// ---------------------------------------------------------------------------
+
+export interface UserSample {
+  id: string
+  title: string
+  fileName: string
+  /** Base64-encoded audio file data */
+  audioData: string
+}
+
+// ---------------------------------------------------------------------------
 // Private key constants – no other file should reference these strings
 // ---------------------------------------------------------------------------
 
@@ -18,6 +30,7 @@ const KEYS = {
   immersiveOpacity: 'shader-playground:immersive-opacity',
   fontSize: 'shader-playground:font-size',
   warnOnOverwrite: 'shader-playground:warn-on-overwrite',
+  userSamples: 'shader-playground:user-samples',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -39,6 +52,20 @@ export function saveStrudelCode(code: string): void {
 
 export function saveStrudelTitle(title: string): void {
   try { localStorage.setItem(KEYS.strudelTitle, title) } catch { /* quota exceeded */ }
+}
+
+export function getUserSamples(): UserSample[] {
+  try {
+    const raw = localStorage.getItem(KEYS.userSamples)
+    if (!raw) return []
+    return JSON.parse(raw) as UserSample[]
+  } catch {
+    return []
+  }
+}
+
+export function saveUserSamples(samples: UserSample[]): void {
+  try { localStorage.setItem(KEYS.userSamples, JSON.stringify(samples)) } catch { /* quota exceeded */ }
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +111,8 @@ export interface AppStorageReturn {
   setFontSize: (v: number) => void
   warnOnOverwrite: boolean
   setWarnOnOverwrite: (v: boolean) => void
+  userSamples: UserSample[]
+  setUserSamples: (v: UserSample[] | ((prev: UserSample[]) => UserSample[])) => void
 }
 
 const AppStorageContext = createContext<AppStorageReturn | null>(null)
@@ -97,6 +126,7 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
   const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(KEYS.immersiveOpacity, 50)
   const [fontSize, setFontSize] = useLocalStorage(KEYS.fontSize, 13)
   const [warnOnOverwrite, setWarnOnOverwrite] = useLocalStorage(KEYS.warnOnOverwrite, true)
+  const [userSamples, setUserSamples] = useLocalStorage<UserSample[]>(KEYS.userSamples, [])
 
   return (
 		<AppStorageContext.Provider value={{
@@ -107,6 +137,7 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
 			immersiveOpacity, setImmersiveOpacity,
 			fontSize, setFontSize,
 			warnOnOverwrite, setWarnOnOverwrite,
+			userSamples, setUserSamples,
 		}}>
 			{children}
 		</AppStorageContext.Provider>
