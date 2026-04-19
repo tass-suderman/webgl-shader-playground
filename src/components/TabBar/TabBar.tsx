@@ -5,12 +5,14 @@ export interface TabBarProps {
 	viewMode: ViewMode
 	setViewMode: (mode: ViewMode) => void
 	strudelRef: React.RefObject<{ closeSounds: () => void }>
+	editorRef: React.RefObject<{ closeUniforms: () => void }>
 }
 
 export const TabBar = ({
 	viewMode,
 	setViewMode,
 	strudelRef,
+	editorRef,
 }: TabBarProps) => {
   return (
     <Box sx={{
@@ -30,7 +32,7 @@ export const TabBar = ({
           if (!val) return
           setViewMode(val)
           strudelRef.current?.closeSounds()
-					// TODO --> Close Uniforms Panel (Issue #25)
+          editorRef.current?.closeUniforms()
         }}
         size="small"
         sx={{ flex: 1, minWidth: 0 }}
