@@ -145,38 +145,10 @@ export const ImmersiveTopBar = ({
         )}
       </Box>
 
-      {/* Right side: tabs pill + action buttons pill */}
+      {/* Right side: action buttons pill (when applicable) + tabs pill */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pointerEvents: 'auto' }}>
-        {/* Tabs pill: one icon per tab, active highlighted */}
-        <Box sx={{ ...pillSx, px: 0.75, gap: 0 }}>
-          {tabConfigs.map(({ value, label }) => {
-            const isActive = value === viewMode
-            return (
-              <Tooltip key={value} title={label} placement="bottom">
-                <IconButton
-                  size="small"
-                  onClick={() => handleTabSelect(value)}
-                  sx={{
-                    color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
-                    bgcolor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
-                    borderRadius: '50%',
-                    '&:hover': {
-                      color: 'white',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                    },
-                    p: 0.5,
-                  }}
-                  aria-label={label}
-                  aria-pressed={isActive}
-                >
-                  {TAB_ICONS[value]}
-                </IconButton>
-              </Tooltip>
-            )
-          })}
-        </Box>
-
-        {/* Action buttons pill */}
+        {/* Action buttons pill – only rendered for glsl and strudel tabs */}
+        {(viewMode === 'glsl' || viewMode === 'strudel') && (
         <Box sx={{ ...pillSx, px: 1, gap: 0.5 }}>
           {/* GLSL action buttons */}
           {viewMode === 'glsl' && (
@@ -299,6 +271,36 @@ export const ImmersiveTopBar = ({
               </Tooltip>
             </>
           )}
+        </Box>
+        )}
+
+        {/* Tabs pill: one icon per tab, active highlighted, always visible */}
+        <Box sx={{ ...pillSx, px: 0.75, gap: 0 }}>
+          {tabConfigs.map(({ value, label }) => {
+            const isActive = value === viewMode
+            return (
+              <Tooltip key={value} title={label} placement="bottom">
+                <IconButton
+                  size="small"
+                  onClick={() => handleTabSelect(value)}
+                  sx={{
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                    bgcolor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    borderRadius: '50%',
+                    '&:hover': {
+                      color: 'white',
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                    p: 0.5,
+                  }}
+                  aria-label={label}
+                  aria-pressed={isActive}
+                >
+                  {TAB_ICONS[value]}
+                </IconButton>
+              </Tooltip>
+            )
+          })}
         </Box>
       </Box>
     </Box>

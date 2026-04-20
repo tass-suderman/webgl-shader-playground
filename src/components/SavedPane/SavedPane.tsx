@@ -16,6 +16,7 @@ interface SavedPaneProps {
   onLoadPattern: (title: string, content: string) => void
   onLoadGlslExample: (title: string, content: string) => void
   onLoadStrudelExample: (title: string, content: string) => void
+  hideHeader?: boolean
 }
 
 interface PendingDelete {
@@ -44,6 +45,7 @@ export default function SavedPane({
   onLoadPattern,
   onLoadGlslExample,
   onLoadStrudelExample,
+  hideHeader = false,
 }: SavedPaneProps) {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -136,7 +138,7 @@ export default function SavedPane({
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.panel' }}>
       {/* Header */}
-			<PaneHeader title="Saved">
+			{!hideHeader && <PaneHeader title="Saved">
         {hasSavedContent && (
           <Tooltip title="Export all saved content as zip">
             <IconButton
@@ -149,7 +151,7 @@ export default function SavedPane({
             </IconButton>
           </Tooltip>
         )}
-      </PaneHeader>
+      </PaneHeader>}
 
       {/* Scrollable content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>

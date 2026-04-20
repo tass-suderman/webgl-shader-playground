@@ -325,6 +325,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         flexDirection: 'column',
         height: '100%',
         bgcolor: 'background.panel',
+        pt: hideHeader ? '44px' : 0,
       }}
     >
       {!hideHeader && (

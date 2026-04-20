@@ -416,7 +416,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   }, [soundsSplitRatio])
 
   return (
-    <Box ref={soundsPaneRef} sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.panel' }}>
+    <Box ref={soundsPaneRef} sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.panel', pt: hideHeader ? '44px' : 0 }}>
       {!hideHeader && (
         <EditorHeader
           title={strudelTitle}

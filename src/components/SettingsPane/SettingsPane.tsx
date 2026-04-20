@@ -11,7 +11,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { useAppStorage } from '../../hooks/useAppStorage'
 import PaneHeader from '../PaneHeader/PaneHeader'
 
-export default () => {
+export default ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   const handleResetConfirm = useCallback(() => {
@@ -43,7 +43,7 @@ glslAutocomplete, setGlslAutocomplete,
       }}
     >
       {/* Header */}
-<PaneHeader title="Settings" />
+{!hideHeader && <PaneHeader title="Settings" />}
 
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

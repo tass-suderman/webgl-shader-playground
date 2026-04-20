@@ -101,11 +101,11 @@ export const EditorContent = ({
 		<>
 			<Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 				{/* About panel */}
-				{viewMode === 'about' && <AboutPane />}
+				{viewMode === 'about' && <AboutPane hideHeader={hideHeader} />}
 
 				{/* Settings panel */}
 				{viewMode === 'settings' && (
-					<SettingsPane />
+					<SettingsPane hideHeader={hideHeader} />
 				)}
 
 				{/* Saved panel (Saved Content + Examples) */}
@@ -116,6 +116,7 @@ export const EditorContent = ({
 							onLoadPattern={handleLoadSavedPattern}
 							onLoadGlslExample={handleLoadGlslExample}
 							onLoadStrudelExample={handleLoadStrudelExample}
+							hideHeader={hideHeader}
 						/>
 					</Box>
 				)}
