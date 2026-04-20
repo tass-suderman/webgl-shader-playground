@@ -10,6 +10,7 @@ import {
 	}	from '@mui/material'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import LoadExampleDialog from '../LoadExampleDialog/LoadExampleDialog'
+import { useAppStorage } from '../../hooks/useAppStorage'
 
 interface ExampleMeta {
   id: string
@@ -131,17 +132,12 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
   const [pending, setPending] = useState<PendingExample | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const [dontShowAgain, setDontShowAgain] = useState(false)
 
-  const handleSelect = (meta: ExampleMeta, type: ExampleType) => {
+  const { warnOnLoadExample, setWarnOnLoadExample } = useAppStorage()
+
+  const loadExample = (meta: ExampleMeta, type: ExampleType) => {
     setLoadError(false)
-    setPending({ meta, type })
-    setConfirmOpen(true)
-  }
-
-  const handleConfirm = () => {
-    if (!pending) return
-    setConfirmOpen(false)
-    const { meta, type } = pending
     const ext = type === 'glsl' ? 'glsl' : 'strudel'
     fetch(`./examples/${type}/${meta.id}.${ext}`)
       .then(r => r.text())
@@ -150,6 +146,26 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
         else onLoadStrudel(meta.title, content)
       })
       .catch(() => setLoadError(true))
+  }
+
+  const handleSelect = (meta: ExampleMeta, type: ExampleType) => {
+    if (!warnOnLoadExample) {
+      loadExample(meta, type)
+      return
+    }
+    setLoadError(false)
+    setDontShowAgain(false)
+    setPending({ meta, type })
+    setConfirmOpen(true)
+  }
+
+  const handleConfirm = () => {
+    if (!pending) return
+    setConfirmOpen(false)
+    if (dontShowAgain) {
+      setWarnOnLoadExample(false)
+    }
+    loadExample(pending.meta, pending.type)
     setPending(null)
   }
 
@@ -180,7 +196,7 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
       <ExampleSection heading="Shaders" type="glsl" onSelect={handleSelect} />
       <ExampleSection heading="Patterns" type="strudel" onSelect={handleSelect} />
 
-			<LoadExampleDialog confirmOpen={confirmOpen} title={pending?.meta.title ?? ""} itemLabel={itemLabel} onConfirm={handleConfirm} onCancel={handleCancel} />
+			<LoadExampleDialog confirmOpen={confirmOpen} title={pending?.meta.title ?? ""} itemLabel={itemLabel} onConfirm={handleConfirm} onCancel={handleCancel} dontShowAgain={dontShowAgain} setDontShowAgain={setDontShowAgain} />
     </Box>
   )
 }

@@ -30,6 +30,10 @@ const KEYS = {
   immersiveOpacity: 'shader-playground:immersive-opacity',
   fontSize: 'shader-playground:font-size',
   warnOnOverwrite: 'shader-playground:warn-on-overwrite',
+  warnOnLoadExample: 'shader-playground:warn-on-load-example',
+  warnOnLoadSaved: 'shader-playground:warn-on-load-saved',
+  strudelAutocomplete: 'shader-playground:strudel-autocomplete',
+  glslAutocomplete: 'shader-playground:glsl-autocomplete',
   userSamples: 'shader-playground:user-samples',
 } as const
 
@@ -111,6 +115,14 @@ export interface AppStorageReturn {
   setFontSize: (v: number) => void
   warnOnOverwrite: boolean
   setWarnOnOverwrite: (v: boolean) => void
+  warnOnLoadExample: boolean
+  setWarnOnLoadExample: (v: boolean) => void
+  warnOnLoadSaved: boolean
+  setWarnOnLoadSaved: (v: boolean) => void
+  strudelAutocomplete: boolean
+  setStrudelAutocomplete: (v: boolean) => void
+  glslAutocomplete: boolean
+  setGlslAutocomplete: (v: boolean) => void
   userSamples: UserSample[]
   setUserSamples: (v: UserSample[] | ((prev: UserSample[]) => UserSample[])) => void
 }
@@ -126,6 +138,10 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
   const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(KEYS.immersiveOpacity, 50)
   const [fontSize, setFontSize] = useLocalStorage(KEYS.fontSize, 13)
   const [warnOnOverwrite, setWarnOnOverwrite] = useLocalStorage(KEYS.warnOnOverwrite, true)
+  const [warnOnLoadExample, setWarnOnLoadExample] = useLocalStorage(KEYS.warnOnLoadExample, true)
+  const [warnOnLoadSaved, setWarnOnLoadSaved] = useLocalStorage(KEYS.warnOnLoadSaved, true)
+  const [strudelAutocomplete, setStrudelAutocomplete] = useLocalStorage(KEYS.strudelAutocomplete, true)
+  const [glslAutocomplete, setGlslAutocomplete] = useLocalStorage(KEYS.glslAutocomplete, true)
   const [userSamples, setUserSamples] = useLocalStorage<UserSample[]>(KEYS.userSamples, [])
 
   return (
@@ -137,6 +153,10 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
 			immersiveOpacity, setImmersiveOpacity,
 			fontSize, setFontSize,
 			warnOnOverwrite, setWarnOnOverwrite,
+			warnOnLoadExample, setWarnOnLoadExample,
+			warnOnLoadSaved, setWarnOnLoadSaved,
+			strudelAutocomplete, setStrudelAutocomplete,
+			glslAutocomplete, setGlslAutocomplete,
 			userSamples, setUserSamples,
 		}}>
 			{children}
@@ -151,4 +171,3 @@ export const useAppStorage = () => {
 	}
 	return context
 }
-
