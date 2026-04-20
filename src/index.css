@@ -47,3 +47,14 @@ html, body, #root {
   max-width: 320px;
   overflow: hidden;
 }
+
+/* CodeMirror sets white-space: pre-line on the info panel, which preserves
+   newlines from JSDoc HTML descriptions as visible line breaks, causing large
+   gaps between sections. Reset to normal for the Strudel HTML info content;
+   keep pre-wrap only for code example blocks. */
+.cm-tooltip.cm-completionInfo .autocomplete-info-container {
+  white-space: normal;
+}
+.cm-tooltip.cm-completionInfo .autocomplete-info-example-code {
+  white-space: pre;
+}
