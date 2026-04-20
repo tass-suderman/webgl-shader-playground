@@ -78,7 +78,6 @@ export const ViewReducer = ({
 	const editorContent = (
 		<EditorContent
 			viewMode={viewMode}
-			initialShaderCode={initialShaderCode}
 			shaderError={shaderError}
 			editorRef={editorRef}
 			strudelRef={strudelRef}

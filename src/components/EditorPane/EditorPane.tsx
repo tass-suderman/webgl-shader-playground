@@ -9,13 +9,12 @@ import ShaderError from '../ShaderError/ShaderError'
 import UniformsPanel from '../UniformsPanel/UniformsPanel'
 import { GLSL_MONARCH_TOKENS, GLSL_LANGUAGE_CONFIG } from '../../utility/shader/glslLanguage'
 import { ensureMonacoThemes, themeNameToMonaco } from '../../utility/shader/monacoThemes'
-import { saveGlslCode, saveGlslTitle, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
+import { saveGlslCode, saveGlslTitle, getInitialGlslCode, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
 import { useTheme } from '../../hooks/useTheme'
 
 const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
 
 interface EditorPaneProps {
-  initialCode: string
   onRun: (code: string) => void
   shaderError: string | null
   onSave: (title: string, content: string) => void
@@ -28,10 +27,10 @@ export interface EditorPaneHandle {
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, shaderError, onSave },
+  { onRun, shaderError, onSave },
   ref,
 ) {
-  const [pendingSource, setPendingSource] = useState<string>(initialCode)
+  const [pendingSource, setPendingSource] = useState<string>(() => getInitialGlslCode())
   const [shaderTitle, setShaderTitle] = useState(
     () => getInitialGlslTitle(DEFAULT_SHADER_TITLE),
   )
@@ -323,7 +322,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         <Editor
           height="100%"
           defaultLanguage="glsl"
-          defaultValue={initialCode}
+          defaultValue={pendingSource}
           onChange={handleEditorChange}
           beforeMount={handleBeforeMount}
           onMount={handleEditorMount}
