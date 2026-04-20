@@ -50,7 +50,7 @@ glslAutocomplete, setGlslAutocomplete,
 
         {/* ---- Editor ---- */}
 <SettingsSection title="Editor">
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5, mb: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
             <SettingsCheckbox checked={vimMode} onChange={setVimMode} label="Vim keybindings" />
             <SettingsCheckbox checked={glslAutocomplete} onChange={setGlslAutocomplete} label="GLSL autocomplete" />
             <SettingsCheckbox checked={strudelAutocomplete} onChange={setStrudelAutocomplete} label="Strudel autocomplete" />
