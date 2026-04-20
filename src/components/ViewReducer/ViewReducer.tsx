@@ -41,7 +41,7 @@ export const ViewReducer = ({
   const outerContainerRef = useRef<HTMLDivElement>(null)
 
 	const tabBar = (
-		<TabBar viewMode={viewMode} setViewMode={setViewMode} strudelRef={strudelRef} />
+		<TabBar viewMode={viewMode} setViewMode={setViewMode} strudelRef={strudelRef} editorRef={editorRef} />
 	)
 
   const handleOverwriteCancel = useCallback(() => {
@@ -78,7 +78,6 @@ export const ViewReducer = ({
 	const editorContent = (
 		<EditorContent
 			viewMode={viewMode}
-			initialShaderCode={initialShaderCode}
 			shaderError={shaderError}
 			editorRef={editorRef}
 			strudelRef={strudelRef}

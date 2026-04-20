@@ -20,6 +20,13 @@ html, body, #root {
   background-color: transparent !important;
 }
 
+/* CodeMirror Vim command-line panel: the <input> inside .cm-vim-panel inherits
+   the browser's default color (black) which is illegible on dark themes.
+   Reset it to inherit the surrounding editor text color instead. */
+.cm-vim-panel input {
+  color: inherit;
+}
+
 /* CodeMirror (used by the Strudel pane) backgrounds.
    Covers the root editor element, its scroller/content/gutters, and the
    <strudel-editor> custom element that wraps it all.  Both background-color
@@ -32,4 +39,22 @@ html, body, #root {
 :root[data-immersive='true'] .cm-content {
   background-color: transparent !important;
   background: transparent !important;
+}
+
+/* Constrain the CodeMirror autocomplete info panel so it doesn't overflow
+   outside the editor into adjacent panels. */
+.cm-tooltip.cm-completionInfo {
+  max-width: 320px;
+  overflow: hidden;
+}
+
+/* CodeMirror sets white-space: pre-line on the info panel, which preserves
+   newlines from JSDoc HTML descriptions as visible line breaks, causing large
+   gaps between sections. Reset to normal for the Strudel HTML info content;
+   keep pre-wrap only for code example blocks. */
+.cm-tooltip.cm-completionInfo .autocomplete-info-container {
+  white-space: normal;
+}
+.cm-tooltip.cm-completionInfo .autocomplete-info-example-code {
+  white-space: pre;
 }

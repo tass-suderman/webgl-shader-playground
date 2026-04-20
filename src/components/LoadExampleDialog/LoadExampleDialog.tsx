@@ -6,9 +6,11 @@ interface LoadExampleDialogProps {
 	itemLabel: string
 	onCancel: () => void
 	onConfirm: () => void
+	dontShowAgain?: boolean
+	setDontShowAgain?: (value: boolean) => void
 }
 
-export default function LoadExampleDialog({ confirmOpen, title, itemLabel, onCancel, onConfirm }: LoadExampleDialogProps) {
+export default function LoadExampleDialog({ confirmOpen, title, itemLabel, onCancel, onConfirm, dontShowAgain, setDontShowAgain }: LoadExampleDialogProps) {
 	return (
 		<ConfirmationDialog
 			open={confirmOpen}
@@ -17,6 +19,8 @@ export default function LoadExampleDialog({ confirmOpen, title, itemLabel, onCan
 			confirmLabel="Load"
 			onCancel={onCancel}
 			onConfirm={onConfirm}
+			dontShowAgain={dontShowAgain}
+			setDontShowAgain={setDontShowAgain}
 		/>
 	)
 }

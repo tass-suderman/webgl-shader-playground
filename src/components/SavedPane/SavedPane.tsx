@@ -9,6 +9,7 @@ import ConfirmationDialog from '../ConfirmationDialog/ConfirmationDialog'
 import SavedSection from './SavedSection'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
 import PaneHeader from '../PaneHeader/PaneHeader'
+import { useAppStorage } from '../../hooks/useAppStorage'
 
 interface SavedPaneProps {
   onLoadShader: (title: string, content: string) => void
@@ -48,6 +49,9 @@ export default function SavedPane({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pendingLoad, setPendingLoad] = useState<PendingLoad | null>(null)
   const [loadDialogOpen, setLoadDialogOpen] = useState(false)
+  const [dontShowAgain, setDontShowAgain] = useState(false)
+
+  const { warnOnLoadSaved, setWarnOnLoadSaved } = useAppStorage()
 
 	const { 
 		savedShaders, deleteShader,
@@ -78,12 +82,21 @@ export default function SavedPane({
   }
 
   const handleLoadRequest = (title: string, content: string, type: 'shader' | 'pattern') => {
+    if (!warnOnLoadSaved) {
+      if (type === 'shader') onLoadShader(title, content)
+      else onLoadPattern(title, content)
+      return
+    }
+    setDontShowAgain(false)
     setPendingLoad({ title, content, type })
     setLoadDialogOpen(true)
   }
 
   const handleLoadConfirm = () => {
     if (!pendingLoad) return
+    if (dontShowAgain) {
+      setWarnOnLoadSaved(false)
+    }
     if (pendingLoad.type === 'shader') {
       onLoadShader(pendingLoad.title, pendingLoad.content)
     } else {
@@ -216,6 +229,8 @@ export default function SavedPane({
 				confirmLabel="Load"
 				onCancel={handleLoadCancel}
 				onConfirm={handleLoadConfirm}
+				dontShowAgain={dontShowAgain}
+				setDontShowAgain={setDontShowAgain}
 			/>
     </Box>
   )

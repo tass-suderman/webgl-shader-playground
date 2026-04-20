@@ -79,7 +79,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   { onAnalyserReady, onAudioStreamReady, onSave, hideHeader = false },
   ref,
 ) {
-	const { vimMode, muted, volume, fontSize } = useAppStorage()
+	const { vimMode, muted, volume, fontSize, strudelAutocomplete } = useAppStorage()
 	const { currentTheme } = useTheme()
 	const themeName = useMemo(() => currentTheme.name, [currentTheme])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -90,8 +90,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const destinationGainRef = useRef<GainNode | null>(null)
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  // Capture the saved code once at mount – used as StrudelMirror's initialCode
-  const savedStrudelCode = useRef(getInitialStrudelCode(DEFAULT_STRUDEL_CODE))
   const [isPlaying, setIsPlaying] = useState(false)
   const [strudelTitle, setStrudelTitle] = useState(
     () => getInitialStrudelTitle(DEFAULT_STRUDEL_TITLE),
@@ -118,6 +116,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   mutedRef.current = muted
   const fontSizeRef = useRef(fontSize)
   fontSizeRef.current = fontSize
+  const strudelAutocompleteRef = useRef(strudelAutocomplete)
+  strudelAutocompleteRef.current = strudelAutocomplete
 
   useImperativeHandle(ref, () => ({
     play() {
@@ -176,10 +176,14 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
 
   useEffect(() => {
     if (!rootRef.current) return
+    // Read initial code inside the effect so it runs after the previous
+    // StrudelPane instance's cleanup has flushed its code to localStorage
+    // (e.g. when toggling immersive mode causes an unmount/remount cycle).
+    const initialCode = getInitialStrudelCode(DEFAULT_STRUDEL_CODE)
     initAudioOnFirstClick()
     const mirror = new StrudelMirror({
       root: rootRef.current,
-      initialCode: savedStrudelCode.current,
+      initialCode,
       prebake: minimalPrebake,
       defaultOutput: webaudioOutput,
       getTime: () => getAudioContext()?.currentTime ?? 0,
@@ -192,6 +196,13 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
         if (msg !== lastErrorRef.current) {
           lastErrorRef.current = msg
           setStrudelError(msg)
+        }
+      },
+      afterEval: () => {
+        // Clear any previously shown eval error when evaluation succeeds
+        if (lastErrorRef.current !== null) {
+          lastErrorRef.current = null
+          setStrudelError(null)
         }
       },
       onToggle: (started: boolean) => {
@@ -254,8 +265,12 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     mirrorRef.current.changeSetting('keybindings', vimModeRef.current ? 'vim' : 'codemirror')
     mirrorRef.current.changeSetting('isTabIndentationEnabled', true)
     mirrorRef.current.changeSetting('fontSize', fontSizeRef.current)
+    mirrorRef.current.changeSetting('isAutoCompletionEnabled', strudelAutocompleteRef.current)
     mirrorRef.current.setTheme(mapToStrudelTheme(themeNameRef.current))
     return () => {
+      // Persist the current code so it is restored if the component remounts
+      // (e.g. when toggling immersive mode)
+      saveStrudelCode(mirror.code ?? DEFAULT_STRUDEL_CODE)
       if (analyserRef.current) {
         const dg = destinationGainRef.current
         if (dg) {
@@ -304,6 +319,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   useEffect(() => {
     mirrorRef.current?.changeSetting('fontSize', fontSize)
   }, [fontSize])
+
+  // Enable or disable Strudel autocomplete whenever the setting changes
+  useEffect(() => {
+    mirrorRef.current?.changeSetting('isAutoCompletionEnabled', strudelAutocomplete)
+  }, [strudelAutocomplete])
 
   // Persist the strudel code when the tab is hidden or the page is unloaded
   useEffect(() => {

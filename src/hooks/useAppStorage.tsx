@@ -18,6 +18,10 @@ const KEYS = {
   immersiveOpacity: 'shader-playground:immersive-opacity',
   fontSize: 'shader-playground:font-size',
   warnOnOverwrite: 'shader-playground:warn-on-overwrite',
+  warnOnLoadExample: 'shader-playground:warn-on-load-example',
+  warnOnLoadSaved: 'shader-playground:warn-on-load-saved',
+  strudelAutocomplete: 'shader-playground:strudel-autocomplete',
+  glslAutocomplete: 'shader-playground:glsl-autocomplete',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -84,6 +88,14 @@ export interface AppStorageReturn {
   setFontSize: (v: number) => void
   warnOnOverwrite: boolean
   setWarnOnOverwrite: (v: boolean) => void
+  warnOnLoadExample: boolean
+  setWarnOnLoadExample: (v: boolean) => void
+  warnOnLoadSaved: boolean
+  setWarnOnLoadSaved: (v: boolean) => void
+  strudelAutocomplete: boolean
+  setStrudelAutocomplete: (v: boolean) => void
+  glslAutocomplete: boolean
+  setGlslAutocomplete: (v: boolean) => void
 }
 
 const AppStorageContext = createContext<AppStorageReturn | null>(null)
@@ -97,27 +109,34 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
   const [immersiveOpacity, setImmersiveOpacity] = useLocalStorage(KEYS.immersiveOpacity, 50)
   const [fontSize, setFontSize] = useLocalStorage(KEYS.fontSize, 13)
   const [warnOnOverwrite, setWarnOnOverwrite] = useLocalStorage(KEYS.warnOnOverwrite, true)
+  const [warnOnLoadExample, setWarnOnLoadExample] = useLocalStorage(KEYS.warnOnLoadExample, true)
+  const [warnOnLoadSaved, setWarnOnLoadSaved] = useLocalStorage(KEYS.warnOnLoadSaved, true)
+  const [strudelAutocomplete, setStrudelAutocomplete] = useLocalStorage(KEYS.strudelAutocomplete, true)
+  const [glslAutocomplete, setGlslAutocomplete] = useLocalStorage(KEYS.glslAutocomplete, true)
 
   return (
-		<AppStorageContext.Provider value={{
-			theme, setTheme,
-			vimMode, setVimMode,
-			volume, setVolume,
-			muted, setMuted,
-			immersiveOpacity, setImmersiveOpacity,
-			fontSize, setFontSize,
-			warnOnOverwrite, setWarnOnOverwrite,
-		}}>
-			{children}
-		</AppStorageContext.Provider>
-	)
+<AppStorageContext.Provider value={{
+theme, setTheme,
+vimMode, setVimMode,
+volume, setVolume,
+muted, setMuted,
+immersiveOpacity, setImmersiveOpacity,
+fontSize, setFontSize,
+warnOnOverwrite, setWarnOnOverwrite,
+warnOnLoadExample, setWarnOnLoadExample,
+warnOnLoadSaved, setWarnOnLoadSaved,
+strudelAutocomplete, setStrudelAutocomplete,
+glslAutocomplete, setGlslAutocomplete,
+}}>
+{children}
+</AppStorageContext.Provider>
+)
 }
 
 export const useAppStorage = () => {
-	const context = useContext(AppStorageContext)
-	if (!context) {
-		throw new Error('useAppStorage must be used within an AppStorageProvider')
-	}
-	return context
+const context = useContext(AppStorageContext)
+if (!context) {
+throw new Error('useAppStorage must be used within an AppStorageProvider')
 }
-
+return context
+}

@@ -13,7 +13,6 @@ import { useAppStorage } from '../../hooks/useAppStorage'
 
 export interface EditorContentProps {
 	viewMode: ViewMode
-	initialShaderCode: string
 	shaderError: string | null
 	editorRef: React.RefObject<EditorPaneHandle>
 	strudelRef: React.RefObject<StrudelPaneHandle>
@@ -28,7 +27,6 @@ export interface EditorContentProps {
 
 export const EditorContent = ({
 	viewMode,
-	initialShaderCode,
 	shaderError,
 	editorRef,
 	strudelRef,
@@ -131,7 +129,6 @@ export const EditorContent = ({
 				}}>
 					<EditorPane
 						ref={editorRef}
-						initialCode={initialShaderCode}
 						onRun={handleRun}
 						shaderError={shaderError}
 						onSave={handleSaveShader}

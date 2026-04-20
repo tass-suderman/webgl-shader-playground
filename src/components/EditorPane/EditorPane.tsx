@@ -9,13 +9,12 @@ import ShaderError from '../ShaderError/ShaderError'
 import UniformsPanel from '../UniformsPanel/UniformsPanel'
 import { GLSL_MONARCH_TOKENS, GLSL_LANGUAGE_CONFIG } from '../../utility/shader/glslLanguage'
 import { ensureMonacoThemes, themeNameToMonaco } from '../../utility/shader/monacoThemes'
-import { saveGlslCode, saveGlslTitle, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
+import { saveGlslCode, saveGlslTitle, getInitialGlslCode, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
 import { useTheme } from '../../hooks/useTheme'
 
 const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
 
 interface EditorPaneProps {
-  initialCode: string
   onRun: (code: string) => void
   shaderError: string | null
   onSave: (title: string, content: string) => void
@@ -31,13 +30,14 @@ export interface EditorPaneHandle {
   triggerImport: () => void
   triggerExport: () => void
   toggleUniforms: () => void
+  closeUniforms: () => void
 }
 
 export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
-  { initialCode, onRun, shaderError, onSave, hideHeader = false },
+  { onRun, shaderError, onSave, hideHeader = false },
   ref,
 ) {
-  const [pendingSource, setPendingSource] = useState<string>(initialCode)
+  const [pendingSource, setPendingSource] = useState<string>(() => getInitialGlslCode())
   const [shaderTitle, setShaderTitle] = useState(
     () => getInitialGlslTitle(DEFAULT_SHADER_TITLE),
   )
@@ -59,7 +59,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const pendingSourceRef = useRef(pendingSource)
   pendingSourceRef.current = pendingSource
 
-	const { vimMode, fontSize } = useAppStorage()
+	const { vimMode, fontSize, glslAutocomplete } = useAppStorage()
 	const { currentTheme } = useTheme()
 
   // Expose loadExample imperatively (used by App when a GLSL example is selected)
@@ -109,6 +109,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     toggleUniforms() {
       setUniformsOpen(v => !v)
     },
+    closeUniforms() {
+      setUniformsOpen(false)
+    },
   }), [shaderTitle, onSave, onRun])
 
   // Enable / disable vim mode whenever the prop changes or the editor mounts
@@ -133,6 +136,15 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     editorRef.current?.updateOptions({ fontSize })
   }, [fontSize])
 
+  // Toggle Monaco autocomplete whenever the setting changes
+  useEffect(() => {
+    editorRef.current?.updateOptions({
+      quickSuggestions: glslAutocomplete,
+      suggestOnTriggerCharacters: glslAutocomplete,
+      wordBasedSuggestions: glslAutocomplete ? 'currentDocument' : 'off',
+    })
+  }, [glslAutocomplete])
+
   // Forward vim status changes to the parent (used in split mode for a shared bar)
   // (Removed – vim status bar is no longer displayed)
 
@@ -147,6 +159,56 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     monaco.languages.setMonarchTokensProvider('glsl', GLSL_MONARCH_TOKENS as any)
     monaco.languages.setLanguageConfiguration('glsl', GLSL_LANGUAGE_CONFIG)
     ensureMonacoThemes(monaco)
+
+    // Register a GLSL keyword/function/variable completion provider.
+    // The provider is always registered (registration happens once on mount),
+    // and autocomplete is activated or suppressed via the quickSuggestions and
+    // suggestOnTriggerCharacters options controlled by the glslAutocomplete setting.
+    monaco.languages.registerCompletionItemProvider('glsl', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position)
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        }
+        const suggestions = [
+          ...GLSL_MONARCH_TOKENS.keywords.map(kw => ({
+            label: kw,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: kw,
+            range,
+          })),
+          ...GLSL_MONARCH_TOKENS.typeKeywords.map(kw => ({
+            label: kw,
+            kind: monaco.languages.CompletionItemKind.Class,
+            insertText: kw,
+            range,
+          })),
+          ...GLSL_MONARCH_TOKENS.qualifiers.map(kw => ({
+            label: kw,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: kw,
+            range,
+          })),
+          ...GLSL_MONARCH_TOKENS.builtinFunctions.map(fn => ({
+            label: fn,
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: fn,
+            range,
+          })),
+          ...GLSL_MONARCH_TOKENS.builtinVariables.map(v => ({
+            label: v,
+            kind: monaco.languages.CompletionItemKind.Variable,
+            insertText: v,
+            range,
+          })),
+        ]
+        return { suggestions }
+      },
+    })
   }, [])
 
   // Switch Monaco editor theme whenever the app theme changes
@@ -303,7 +365,7 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         <Editor
           height="100%"
           defaultLanguage="glsl"
-          defaultValue={initialCode}
+          defaultValue={pendingSource}
           onChange={handleEditorChange}
           beforeMount={handleBeforeMount}
           onMount={handleEditorMount}
@@ -315,6 +377,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
             scrollBeyondLastLine: false,
             wordWrap: 'on',
             automaticLayout: true,
+            quickSuggestions: glslAutocomplete,
+            suggestOnTriggerCharacters: glslAutocomplete,
+            wordBasedSuggestions: glslAutocomplete ? 'currentDocument' : 'off',
           }}
         />
       </Box>
