@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Box,
   IconButton,
   InputBase,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
+  Tooltip,
+  Typography,
 } from '@mui/material'
 import TabIcon from '@mui/icons-material/Tab'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
@@ -28,23 +27,18 @@ const DEFAULT_STRUDEL_TITLE = 'Strudel Pattern'
 
 const TAB_ICONS: Record<ViewMode, React.ReactElement> = {
   glsl: <TabIcon fontSize="small" />,
-  strudel: <TabIcon fontSize="small" />,
-  saved: <FolderIcon fontSize="small" />,
-  settings: <SettingsIcon fontSize="small" />,
-  about: <InfoIcon fontSize="small" />,
-}
-
-const TAB_ITEM_ICONS: Record<ViewMode, React.ReactElement> = {
-  glsl: <TabIcon fontSize="small" />,
   strudel: <MusicNoteIcon fontSize="small" />,
   saved: <FolderIcon fontSize="small" />,
   settings: <SettingsIcon fontSize="small" />,
   about: <InfoIcon fontSize="small" />,
 }
 
-const TAB_TEXT_COLOR: Record<string, string> = {
-  editor: 'textColor.button',
-  utility: 'textColor.utilTab',
+const TAB_LABELS: Record<ViewMode, string> = {
+  glsl: 'GLSL',
+  strudel: 'Strudel',
+  saved: 'Saved',
+  settings: 'Settings',
+  about: 'About Shades & Waves',
 }
 
 interface ImmersiveTopBarProps {
@@ -76,28 +70,6 @@ export const ImmersiveTopBar = ({
     gap: 0.5,
   }
 
-  const [tabMenuOpen, setTabMenuOpen] = useState(false)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Clean up pending close timer on unmount
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-    }
-  }, [])
-
-  const handleMenuMouseEnter = () => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-      closeTimerRef.current = null
-    }
-    setTabMenuOpen(true)
-  }
-
-  const handleMenuMouseLeave = () => {
-    closeTimerRef.current = setTimeout(() => setTabMenuOpen(false), 150)
-  }
-
   const [title, setTitle] = useState(() => {
     if (viewMode === 'strudel') return getInitialStrudelTitle(DEFAULT_STRUDEL_TITLE)
     return getInitialGlslTitle(DEFAULT_GLSL_TITLE)
@@ -127,10 +99,7 @@ export const ImmersiveTopBar = ({
       strudelRef.current?.closeSounds()
     }
     setViewMode(mode)
-    setTabMenuOpen(false)
   }
-
-  const showTitlePill = viewMode === 'glsl' || viewMode === 'strudel'
 
   return (
     <Box
@@ -144,9 +113,9 @@ export const ImmersiveTopBar = ({
         pointerEvents: 'none',
       }}
     >
-      {/* Left pill: editable title */}
-      {showTitlePill ? (
-        <Box sx={{ ...pillSx, width: 300, pointerEvents: 'auto' }}>
+      {/* Left pill: editable title for glsl/strudel, static label for others */}
+      <Box sx={{ ...pillSx, width: 300, pointerEvents: 'auto' }}>
+        {viewMode === 'glsl' || viewMode === 'strudel' ? (
           <InputBase
             value={title}
             onChange={handleTitleChange}
@@ -159,166 +128,178 @@ export const ImmersiveTopBar = ({
             }}
             inputProps={{ 'aria-label': viewMode === 'glsl' ? 'Shader title' : 'Pattern title' }}
           />
-        </Box>
-      ) : (
-        <Box />
-      )}
+        ) : (
+          <Typography
+            sx={{
+              color: 'white',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {TAB_LABELS[viewMode]}
+          </Typography>
+        )}
+      </Box>
 
-      {/* Right pill: tab switcher + action buttons */}
-      <Box sx={{ ...pillSx, pointerEvents: 'auto', position: 'relative' }}>
-        {/* Tab switcher – hover over button or dropdown to keep it open */}
-        <Box
-          onMouseEnter={handleMenuMouseEnter}
-          onMouseLeave={handleMenuMouseLeave}
-          sx={{ position: 'relative' }}
-        >
-          <IconButton size="small" sx={{ color: 'white' }}>
-            {TAB_ICONS[viewMode]}
-          </IconButton>
-
-          {tabMenuOpen && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                mt: 0.5,
-                bgcolor: pillBg,
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 1,
-                backdropFilter: 'blur(8px)',
-                overflow: 'hidden',
-                minWidth: 160,
-                zIndex: 100,
-                py: 0.5,
-              }}
-            >
-              {tabConfigs.map(({ value, label, variant }) => (
-                <MenuItem
-                  key={value}
-                  selected={value === viewMode}
+      {/* Right side: tabs pill + action buttons pill */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pointerEvents: 'auto' }}>
+        {/* Tabs pill: one icon per tab, active highlighted */}
+        <Box sx={{ ...pillSx, px: 0.75, gap: 0 }}>
+          {tabConfigs.map(({ value, label }) => {
+            const isActive = value === viewMode
+            return (
+              <Tooltip key={value} title={label} placement="bottom">
+                <IconButton
+                  size="small"
                   onClick={() => handleTabSelect(value)}
                   sx={{
-                    color: TAB_TEXT_COLOR[variant] ?? 'white',
-                    py: 0.75,
-                    px: 1.5,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.12)' },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                    fontSize: '0.875rem',
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                    bgcolor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    borderRadius: '50%',
+                    '&:hover': {
+                      color: 'white',
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                    p: 0.5,
                   }}
+                  aria-label={label}
+                  aria-pressed={isActive}
                 >
-                  <ListItemIcon sx={{ color: TAB_TEXT_COLOR[variant] ?? 'white', minWidth: 28 }}>
-                    {TAB_ITEM_ICONS[value]}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={label}
-                    sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem', color: 'inherit' } }}
-                  />
-                </MenuItem>
-              ))}
-            </Box>
-          )}
+                  {TAB_ICONS[value]}
+                </IconButton>
+              </Tooltip>
+            )
+          })}
         </Box>
 
-        {/* GLSL action buttons */}
-        {viewMode === 'glsl' && (
-          <>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => editorRef.current?.toggleUniforms()}
-              aria-label="Available uniforms"
-            >
-              <InfoOutlinedIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => editorRef.current?.save()}
-              aria-label="Save"
-            >
-              <SaveIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => editorRef.current?.triggerImport()}
-              aria-label="Import shader from file"
-            >
-              <FileUploadIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => editorRef.current?.triggerExport()}
-              aria-label="Export shader to file"
-            >
-              <FileDownloadIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => editorRef.current?.run()}
-              aria-label="Run Shader"
-            >
-              <PlayArrowIcon fontSize="small" />
-            </IconButton>
-          </>
-        )}
+        {/* Action buttons pill */}
+        <Box sx={{ ...pillSx, px: 1, gap: 0.5 }}>
+          {/* GLSL action buttons */}
+          {viewMode === 'glsl' && (
+            <>
+              <Tooltip title="Available uniforms" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => editorRef.current?.toggleUniforms()}
+                  aria-label="Available uniforms"
+                >
+                  <InfoOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Save" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => editorRef.current?.save()}
+                  aria-label="Save"
+                >
+                  <SaveIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Import shader from file" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => editorRef.current?.triggerImport()}
+                  aria-label="Import shader from file"
+                >
+                  <FileUploadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Export shader to file" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => editorRef.current?.triggerExport()}
+                  aria-label="Export shader to file"
+                >
+                  <FileDownloadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Run Shader" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => editorRef.current?.run()}
+                  aria-label="Run Shader"
+                >
+                  <PlayArrowIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
 
-        {/* Strudel action buttons */}
-        {viewMode === 'strudel' && (
-          <>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.toggleSounds()}
-              aria-label="Available sounds"
-            >
-              <MusicNoteIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.save()}
-              aria-label="Save"
-            >
-              <SaveIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.triggerImport()}
-              aria-label="Import pattern from file"
-            >
-              <FileUploadIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.triggerExport()}
-              aria-label="Export pattern to file"
-            >
-              <FileDownloadIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.play()}
-              aria-label="Play Strudel"
-            >
-              <PlayArrowIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              sx={{ color: 'white' }}
-              onClick={() => strudelRef.current?.pause()}
-              aria-label="Stop Strudel"
-            >
-              <StopIcon fontSize="small" />
-            </IconButton>
-          </>
-        )}
+          {/* Strudel action buttons */}
+          {viewMode === 'strudel' && (
+            <>
+              <Tooltip title="Available sounds" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.toggleSounds()}
+                  aria-label="Available sounds"
+                >
+                  <MusicNoteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Save" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.save()}
+                  aria-label="Save"
+                >
+                  <SaveIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Import pattern from file" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.triggerImport()}
+                  aria-label="Import pattern from file"
+                >
+                  <FileUploadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Export pattern to file" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.triggerExport()}
+                  aria-label="Export pattern to file"
+                >
+                  <FileDownloadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Play Strudel" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.play()}
+                  aria-label="Play Strudel"
+                >
+                  <PlayArrowIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Stop Strudel" placement="bottom">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={() => strudelRef.current?.pause()}
+                  aria-label="Stop Strudel"
+                >
+                  <StopIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
       </Box>
     </Box>
   )
