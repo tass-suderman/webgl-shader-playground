@@ -1,12 +1,4 @@
-import { useRef, useState } from 'react'
-import {
-	Box,
-  IconButton,
-  Popover,
-  Slider,
-  Tooltip,
-  Typography,
-} from '@mui/material'
+import { Box, Tooltip, IconButton } from '@mui/material'
 import {
 	PlayArrow,
 	Pause,
@@ -21,227 +13,119 @@ import {
 	VolumeOff,
 	FiberManualRecord,
 	StopCircle,
-	ChevronLeft,
-	ChevronRight,
-	ExpandMore,
-	ExpandLess,
 	Preview,
 } from '@mui/icons-material'
-import ChannelStatusChips from '../ChannelStatusChips/ChannelStatusChips'
 import { useAppStorage } from '../../hooks/useAppStorage'
 import { useMediaStreams } from '../../hooks/useMediaStreams'
+import { SliderControl } from '../SliderControl/SliderControl'
+import { ToggleIconButton } from '../ToggleIconButton/ToggleIconButton'
 
 interface ShaderControlsProps {
-  isPlaying: boolean
-  isRecording: boolean
-  isFullscreen: boolean
-  onTogglePlay: () => void
-  onStartRecording: () => void
-  onStopRecording: () => void
-  onToggleFullscreen: () => void
-  editorCollapsed?: boolean
-  onToggleEditorCollapsed?: () => void
-  isMobile?: boolean
-  isImmersive?: boolean
-  onToggleImmersive?: () => void
+	isPlaying: boolean
+	isRecording: boolean
+	isFullscreen: boolean
+	onTogglePlay: () => void
+	onStartRecording: () => void
+	onStopRecording: () => void
+	onToggleFullscreen: () => void
 }
 
 export default function ShaderControls({
-  isPlaying,
-  isRecording,
-  isFullscreen,
-  onTogglePlay,
-  onStartRecording,
-  onStopRecording,
-  onToggleFullscreen,
-  editorCollapsed,
-  onToggleEditorCollapsed,
-  isMobile = false,
-  isImmersive = false,
-  onToggleImmersive,
+	isPlaying,
+	isRecording,
+	isFullscreen,
+	onTogglePlay,
+	onStartRecording,
+	onStopRecording,
+	onToggleFullscreen,
 }: ShaderControlsProps) {
-	const { 
+	const {
 		muted, setMuted,
 		volume, setVolume,
 		immersiveOpacity, setImmersiveOpacity,
 	} = useAppStorage()
 
-  const {
-    webcamEnabled,
-    micEnabled,
+	const {
+		webcamEnabled,
+		micEnabled,
 		handleToggleWebcam,
 		handleToggleMic,
-  } = useMediaStreams()
+	} = useMediaStreams()
 
-  const Volume = (muted || volume === 0)
-    ? VolumeOff
-    : volume <= 50
-      ? VolumeDown
-      : VolumeUp
+	const VolumeIcon = (muted || volume === 0)
+		? VolumeOff
+		: volume <= 50
+			? VolumeDown
+			: VolumeUp
 
-  const previewBtnRef = useRef<HTMLButtonElement>(null)
-  const [opacityPopoverOpen, setOpacityPopoverOpen] = useState(false)
+	return (
+		<Box
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 1,
+				px: 1,
+				py: 0.5,
+				bgcolor: 'rgba(0,0,0,0.8)',
+				borderTop: '1px solid rgba(255,255,255,0.1)',
+			}}
+		>
+			{/* Left side: Play/Pause, Webcam, Microphone, Recording */}
+			<ToggleIconButton
+				onClick={onTogglePlay}
+				checked={isPlaying}
+				inactiveProps={{ icon: <PlayArrow />, label: 'Play', color: 'white' }}
+				activeProps={{ icon: <Pause />, label: 'Pause', color: 'white' }}
+			/>
 
-  const handlePreviewClick = () => {
-    onToggleImmersive?.()
-    setOpacityPopoverOpen(true)
-  }
+			<ToggleIconButton
+				onClick={handleToggleWebcam}
+				checked={webcamEnabled}
+				inactiveProps={{ icon: <VideocamOff />, label: 'Enable Webcam (iChannel0)', color: 'white' }}
+				activeProps={{ icon: <Videocam />, label: 'Disable Webcam (iChannel0)', color: 'background.hover' }}
+			/>
 
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        px: 1,
-        py: 0.5,
-        bgcolor: 'rgba(0,0,0,0.8)',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-      }}
-    >
-      <Tooltip title={isPlaying ? 'Pause' : 'Play'}>
-        <IconButton onClick={onTogglePlay} size="small" sx={{ color: 'white' }}>
-          {isPlaying ? <Pause /> : <PlayArrow />}
-        </IconButton>
-      </Tooltip>
+			<ToggleIconButton
+				onClick={handleToggleMic}
+				checked={micEnabled}
+				inactiveProps={{ icon: <MicOff />, label: 'Enable Microphone (iChannel1)', color: 'white' }}
+				activeProps={{ icon: <Mic />, label: 'Disable Microphone (iChannel1)', color: 'background.hover' }}
+			/>
 
-      <Tooltip title={webcamEnabled ? 'Disable Webcam (iChannel0)' : 'Enable Webcam (iChannel0)'}>
-        <IconButton onClick={handleToggleWebcam} size="small" sx={{ color: webcamEnabled ? 'background.hover' : 'white' }}>
-          {webcamEnabled ? <Videocam /> : <VideocamOff />}
-        </IconButton>
-      </Tooltip>
+			<ToggleIconButton
+				onClick={isRecording ? onStopRecording : onStartRecording}
+				checked={isRecording}
+				inactiveProps={{ icon: <FiberManualRecord />, label: 'Start recording', color: 'white' }}
+				activeProps={{ icon: <StopCircle />, label: 'Stop recording', color: 'error.main' }}
+			/>
 
-      <Tooltip title={micEnabled ? 'Disable Microphone (iChannel1)' : 'Enable Microphone (iChannel1)'}>
-        <IconButton onClick={handleToggleMic} size="small" sx={{ color: micEnabled ? 'background.hover' : 'white' }}>
-          {micEnabled ? <Mic /> : <MicOff />}
-        </IconButton>
-      </Tooltip>
+			<Box sx={{ flex: 1 }} />
 
-      <ChannelStatusChips />
+			{/* Right side: Volume, Opacity, Fullscreen */}
+			<SliderControl
+				icon={<VolumeIcon />}
+				value={volume}
+				onChange={setVolume}
+				label={muted ? 'Unmute' : 'Mute'}
+				iconColor={muted ? 'error.main' : 'white'}
+				disabled={muted}
+				onIconClick={() => setMuted(!muted)}
+			/>
 
-      <Box sx={{ flex: 1 }} />
+			<SliderControl
+				icon={<Preview />}
+				value={immersiveOpacity}
+				onChange={setImmersiveOpacity}
+				label={`Overlay opacity: ${immersiveOpacity}%`}
+				iconColor="white"
+			/>
 
-      <Tooltip title={muted ? 'Unmute' : 'Mute'}>
-        <IconButton onClick={() => setMuted(!muted)} size="small" aria-label={muted ? 'Unmute' : 'Mute'} sx={{ color: 'white' }}>
-          <Volume />
-        </IconButton>
-      </Tooltip>
-
-      <Slider
-        value={volume}
-        min={0}
-        max={100}
-        size="small"
-        aria-label="Volume"
-        onChange={(_e, val) => setVolume(val as number)}
-        sx={{
-          width: 80,
-          color: 'white',
-          '& .MuiSlider-thumb': { width: 12, height: 12 },
-          '& .MuiSlider-rail': { opacity: 0.3 },
-        }}
-      />
-
-      <Tooltip title={isRecording ? 'Stop recording' : 'Start recording'}>
-        <IconButton
-          onClick={isRecording ? onStopRecording : onStartRecording}
-          size="small"
-          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-          sx={{ color: isRecording ? 'error.main' : 'white' }}
-        >
-          {isRecording ? <StopCircle /> : <FiberManualRecord />}
-        </IconButton>
-      </Tooltip>
-
-      {onToggleImmersive !== undefined && (
-        <>
-          <Tooltip title={isImmersive ? 'Exit immersive mode' : 'Immersive mode'}>
-            <IconButton
-              ref={previewBtnRef}
-              onClick={handlePreviewClick}
-              size="small"
-              aria-label={isImmersive ? 'Exit immersive mode' : 'Immersive mode'}
-              sx={{ color: isImmersive ? 'background.hover' : 'white' }}
-            >
-              <Preview />
-            </IconButton>
-          </Tooltip>
-
-          {isImmersive && (
-            <Tooltip title={`Opacity: ${immersiveOpacity}%`}>
-              <Slider
-                value={immersiveOpacity}
-                onChange={(_e, val) => setImmersiveOpacity?.(val as number)}
-                min={0}
-                max={100}
-                step={1}
-                size="small"
-                aria-label="Background opacity"
-                sx={{
-                  width: 80,
-                  color: 'white',
-                  '& .MuiSlider-thumb': { width: 12, height: 12 },
-                  '& .MuiSlider-rail': { opacity: 0.3 },
-                }}
-              />
-            </Tooltip>
-          )}
-
-          <Popover
-            open={opacityPopoverOpen}
-            anchorEl={previewBtnRef.current}
-            onClose={() => setOpacityPopoverOpen(false)}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            slotProps={{ paper: { sx: { bgcolor: 'rgba(0,0,0,0.85)', color: 'white', p: 2, minWidth: 200, border: '1px solid rgba(255,255,255,0.15)' } } }}
-          >
-            <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
-              Background opacity: {immersiveOpacity}%
-            </Typography>
-            <Slider
-              value={immersiveOpacity}
-              onChange={(_e, val) => setImmersiveOpacity?.(val as number)}
-              min={0}
-              max={100}
-              step={1}
-              size="small"
-              disabled={!isImmersive}
-              sx={{
-                color: 'white',
-                '& .MuiSlider-thumb': { width: 12, height: 12 },
-                '& .MuiSlider-rail': { opacity: 0.3 },
-              }}
-            />
-            {!isImmersive && (
-              <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'rgba(255,255,255,0.5)' }}>
-                Enable immersive mode to adjust
-              </Typography>
-            )}
-          </Popover>
-        </>
-      )}
-
-      <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
-        <IconButton onClick={onToggleFullscreen} size="small" sx={{ color: 'white' }}>
-          {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-        </IconButton>
-      </Tooltip>
-
-      {onToggleEditorCollapsed !== undefined && !isFullscreen && (
-        <Tooltip title={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}>
-          <IconButton
-            onClick={onToggleEditorCollapsed}
-            size="small"
-            aria-label={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}
-            sx={{ color: 'white' }}
-          >
-            {isMobile
-              ? (editorCollapsed ? <ExpandLess /> : <ExpandMore />)
-              : (editorCollapsed ? <ChevronLeft /> : <ChevronRight />)
-            }
-          </IconButton>
-        </Tooltip>
-      )}
-    </Box>
-  )
+			<Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
+				<IconButton onClick={onToggleFullscreen} size="small" sx={{ color: 'white' }}>
+					{isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+				</IconButton>
+			</Tooltip>
+		</Box>
+	)
 }
+

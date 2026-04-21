@@ -1,13 +1,11 @@
 import { useCallback, useState } from 'react'
 import { Box, Button, FormControl, MenuItem, Select, Typography} from '@mui/material'
 import { DeleteForever } from '@mui/icons-material'
-import { themes } from '../../themes/Theme'
 import ResetConfirmationDialog from '../ResetConfirmationDialog/ResetConfirmationDialog'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
 import SettingsSection from '../SettingsSection/SettingsSection'
 import SettingsCheckbox from '../SettingsCheckbox/SettingsCheckbox'
 import { shortcuts } from '../../utility/keyboardShortcuts'
-import { useTheme } from '../../hooks/useTheme'
 import { useAppStorage } from '../../hooks/useAppStorage'
 import PaneHeader from '../PaneHeader/PaneHeader'
 
@@ -20,7 +18,6 @@ export default ({ hideHeader = false }: { hideHeader?: boolean }) => {
     window.location.reload()
   }, [])
 
-const { changeTheme, currentTheme } = useTheme()
 const {
 vimMode, setVimMode,
 fontSize, setFontSize,
@@ -97,58 +94,6 @@ borderColor: 'border.default',
               </Select>
             </FormControl>
 </Box>
-</SettingsSection>
-
-<SettingsDivider />
-
-<SettingsSection title="Theme">
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-{/* TODO -- This seems to default to Kanagawa on refresh */}
-            <Select
-              value={currentTheme.name}
-              onChange={(e) => changeTheme(e.target.value)}
-              sx={{
-                color: 'textColor.primary',
-                bgcolor: 'background.button',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'border.default',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'border.hover',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'accent',
-                },
-                '& .MuiSvgIcon-root': {
-                  color: 'textColor.muted',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    bgcolor: 'background.header',
-                    color: 'textColor.primary',
-borderColor: 'border.default',
-                    border: '1px solid',
-                  },
-                },
-              }}
-            >
-              {themes.map(t => (
-                <MenuItem
-                  key={t.name}
-                  value={t.name}
-                  sx={{
-                    color: 'textColor.primary',
-                    '&:hover': { bgcolor: 'background.button' },
-                    '&.Mui-selected': { bgcolor: 'background.button' },
-                    '&.Mui-selected:hover': { bgcolor: 'border.faint' },
-                  }}
-children={t.label}
-                />
-              ))}
-            </Select>
-          </FormControl>
 </SettingsSection>
 
 <SettingsDivider />

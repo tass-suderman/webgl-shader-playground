@@ -11,10 +11,9 @@ import ShaderError from '../ShaderError/ShaderError'
 import UniformsPanel from '../UniformsPanel/UniformsPanel'
 import { glslLanguage, glslCompletions } from '../../utility/shader/glslCodemirror'
 import { getGlslThemeExtension } from '../../utility/shader/codemirrorThemes'
-import { saveGlslCode, saveGlslTitle, getInitialGlslCode, getInitialGlslTitle, useAppStorage } from '../../hooks/useAppStorage'
-import { useTheme } from '../../hooks/useTheme'
-
-const DEFAULT_SHADER_TITLE = 'Fragment Shader (GLSL)'
+import { saveGlslCode, saveGlslTitle, getInitialGlslCode, getInitialGlslTitle } from '../../hooks/useAppStorage'
+import { useGlslEditorSettings } from '../../hooks/useGlslEditorSettings'
+import { DEFAULT_SHADER_TITLE } from '../../constants/editorConstants'
 
 interface EditorPaneProps {
   onRun: (code: string) => void
@@ -50,7 +49,6 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Compartments allow dynamic reconfiguration of individual extensions
-  const themeCompartment = useRef(new Compartment())
   const vimCompartment = useRef(new Compartment())
   const fontSizeCompartment = useRef(new Compartment())
   const autocompleteCompartment = useRef(new Compartment())
@@ -62,18 +60,11 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   const onRunRef = useRef(onRun)
   onRunRef.current = onRun
 
-  const { vimMode, fontSize, glslAutocomplete } = useAppStorage()
-  const { currentTheme } = useTheme()
-
-  // Capture initial values in refs so the mount effect only runs once
-  const vimModeRef = useRef(vimMode)
-  vimModeRef.current = vimMode
-  const fontSizeRef = useRef(fontSize)
-  fontSizeRef.current = fontSize
-  const themeNameRef = useRef(currentTheme.name)
-  themeNameRef.current = currentTheme.name
-  const glslAutocompleteRef = useRef(glslAutocomplete)
-  glslAutocompleteRef.current = glslAutocomplete
+  const { vimMode, fontSize, glslAutocomplete } = useGlslEditorSettings(viewRef, {
+    vimCompartment,
+    fontSizeCompartment,
+    autocompleteCompartment,
+  })
 
   // ---------------------------------------------------------------------------
   // Mount the CodeMirror EditorView exactly once
@@ -115,14 +106,14 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
           }
         }),
 
-        // Dynamic compartments (theme / vim / font size / autocomplete)
-        themeCompartment.current.of(getGlslThemeExtension(themeNameRef.current)),
-        vimCompartment.current.of(vimModeRef.current ? vim() : []),
+        // Theme (static) and dynamic compartments (vim / font size / autocomplete)
+        getGlslThemeExtension(),
+        vimCompartment.current.of(vimMode ? vim() : []),
         fontSizeCompartment.current.of(
-          EditorView.theme({ '&': { fontSize: `${fontSizeRef.current}px` } }),
+          EditorView.theme({ '&': { fontSize: `${fontSize}px` } }),
         ),
         autocompleteCompartment.current.of(
-          glslAutocompleteRef.current ? autocompletion({ override: [glslCompletions] }) : [],
+          glslAutocomplete ? autocompletion({ override: [glslCompletions] }) : [],
         ),
       ],
     })
@@ -194,48 +185,6 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
       setUniformsOpen(false)
     },
   }), [])
-
-  // ---------------------------------------------------------------------------
-  // Reconfigure vim mode dynamically
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    viewRef.current?.dispatch({
-      effects: vimCompartment.current.reconfigure(vimMode ? vim() : []),
-    })
-  }, [vimMode])
-
-  // ---------------------------------------------------------------------------
-  // Reconfigure font size dynamically
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    viewRef.current?.dispatch({
-      effects: fontSizeCompartment.current.reconfigure(
-        EditorView.theme({ '&': { fontSize: `${fontSize}px` } }),
-      ),
-    })
-  }, [fontSize])
-
-  // ---------------------------------------------------------------------------
-  // Reconfigure theme dynamically
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    viewRef.current?.dispatch({
-      effects: themeCompartment.current.reconfigure(
-        getGlslThemeExtension(currentTheme.name),
-      ),
-    })
-  }, [currentTheme.name])
-
-  // ---------------------------------------------------------------------------
-  // Reconfigure autocomplete dynamically
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    viewRef.current?.dispatch({
-      effects: autocompleteCompartment.current.reconfigure(
-        glslAutocomplete ? autocompletion({ override: [glslCompletions] }) : [],
-      ),
-    })
-  }, [glslAutocomplete])
 
   // ---------------------------------------------------------------------------
   // Callbacks
