@@ -2,31 +2,29 @@ import { Box, IconButton, Slider, Tooltip } from '@mui/material'
 
 interface SliderControlProps {
 	icon: React.ReactNode
-	activeIcon?: React.ReactNode
 	value: number
 	onChange: (value: number) => void
 	min?: number
 	max?: number
 	step?: number
 	label: string
-	active?: boolean
+	iconColor?: string
+	disabled?: boolean
 	onIconClick?: () => void
 }
 
 export const SliderControl = ({
 	icon,
-	activeIcon,
 	value,
 	onChange,
 	min = 0,
 	max = 100,
 	step = 1,
 	label,
-	active = true,
+	iconColor = 'white',
+	disabled = false,
 	onIconClick,
 }: SliderControlProps) => {
-	const displayIcon = active && activeIcon ? activeIcon : icon
-
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
 			{onIconClick ? (
@@ -35,15 +33,15 @@ export const SliderControl = ({
 						onClick={onIconClick}
 						size="small"
 						aria-label={label}
-						sx={{ color: active ? 'background.hover' : 'white' }}
+						sx={{ color: iconColor }}
 					>
-						{displayIcon}
+						{icon}
 					</IconButton>
 				</Tooltip>
 			) : (
 				<Tooltip title={label}>
-					<Box sx={{ color: active ? 'background.hover' : 'white', display: 'flex', alignItems: 'center', px: 0.5 }}>
-						{displayIcon}
+					<Box sx={{ color: iconColor, display: 'flex', alignItems: 'center', px: 0.5 }}>
+						{icon}
 					</Box>
 				</Tooltip>
 			)}
@@ -55,6 +53,7 @@ export const SliderControl = ({
 				step={step}
 				size="small"
 				aria-label={label}
+				disabled={disabled}
 				sx={{
 					width: 80,
 					color: 'white',
@@ -65,3 +64,4 @@ export const SliderControl = ({
 		</Box>
 	)
 }
+

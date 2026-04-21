@@ -1,11 +1,4 @@
-import { useRef, useState } from 'react'
-import {
-	Box,
-	IconButton,
-	Popover,
-	Tooltip,
-	Typography,
-} from '@mui/material'
+import { Box, Tooltip, IconButton } from '@mui/material'
 import {
 	PlayArrow,
 	Pause,
@@ -22,10 +15,10 @@ import {
 	StopCircle,
 	Preview,
 } from '@mui/icons-material'
-import ChannelStatusChips from '../ChannelStatusChips/ChannelStatusChips'
 import { useAppStorage } from '../../hooks/useAppStorage'
 import { useMediaStreams } from '../../hooks/useMediaStreams'
 import { SliderControl } from '../SliderControl/SliderControl'
+import { ToggleIconButton } from '../ToggleIconButton/ToggleIconButton'
 
 interface ShaderControlsProps {
 	isPlaying: boolean
@@ -65,9 +58,6 @@ export default function ShaderControls({
 			? VolumeDown
 			: VolumeUp
 
-	const opacityBtnRef = useRef<HTMLButtonElement>(null)
-	const [opacityPopoverOpen, setOpacityPopoverOpen] = useState(false)
-
 	return (
 		<Box
 			sx={{
@@ -80,77 +70,55 @@ export default function ShaderControls({
 				borderTop: '1px solid rgba(255,255,255,0.1)',
 			}}
 		>
-			<Tooltip title={isPlaying ? 'Pause' : 'Play'}>
-				<IconButton onClick={onTogglePlay} size="small" sx={{ color: 'white' }}>
-					{isPlaying ? <Pause /> : <PlayArrow />}
-				</IconButton>
-			</Tooltip>
+			{/* Left side: Play/Pause, Webcam, Microphone, Recording */}
+			<ToggleIconButton
+				onClick={onTogglePlay}
+				checked={isPlaying}
+				inactiveProps={{ icon: <PlayArrow />, label: 'Play', color: 'white' }}
+				activeProps={{ icon: <Pause />, label: 'Pause', color: 'white' }}
+			/>
 
-			<Tooltip title={webcamEnabled ? 'Disable Webcam (iChannel0)' : 'Enable Webcam (iChannel0)'}>
-				<IconButton onClick={handleToggleWebcam} size="small" sx={{ color: webcamEnabled ? 'background.hover' : 'white' }}>
-					{webcamEnabled ? <Videocam /> : <VideocamOff />}
-				</IconButton>
-			</Tooltip>
+			<ToggleIconButton
+				onClick={handleToggleWebcam}
+				checked={webcamEnabled}
+				inactiveProps={{ icon: <VideocamOff />, label: 'Enable Webcam (iChannel0)', color: 'white' }}
+				activeProps={{ icon: <Videocam />, label: 'Disable Webcam (iChannel0)', color: 'background.hover' }}
+			/>
 
-			<Tooltip title={micEnabled ? 'Disable Microphone (iChannel1)' : 'Enable Microphone (iChannel1)'}>
-				<IconButton onClick={handleToggleMic} size="small" sx={{ color: micEnabled ? 'background.hover' : 'white' }}>
-					{micEnabled ? <Mic /> : <MicOff />}
-				</IconButton>
-			</Tooltip>
+			<ToggleIconButton
+				onClick={handleToggleMic}
+				checked={micEnabled}
+				inactiveProps={{ icon: <MicOff />, label: 'Enable Microphone (iChannel1)', color: 'white' }}
+				activeProps={{ icon: <Mic />, label: 'Disable Microphone (iChannel1)', color: 'background.hover' }}
+			/>
 
-			<ChannelStatusChips />
+			<ToggleIconButton
+				onClick={isRecording ? onStopRecording : onStartRecording}
+				checked={isRecording}
+				inactiveProps={{ icon: <FiberManualRecord />, label: 'Start recording', color: 'white' }}
+				activeProps={{ icon: <StopCircle />, label: 'Stop recording', color: 'error.main' }}
+			/>
 
 			<Box sx={{ flex: 1 }} />
 
+			{/* Right side: Volume, Opacity, Fullscreen */}
 			<SliderControl
 				icon={<VolumeIcon />}
 				value={volume}
 				onChange={setVolume}
 				label={muted ? 'Unmute' : 'Mute'}
+				iconColor={muted ? 'error.main' : 'white'}
+				disabled={muted}
 				onIconClick={() => setMuted(!muted)}
 			/>
 
-			<Tooltip title={isRecording ? 'Stop recording' : 'Start recording'}>
-				<IconButton
-					onClick={isRecording ? onStopRecording : onStartRecording}
-					size="small"
-					aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-					sx={{ color: isRecording ? 'error.main' : 'white' }}
-				>
-					{isRecording ? <StopCircle /> : <FiberManualRecord />}
-				</IconButton>
-			</Tooltip>
-
-			<Tooltip title="Adjust overlay opacity">
-				<IconButton
-					ref={opacityBtnRef}
-					onClick={() => setOpacityPopoverOpen(true)}
-					size="small"
-					aria-label="Adjust overlay opacity"
-					sx={{ color: 'white' }}
-				>
-					<Preview />
-				</IconButton>
-			</Tooltip>
-
-			<Popover
-				open={opacityPopoverOpen}
-				anchorEl={opacityBtnRef.current}
-				onClose={() => setOpacityPopoverOpen(false)}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-				slotProps={{ paper: { sx: { bgcolor: 'rgba(0,0,0,0.85)', color: 'white', p: 2, minWidth: 200, border: '1px solid rgba(255,255,255,0.15)' } } }}
-			>
-				<Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
-					Background opacity: {immersiveOpacity}%
-				</Typography>
-				<SliderControl
-					icon={<Preview />}
-					value={immersiveOpacity}
-					onChange={setImmersiveOpacity}
-					label={`Opacity: ${immersiveOpacity}%`}
-				/>
-			</Popover>
+			<SliderControl
+				icon={<Preview />}
+				value={immersiveOpacity}
+				onChange={setImmersiveOpacity}
+				label={`Overlay opacity: ${immersiveOpacity}%`}
+				iconColor="white"
+			/>
 
 			<Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
 				<IconButton onClick={onToggleFullscreen} size="small" sx={{ color: 'white' }}>
@@ -160,3 +128,4 @@ export default function ShaderControls({
 		</Box>
 	)
 }
+

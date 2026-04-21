@@ -1,5 +1,5 @@
 import { useLocalStorage } from './useLocalStorage'
-import { DEFAULT_SHADER } from '../utility/shader/defaultShader'
+import { DEFAULT_SHADER } from '../constants/editorConstants'
 import { createContext, useContext } from 'react'
 
 // ---------------------------------------------------------------------------
