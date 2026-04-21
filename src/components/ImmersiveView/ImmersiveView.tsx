@@ -31,37 +31,37 @@ handleOverwriteCancel,
 handleOverwriteConfirm,
 } = useViewState()
 
-  const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
-  const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
-  const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
+const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
+const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
+const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
 
 const { immersiveOpacity } = useAppStorage()
 const { muiTheme } = useTheme()
 
-  // Build a theme variant with alpha-blended backgrounds so every component
-  // inside the overlay respects the immersive opacity slider automatically.
-  const immersiveTheme = useMemo(() => {
-    const a = immersiveOpacity / 100
-    const bg = muiTheme.palette.background
-    return createTheme(muiTheme, {
-      palette: {
-        background: {
-          app:      alpha(bg.app,      a),
-          panel:    alpha(bg.panel,    a),
-          header:   alpha(bg.header,   a),
-          button:   alpha(bg.button,   a),
-          card:     alpha(bg.card,     a),
-          disabled: alpha(bg.disabled, a),
-          hover:    alpha(bg.hover,    a),
-        },
-      },
-    })
-  }, [muiTheme, immersiveOpacity])
+// Build a theme variant with alpha-blended backgrounds so every component
+// inside the overlay respects the immersive opacity slider automatically.
+const immersiveTheme = useMemo(() => {
+const a = immersiveOpacity / 100
+const bg = muiTheme.palette.background
+return createTheme(muiTheme, {
+palette: {
+background: {
+app:      alpha(bg.app,      a),
+panel:    alpha(bg.panel,    a),
+header:   alpha(bg.header,   a),
+button:   alpha(bg.button,   a),
+card:     alpha(bg.card,     a),
+disabled: alpha(bg.disabled, a),
+hover:    alpha(bg.hover,    a),
+},
+},
+})
+}, [muiTheme, immersiveOpacity])
 
-  useEffect(() => {
+useEffect(() => {
 document.documentElement.dataset.immersive = 'true'
 document.documentElement.style.setProperty('--pg-immersive-alpha', `${immersiveOpacity}%`)
-  }, [immersiveOpacity])
+}, [immersiveOpacity])
 
 useEffect(() => {
 const handler = (e: KeyboardEvent) => {

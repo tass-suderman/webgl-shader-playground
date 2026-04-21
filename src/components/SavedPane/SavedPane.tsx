@@ -8,7 +8,6 @@ import DeleteItemDialog from '../DeleteItemDialog/DeleteItemDialog'
 import ConfirmationDialog from '../ConfirmationDialog/ConfirmationDialog'
 import SavedSection from './SavedSection'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
-import PaneHeader from '../PaneHeader/PaneHeader'
 import { useAppStorage } from '../../hooks/useAppStorage'
 
 interface SavedPaneProps {
@@ -16,7 +15,6 @@ interface SavedPaneProps {
   onLoadPattern: (title: string, content: string) => void
   onLoadGlslExample: (title: string, content: string) => void
   onLoadStrudelExample: (title: string, content: string) => void
-  hideHeader?: boolean
 }
 
 interface PendingDelete {
@@ -45,7 +43,6 @@ export default function SavedPane({
   onLoadPattern,
   onLoadGlslExample,
   onLoadStrudelExample,
-  hideHeader = false,
 }: SavedPaneProps) {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -137,8 +134,8 @@ export default function SavedPane({
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.panel' }}>
-      {/* Header */}
-			{!hideHeader && <PaneHeader title="Saved">
+      {/* Pill gap + optional export button */}
+      <Box sx={{ pt: '44px', display: 'flex', justifyContent: 'flex-end', px: 1, flexShrink: 0 }}>
         {hasSavedContent && (
           <Tooltip title="Export all saved content as zip">
             <IconButton
@@ -151,7 +148,7 @@ export default function SavedPane({
             </IconButton>
           </Tooltip>
         )}
-      </PaneHeader>}
+      </Box>
 
       {/* Scrollable content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>

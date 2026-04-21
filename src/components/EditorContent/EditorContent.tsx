@@ -22,7 +22,6 @@ export interface EditorContentProps {
 	setOverwriteDialogOpen: (open: boolean) => void
 	setViewMode: (mode: ViewMode) => void
 	commitSave: (title: string, content: string, type: 'shader' | 'pattern') => void
-	hideHeader?: boolean
 }
 
 export const EditorContent = ({
@@ -36,7 +35,6 @@ export const EditorContent = ({
 	setOverwriteDialogOpen,
 	setViewMode,
 	commitSave,
-	hideHeader = false,
 }: EditorContentProps) => {
 
   const savedContent = useSavedContent()
@@ -101,11 +99,11 @@ export const EditorContent = ({
 		<>
 			<Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 				{/* About panel */}
-				{viewMode === 'about' && <AboutPane hideHeader={hideHeader} />}
+				{viewMode === 'about' && <AboutPane />}
 
 				{/* Settings panel */}
 				{viewMode === 'settings' && (
-					<SettingsPane hideHeader={hideHeader} />
+					<SettingsPane />
 				)}
 
 				{/* Saved panel (Saved Content + Examples) */}
@@ -116,7 +114,6 @@ export const EditorContent = ({
 							onLoadPattern={handleLoadSavedPattern}
 							onLoadGlslExample={handleLoadGlslExample}
 							onLoadStrudelExample={handleLoadStrudelExample}
-							hideHeader={hideHeader}
 						/>
 					</Box>
 				)}
@@ -133,7 +130,6 @@ export const EditorContent = ({
 						onRun={handleRun}
 						shaderError={shaderError}
 						onSave={handleSaveShader}
-						hideHeader={hideHeader}
 					/>
 				</Box>
 
@@ -149,7 +145,6 @@ export const EditorContent = ({
 						onAnalyserReady={setAnalyzer}
 						onAudioStreamReady={setStrudelAudioStream}
 						onSave={handleSavePattern}
-						hideHeader={hideHeader}
 					/>
 				</Box>
 			</Box>

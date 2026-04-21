@@ -7,9 +7,8 @@ import SettingsSection from '../SettingsSection/SettingsSection'
 import SettingsCheckbox from '../SettingsCheckbox/SettingsCheckbox'
 import { shortcuts } from '../../utility/keyboardShortcuts'
 import { useAppStorage } from '../../hooks/useAppStorage'
-import PaneHeader from '../PaneHeader/PaneHeader'
 
-export default ({ hideHeader = false }: { hideHeader?: boolean }) => {
+export default () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   const handleResetConfirm = useCallback(() => {
@@ -39,8 +38,8 @@ glslAutocomplete, setGlslAutocomplete,
         overflow: 'auto',
       }}
     >
-      {/* Header */}
-{!hideHeader && <PaneHeader title="Settings" />}
+      {/* Pill gap */}
+      <Box sx={{ pt: '44px' }} />
 
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

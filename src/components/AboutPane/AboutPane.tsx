@@ -1,11 +1,10 @@
 import { Box, Link, Typography } from '@mui/material'
 import AboutPaneSection from './AboutPaneSection'
-import PaneHeader from '../PaneHeader/PaneHeader'
 
-export default function AboutPane({ hideHeader = false }: { hideHeader?: boolean }) {
+export default function AboutPane() {
   return (
 		<>
-			{!hideHeader && <PaneHeader title="About Shades & Waves" />}
+			<Box sx={{ pt: '44px' }} />
 			<Box
 				sx={{
 					flex: 1,
