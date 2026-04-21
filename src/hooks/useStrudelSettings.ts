@@ -8,6 +8,7 @@ type StrudelMirrorExt = {
 export function useStrudelSettings(mirrorRef: React.RefObject<StrudelMirrorExt | null>) {
 	const { vimMode, fontSize, strudelAutocomplete } = useAppStorage()
 
+	// mirrorRef is a stable React ref and intentionally omitted from deps arrays
 	useEffect(() => {
 		mirrorRef.current?.changeSetting('keybindings', vimMode ? 'vim' : 'codemirror')
 	}, [vimMode])

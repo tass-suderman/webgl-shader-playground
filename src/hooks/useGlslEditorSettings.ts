@@ -18,6 +18,7 @@ export function useGlslEditorSettings(
 ) {
 	const { vimMode, fontSize, glslAutocomplete } = useAppStorage()
 
+	// viewRef and compartment refs are stable React refs and intentionally omitted from deps arrays
 	useEffect(() => {
 		if (!compartments.vimCompartment.current) return
 		viewRef.current?.dispatch({
