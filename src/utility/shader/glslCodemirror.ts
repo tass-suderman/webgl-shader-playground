@@ -1,16 +1,29 @@
 // ---------------------------------------------------------------------------
 // GLSL language support for CodeMirror 6
-// – StreamLanguage tokenizer (syntax highlighting)
+// – LRLanguage from lezer-glsl (syntax highlighting)
 // – Completion source (autocomplete for keywords, builtins, and uniforms)
 // ---------------------------------------------------------------------------
 
-import { StreamLanguage } from '@codemirror/language'
-import { tags } from '@lezer/highlight'
+import { LRLanguage } from '@codemirror/language'
+import { parser } from 'lezer-glsl'
 import type { CompletionContext, Completion } from '@codemirror/autocomplete'
 import { UNIFORMS } from './uniformsData'
 
 // ---------------------------------------------------------------------------
-// Keyword / identifier sets (ported from the Monaco Monarch tokenizer)
+// GLSL LRLanguage definition (uses lezer-glsl parser with built-in styleTags)
+// ---------------------------------------------------------------------------
+
+export const glslLanguage = LRLanguage.define({
+  name: 'glsl',
+  parser,
+  languageData: {
+    commentTokens: { line: '//', block: { open: '/*', close: '*/' } },
+    closeBrackets: { brackets: ['{', '[', '('] },
+  },
+})
+
+// ---------------------------------------------------------------------------
+// Keyword / identifier sets used for autocompletion
 // ---------------------------------------------------------------------------
 
 const KEYWORDS = new Set([
@@ -68,107 +81,6 @@ const BUILTIN_VARIABLES = new Set([
   'gl_VertexID', 'gl_InstanceID',
   'gl_DepthRange',
 ])
-
-// ---------------------------------------------------------------------------
-// Stream parser state
-// ---------------------------------------------------------------------------
-
-interface GlslState {
-  inBlockComment: boolean
-}
-
-// ---------------------------------------------------------------------------
-// GLSL StreamLanguage definition
-// ---------------------------------------------------------------------------
-
-export const glslLanguage = StreamLanguage.define<GlslState>({
-  name: 'glsl',
-
-  startState: () => ({ inBlockComment: false }),
-
-  token(stream, state) {
-    // Continue an open block comment
-    if (state.inBlockComment) {
-      if (stream.match('*/')) {
-        state.inBlockComment = false
-        return 'blockComment'
-      }
-      stream.next()
-      return 'blockComment'
-    }
-
-    // Whitespace
-    if (stream.eatSpace()) return null
-
-    // Line comment
-    if (stream.match('//')) {
-      stream.skipToEnd()
-      return 'lineComment'
-    }
-
-    // Block comment open
-    if (stream.match('/*')) {
-      state.inBlockComment = true
-      return 'blockComment'
-    }
-
-    // Preprocessor directive (#version, #define, …) – entire line
-    if (stream.peek() === '#') {
-      stream.skipToEnd()
-      return 'preprocessor'
-    }
-
-    // Float literal: 1.0, .5, 1e-3, etc.
-    if (stream.match(/\d*\.\d+([eEfF][-+]?\d+)?[fF]?/)) return 'number'
-    // Hex literal
-    if (stream.match(/0[xX][0-9a-fA-F]+[uU]?/)) return 'number'
-    // Integer literal
-    if (stream.match(/\d+[uU]?/)) return 'number'
-
-    // Identifiers / keywords
-    if (stream.match(/[a-zA-Z_]\w*/)) {
-      const word = stream.current()
-      if (TYPE_KEYWORDS.has(word)) return 'type'
-      if (QUALIFIERS.has(word)) return 'qualifier'
-      if (BUILTIN_FUNCTIONS.has(word)) return 'builtin'
-      if (BUILTIN_VARIABLES.has(word)) return 'glvar'
-      if (KEYWORDS.has(word)) return 'keyword'
-      return null
-    }
-
-    // Brackets
-    if (stream.match(/[{}()[\]]/)) return 'bracket'
-
-    // Operators and punctuation
-    if (stream.match(/[=><!~?:&|+\-*^%;,.]/)) return 'operator'
-
-    stream.next()
-    return null
-  },
-
-  copyState: (state) => ({ ...state }),
-
-  languageData: {
-    commentTokens: { line: '//', block: { open: '/*', close: '*/' } },
-    closeBrackets: { brackets: ['{', '[', '('] },
-  },
-
-  // Map token type names returned by token() to @lezer/highlight Tag objects
-  tokenTable: {
-    blockComment: tags.blockComment,
-    lineComment: tags.lineComment,
-    preprocessor: tags.processingInstruction,
-    keyword: tags.keyword,
-    type: tags.typeName,
-    qualifier: tags.modifier,
-    builtin: tags.function(tags.name),
-    glvar: tags.special(tags.variableName),
-    number: tags.number,
-    operator: tags.operator,
-    bracket: tags.bracket,
-    string: tags.string,
-  },
-})
 
 // ---------------------------------------------------------------------------
 // Autocompletion source
