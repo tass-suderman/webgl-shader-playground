@@ -1,5 +1,5 @@
 import { useLocalStorage } from './useLocalStorage'
-import { DEFAULT_SHADER } from '../utility/shader/defaultShader'
+import { DEFAULT_SHADER } from '../constants/editorConstants'
 import { createContext, useContext } from 'react'
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,6 @@ const KEYS = {
   glslTitle: 'shader-playground:glsl-title',
   strudelCode: 'shader-playground:strudel-code',
   strudelTitle: 'shader-playground:strudel-title',
-  theme: 'shader-playground:theme',
   vimMode: 'shader-playground:vim-mode',
   volume: 'shader-playground:volume',
   muted: 'shader-playground:muted',
@@ -92,17 +91,11 @@ export function getInitialStrudelTitle(defaultTitle: string): string {
   return localStorage.getItem(KEYS.strudelTitle) ?? defaultTitle
 }
 
-export function getInitialTheme(): string {
-  return localStorage.getItem(KEYS.theme) ?? 'kanagawa'
-}
-
 // ---------------------------------------------------------------------------
 // Reactive hook for all persisted settings
 // ---------------------------------------------------------------------------
 
 export interface AppStorageReturn {
-  theme: string
-  setTheme: (v: string) => void
   vimMode: boolean
   setVimMode: (v: boolean) => void
   volume: number
@@ -131,7 +124,6 @@ const AppStorageContext = createContext<AppStorageReturn | null>(null)
 
 
 export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
-  const [theme, setTheme] = useLocalStorage(KEYS.theme, 'kanagawa')
   const [vimMode, setVimMode] = useLocalStorage(KEYS.vimMode, false)
   const [volume, setVolume] = useLocalStorage(KEYS.volume, 50)
   const [muted, setMuted] = useLocalStorage(KEYS.muted, false)
@@ -146,7 +138,6 @@ export const AppStorageProvider = ({children}: {children: React.ReactNode}) => {
 
   return (
 		<AppStorageContext.Provider value={{
-			theme, setTheme,
 			vimMode, setVimMode,
 			volume, setVolume,
 			muted, setMuted,

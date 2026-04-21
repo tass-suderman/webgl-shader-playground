@@ -1,6 +1,5 @@
 import { ThemeOptions } from '@mui/material/styles';
 import kanagawa from './kanagawa';
-import dark from './dark';
 
 export interface Theme {
 	name: string;
@@ -10,5 +9,4 @@ export interface Theme {
 
 export const themes: Theme[] = [
 	kanagawa,
-	dark,
 ];

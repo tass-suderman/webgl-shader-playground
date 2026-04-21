@@ -14,7 +14,6 @@ A browser-based creative coding playground that combines real-time GLSL fragment
 - **Webcam & mic input** — optionally pipe camera or microphone data into your shader as `iChannel0`/`iChannel1`.
 - **Immersive mode** — the shader fills the full viewport with the editor as a transparent overlay; adjust background opacity with the slider.
 - **Import / export** — save and load shaders (`.glsl`) or Strudel patterns (`.strudel`).
-- **Multiple themes** — Kanagawa (default) and Dark.
 - **Vim keybindings** — toggle in Settings.
 - **Examples** — curated starting points for both GLSL and Strudel.
 - **Recording** — capture the shader canvas (with audio) as an MP4 or WebM video.
@@ -28,7 +27,7 @@ A browser-based creative coding playground that combines real-time GLSL fragment
 3. **GLSL tab** — edit the fragment shader in the left pane; press `Ctrl+Enter` (or the *Run Shader* button) to compile and run it.
 4. **Strudel tab** — write a music pattern; press `Alt+Enter` (or *Play Strudel*) to start. The shader receives audio data in real time via `iChannel2`.
 5. **Examples** — browse and load example shaders and patterns with a single click.
-6. **Settings** — switch themes and toggle Vim keybindings.
+6. **Settings** — toggle Vim keybindings and adjust font size.
 7. The 🎵 icon in the Strudel header opens the *Available Sounds* panel, which lists all built-in oscillators, synths, and noise types.
 8. The ℹ icon in the GLSL header opens the *Available Uniforms* panel.
 

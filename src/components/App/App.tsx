@@ -1,60 +1,18 @@
-import { useEffect, useRef } from 'react'
 import { GlobalStyles, ThemeProvider } from '@mui/material'
-import { type ShaderPaneHandle } from '../ShaderPane/ShaderPane'
-import { type StrudelPaneHandle } from '../StrudelPane/StrudelPane'
-import { type EditorPaneHandle } from '../EditorPane/EditorPane'
 import { useTheme } from '../../hooks/useTheme'
-import { ViewReducer } from '../ViewReducer/ViewReducer'
+import { ImmersiveView } from '../ImmersiveView/ImmersiveView'
 
 export default function App() {
-  const strudelRef = useRef<StrudelPaneHandle>(null)
-  const shaderRef = useRef<ShaderPaneHandle>(null)
-  const editorRef = useRef<EditorPaneHandle>(null)
-	const { muiTheme } = useTheme();
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-			const handleKeyboardEvent = (e: KeyboardEvent, keyboardAction: () => void) => {
-				e.preventDefault()
-				e.stopPropagation()
-				keyboardAction()
-			}
-
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-				handleKeyboardEvent(e, () => {
-					editorRef.current?.run()
-					shaderRef.current?.unpause()
-				})
-        return
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
-				handleKeyboardEvent(e, () => shaderRef.current?.togglePlay())
-        return
-      }
-      if (e.altKey && e.key === 'Enter') {
-				handleKeyboardEvent(e, () => strudelRef.current?.play())
-        return
-      }
-      if (e.altKey && e.key === '.') {
-				handleKeyboardEvent(e, () => strudelRef.current?.pause())
-      }
-    }
-    window.addEventListener('keydown', handler, { capture: true })
-    return () => window.removeEventListener('keydown', handler, { capture: true })
-  }, [])
-
-  return (
+	const { muiTheme } = useTheme()
+	return (
 		<ThemeProvider theme={muiTheme}>
-							<GlobalStyles styles={{
-								'.MuiTypography-root': {
-									color: 'textColor.primary',
-								},
-							}} />
-							<ViewReducer
-								strudelRef={strudelRef}
-								shaderRef={shaderRef}
-								editorRef={editorRef}
-							/>
+			<GlobalStyles styles={{
+				'.MuiTypography-root': {
+					color: 'textColor.primary',
+				},
+			}} />
+			<ImmersiveView />
 		</ThemeProvider>
-  )
+	)
 }
+
