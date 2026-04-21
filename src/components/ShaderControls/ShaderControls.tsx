@@ -20,8 +20,6 @@ import {
 	VolumeOff,
 	FiberManualRecord,
 	StopCircle,
-	ChevronLeft,
-	ChevronRight,
 	Preview,
 } from '@mui/icons-material'
 import ChannelStatusChips from '../ChannelStatusChips/ChannelStatusChips'
@@ -37,8 +35,6 @@ interface ShaderControlsProps {
 	onStartRecording: () => void
 	onStopRecording: () => void
 	onToggleFullscreen: () => void
-	editorCollapsed?: boolean
-	onToggleEditorCollapsed?: () => void
 }
 
 export default function ShaderControls({
@@ -49,8 +45,6 @@ export default function ShaderControls({
 	onStartRecording,
 	onStopRecording,
 	onToggleFullscreen,
-	editorCollapsed,
-	onToggleEditorCollapsed,
 }: ShaderControlsProps) {
 	const {
 		muted, setMuted,
@@ -163,19 +157,6 @@ export default function ShaderControls({
 					{isFullscreen ? <FullscreenExit /> : <Fullscreen />}
 				</IconButton>
 			</Tooltip>
-
-			{onToggleEditorCollapsed !== undefined && !isFullscreen && (
-				<Tooltip title={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}>
-					<IconButton
-						onClick={onToggleEditorCollapsed}
-						size="small"
-						aria-label={editorCollapsed ? 'Expand Editor' : 'Collapse Editor'}
-						sx={{ color: 'white' }}
-					>
-						{editorCollapsed ? <ChevronLeft /> : <ChevronRight />}
-					</IconButton>
-				</Tooltip>
-			)}
 		</Box>
 	)
 }

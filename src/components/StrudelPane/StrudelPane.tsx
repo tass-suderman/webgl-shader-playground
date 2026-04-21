@@ -10,6 +10,9 @@ import SoundsPanel from '../SoundsPanel/SoundsPanel'
 import { registerInstruments } from '../../utility/strudel/instruments'
 import { registerUserSampleSound, preloadUserSamples } from '../../utility/strudel/userSamples'
 import { saveStrudelCode, saveStrudelTitle, getInitialStrudelCode, getInitialStrudelTitle, useAppStorage } from '../../hooks/useAppStorage'
+import { useStrudelSettings } from '../../hooks/useStrudelSettings'
+import { useTheme } from '../../hooks/useTheme'
+import { DEFAULT_STRUDEL_CODE, DEFAULT_STRUDEL_TITLE } from '../../constants/editorConstants'
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
   changeSetting: (key: string, value: unknown) => void
@@ -17,7 +20,6 @@ type StrudelMirrorExt = StrudelMirror & {
 }
 
 // Custom prebake: loads the evalScope globals needed for Strudel pattern evaluation
-// without fetching remote sample banks. This avoids unnecessary network requests
 // for samples we do not expose in the UI.
 // The synthesised sounds (oscillators, 909 drums, ZZFX, acid bass) registered below
 // are always available offline.
@@ -43,14 +45,7 @@ const minimalPrebake = async (): Promise<void> => {
   })
 }
 
-const DEFAULT_STRUDEL_CODE = `// Strudel live-coding pattern
-// Alt+Enter to play, Alt+. to pause
-note("c3 [e3 g3] b3 [g3 e3]").sound("sawtooth").lpf(800).lpenv(2).slow(2)`
 
-const DEFAULT_STRUDEL_TITLE = 'Strudel Pattern'
-
-// CodeMirror / Strudel editor theme
-const STRUDEL_THEME = 'tokyoNight'
 
 export interface StrudelPaneHandle {
   play: () => void
@@ -69,7 +64,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   { onAnalyserReady, onAudioStreamReady, onSave },
   ref,
 ) {
-	const { vimMode, muted, volume, fontSize, userSamples, strudelAutocomplete } = useAppStorage()
+	const { muted, volume, userSamples } = useAppStorage()
+	const { strudelTheme } = useTheme()
   const rootRef = useRef<HTMLDivElement>(null)
   const mirrorRef = useRef<StrudelMirrorExt | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
@@ -93,17 +89,12 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   onAnalyserReadyRef.current = onAnalyserReady
   const onAudioStreamReadyRef = useRef(onAudioStreamReady)
   onAudioStreamReadyRef.current = onAudioStreamReady
-  // Keep latest props in refs so the mount effect can read them without re-running
-  const vimModeRef = useRef(vimMode)
-  vimModeRef.current = vimMode
   const volumeRef = useRef(volume)
   volumeRef.current = volume
   const mutedRef = useRef(muted)
   mutedRef.current = muted
-  const fontSizeRef = useRef(fontSize)
-  fontSizeRef.current = fontSize
-  const strudelAutocompleteRef = useRef(strudelAutocomplete)
-  strudelAutocompleteRef.current = strudelAutocomplete
+
+  const { vimMode, fontSize, strudelAutocomplete } = useStrudelSettings(mirrorRef)
 
   useImperativeHandle(ref, () => ({
     play() {
@@ -214,11 +205,11 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     })
     mirrorRef.current = mirror as StrudelMirrorExt
     // Apply initial keybindings, theme, and font size from current settings
-    mirrorRef.current.changeSetting('keybindings', vimModeRef.current ? 'vim' : 'codemirror')
+    mirrorRef.current.changeSetting('keybindings', vimMode ? 'vim' : 'codemirror')
     mirrorRef.current.changeSetting('isTabIndentationEnabled', true)
-    mirrorRef.current.changeSetting('fontSize', fontSizeRef.current)
-    mirrorRef.current.changeSetting('isAutoCompletionEnabled', strudelAutocompleteRef.current)
-    mirrorRef.current.setTheme(STRUDEL_THEME)
+    mirrorRef.current.changeSetting('fontSize', fontSize)
+    mirrorRef.current.changeSetting('isAutoCompletionEnabled', strudelAutocomplete)
+    mirrorRef.current.setTheme(strudelTheme)
     return () => {
       // Persist the current code so it is restored if the component remounts
       // (e.g. when toggling immersive mode)
@@ -249,11 +240,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     saveStrudelCode(mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE)
   }, [])
 
-  // Apply vim/normal keybindings whenever the setting changes
-  useEffect(() => {
-    mirrorRef.current?.changeSetting('keybindings', vimMode ? 'vim' : 'codemirror')
-  }, [vimMode])
-
   // Apply volume / mute to the Strudel GainNode whenever either changes
   useEffect(() => {
     const dg = destinationGainRef.current
@@ -261,16 +247,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       dg.gain.value = muted ? 0 : volume / 100
     }
   }, [volume, muted])
-
-  // Update CodeMirror font size via changeSetting whenever the prop changes
-  useEffect(() => {
-    mirrorRef.current?.changeSetting('fontSize', fontSize)
-  }, [fontSize])
-
-  // Enable or disable Strudel autocomplete whenever the setting changes
-  useEffect(() => {
-    mirrorRef.current?.changeSetting('isAutoCompletionEnabled', strudelAutocomplete)
-  }, [strudelAutocomplete])
 
   // Persist the strudel code when the tab is hidden or the page is unloaded
   useEffect(() => {

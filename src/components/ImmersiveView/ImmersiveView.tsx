@@ -68,7 +68,6 @@ export const ImmersiveView = ({
 					ref={shaderRef}
 					shaderSource={shaderSource}
 					onShaderError={setShaderError}
-					hideControls
 					onPlayStateChange={setImmersiveShaderPlaying}
 					onRecordingStateChange={setImmersiveShaderRecording}
 					onFullscreenStateChange={setImmersiveShaderFullscreen}

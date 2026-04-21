@@ -1,7 +1,6 @@
 import { forwardRef, useRef, useState, useCallback, useEffect, useImperativeHandle } from 'react'
 import Box from '@mui/material/Box'
 import { useWebGL } from '../../hooks/useWebGL'
-import ShaderControls from '../ShaderControls/ShaderControls'
 import { useStrudelAnalyzer } from '../../hooks/useStrudelAnalyzer'
 import { useStrudelAudioStream } from '../../hooks/useStrudelAudioStream'
 import { useMediaStreams } from '../../hooks/useMediaStreams'
@@ -19,9 +18,6 @@ export interface ShaderPaneHandle {
 interface ShaderPaneProps {
   shaderSource: string
   onShaderError?: (error: string | null) => void
-  editorCollapsed?: boolean
-  onToggleEditorCollapsed?: () => void
-  hideControls?: boolean
   onPlayStateChange?: (playing: boolean) => void
   onRecordingStateChange?: (recording: boolean) => void
   onFullscreenStateChange?: (fullscreen: boolean) => void
@@ -30,9 +26,6 @@ interface ShaderPaneProps {
 export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane({
   shaderSource,
   onShaderError,
-  editorCollapsed,
-  onToggleEditorCollapsed,
-  hideControls = false,
   onPlayStateChange,
   onRecordingStateChange,
   onFullscreenStateChange,
@@ -193,20 +186,6 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
           style={{ width: '100%', height: '100%', display: 'block' }}
         />
       </Box>
-
-      {!hideControls && (
-        <ShaderControls
-          isPlaying={isPlaying}
-          isRecording={isRecording}
-          isFullscreen={isFullscreen}
-          onTogglePlay={() => setIsPlaying(p => !p)}
-          onStartRecording={handleStartRecording}
-          onStopRecording={handleStopRecording}
-          onToggleFullscreen={handleFullscreen}
-          editorCollapsed={editorCollapsed}
-          onToggleEditorCollapsed={onToggleEditorCollapsed}
-        />
-      )}
     </Box>
   )
 })
