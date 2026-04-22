@@ -57,13 +57,16 @@ export function registerUserSampleSound(sample: UserSample): void {
 
         const source = ctx.createBufferSource()
         source.buffer = buffer
+        // Web Audio API does not support negative playbackRate on BufferSourceNode;
+        // use Math.abs so patterns using negative speed values don't throw.
         source.playbackRate.value = Math.abs(speed)
         source.loop = loop
 
         // Convert begin/end fractions to buffer-time seconds for source.start()
         const offset = begin * buffer.duration
         const playDuration = Math.max(0, end - begin) * buffer.duration
-        if (loop) {
+        // Only set loop bounds when the range is valid (loopStart must be < loopEnd)
+        if (loop && playDuration > 0) {
           source.loopStart = offset
           source.loopEnd = offset + playDuration
         }
