@@ -5,7 +5,7 @@ import StrudelPane, { type StrudelPaneHandle } from '../StrudelPane/StrudelPane'
 import SettingsPane from '../SettingsPane/SettingsPane'
 import SavedPane from '../SavedPane/SavedPane'
 import AboutPane from '../AboutPane/AboutPane'
-import { ViewMode } from '../../constants/tabConfigs'
+import { ViewMode } from '../../utility/tabConfigs'
 import { useSavedContent } from '../../hooks/useSavedContent'
 import { useStrudelAnalyzer } from '../../hooks/useStrudelAnalyzer'
 import { useStrudelAudioStream } from '../../hooks/useStrudelAudioStream'
@@ -25,16 +25,16 @@ export interface EditorContentProps {
 }
 
 export const EditorContent = ({
-	viewMode,
-	shaderError,
-	editorRef,
-	strudelRef,
-	setShaderSource,
-	setOverwritePending,
-	setDontShowAgain,
-	setOverwriteDialogOpen,
-	setViewMode,
-	commitSave
+  viewMode,
+  shaderError,
+  editorRef,
+  strudelRef,
+  setShaderSource,
+  setOverwritePending,
+  setDontShowAgain,
+  setOverwriteDialogOpen,
+  setViewMode,
+  commitSave,
 }: EditorContentProps) => {
 
   const savedContent = useSavedContent()
@@ -46,12 +46,12 @@ export const EditorContent = ({
     setShaderSource(code)
   }, [])
 
-	const { 
-		warnOnOverwrite,
-	} = useAppStorage()
+  const { 
+    warnOnOverwrite,
+  } = useAppStorage()
 
-	const { setAnalyzer } = useStrudelAnalyzer();
-	const { setStrudelAudioStream } = useStrudelAudioStream()
+  const { setAnalyzer } = useStrudelAnalyzer();
+  const { setStrudelAudioStream } = useStrudelAudioStream()
 
   const handleLoadGlslExample = useCallback((title: string, content: string) => {
     editorRef.current?.loadExample(title, content)
@@ -95,59 +95,59 @@ export const EditorContent = ({
     }
   }, [warnOnOverwrite, savedContent, commitSave])
 
-	return (
-		<>
-			<Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-				{/* About panel */}
-				{viewMode === 'about' && <AboutPane />}
+  return (
+    <>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* About panel */}
+        {viewMode === 'about' && <AboutPane />}
 
-				{/* Settings panel */}
-				{viewMode === 'settings' && (
-					<SettingsPane />
-				)}
+        {/* Settings panel */}
+        {viewMode === 'settings' && (
+          <SettingsPane />
+        )}
 
-				{/* Saved panel (Saved Content + Examples) */}
-				{viewMode === 'saved' && (
-					<Box sx={{ flex: 1, overflow: 'hidden' }}>
-						<SavedPane
-							onLoadShader={handleLoadSavedShader}
-							onLoadPattern={handleLoadSavedPattern}
-							onLoadGlslExample={handleLoadGlslExample}
-							onLoadStrudelExample={handleLoadStrudelExample}
-						/>
-					</Box>
-				)}
+        {/* Saved panel (Saved Content + Examples) */}
+        {viewMode === 'saved' && (
+          <Box sx={{ flex: 1, overflow: 'hidden' }}>
+            <SavedPane
+              onLoadShader={handleLoadSavedShader}
+              onLoadPattern={handleLoadSavedPattern}
+              onLoadGlslExample={handleLoadGlslExample}
+              onLoadStrudelExample={handleLoadStrudelExample}
+            />
+          </Box>
+        )}
 
-				{/* GLSL editor – hidden but mounted when not visible to preserve state */}
-				<Box sx={{
-					display: showGlsl ? 'flex' : 'none',
-					flexDirection: 'column',
-					height: '100%',
-					minHeight: 0,
-				}}>
-					<EditorPane
-						ref={editorRef}
-						onRun={handleRun}
-						shaderError={shaderError}
-						onSave={handleSaveShader}
-					/>
-				</Box>
+        {/* GLSL editor – hidden but mounted when not visible to preserve state */}
+        <Box sx={{
+          display: showGlsl ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: 0,
+        }}>
+          <EditorPane
+            ref={editorRef}
+            onRun={handleRun}
+            shaderError={shaderError}
+            onSave={handleSaveShader}
+          />
+        </Box>
 
-				{/* Strudel pane – hidden but mounted when not visible to preserve state */}
-				<Box sx={{
-					display: showStrudel ? 'flex' : 'none',
-					flexDirection: 'column',
-					height: '100%',
-					minHeight: 0,
-				}}>
-					<StrudelPane
-						ref={strudelRef}
-						onAnalyserReady={setAnalyzer}
-						onAudioStreamReady={setStrudelAudioStream}
-						onSave={handleSavePattern}
-					/>
-				</Box>
-			</Box>
-		</>
-	)
+        {/* Strudel pane – hidden but mounted when not visible to preserve state */}
+        <Box sx={{
+          display: showStrudel ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: 0,
+        }}>
+          <StrudelPane
+            ref={strudelRef}
+            onAnalyserReady={setAnalyzer}
+            onAudioStreamReady={setStrudelAudioStream}
+            onSave={handleSavePattern}
+          />
+        </Box>
+      </Box>
+    </>
+  )
 }

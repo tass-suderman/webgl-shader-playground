@@ -20,11 +20,11 @@ declare module '@strudel/codemirror' {
     code: string
     /** Underlying CodeMirror EditorView */
     editor: {
-      state: { doc: { toString(): string; length: number } }
-      dispatch(tr: { changes?: { from: number; to?: number; insert?: string } }): void
-      /** Remove the editor DOM from its parent and clean up state */
-      destroy(): void
-    }
+			state: { doc: { toString(): string; length: number } }
+			dispatch(tr: { changes?: { from: number; to?: number; insert?: string } }): void
+			/** Remove the editor DOM from its parent and clean up state */
+			destroy(): void
+		}
     evaluate(): Promise<void>
     stop(): Promise<void>
     /** Remove document-level event listeners added by this mirror */

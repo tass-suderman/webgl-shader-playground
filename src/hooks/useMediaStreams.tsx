@@ -83,24 +83,24 @@ export const MediaStreamsProvider = ({children}: { children: React.ReactNode}) =
   }, [micEnabled, audioStream, stopAudio])
 
   return (
-		<MediaStreamsContext.Provider value={{
-			webcamEnabled,
-			micEnabled,
-			webcamStream,
-			audioStream,
-			handleToggleWebcam,
-			handleToggleMic,
-		}}>
-			{children}
-		</MediaStreamsContext.Provider>
-	)
+    <MediaStreamsContext.Provider value={{
+      webcamEnabled,
+      micEnabled,
+      webcamStream,
+      audioStream,
+      handleToggleWebcam,
+      handleToggleMic,
+    }}>
+      {children}
+    </MediaStreamsContext.Provider>
+  )
 }
 
 export const useMediaStreams = () => {
-	const context = useContext(MediaStreamsContext)
-	if (!context) {
-		throw new Error('useMediaStreams must be used within a MediaStreamsProvider')
-	}
-	return context
+  const context = useContext(MediaStreamsContext)
+  if (!context) {
+    throw new Error('useMediaStreams must be used within a MediaStreamsProvider')
+  }
+  return context
 }
 

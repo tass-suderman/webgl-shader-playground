@@ -6,12 +6,12 @@ export interface AboutPaneSectionProps {
 }
 
 const AboutPaneSection: React.FC<AboutPaneSectionProps> = ({ title, children }) => {
-	return (
-		<>
-			{title && <Typography variant="h6" sx={{ fontFamily: 'monospace', mb: 2 }} children={title} />}
-			{children}
-		</>
-	)
+  return (
+    <>
+      {title && <Typography variant="h6" sx={{ fontFamily: 'monospace', mb: 2 }} children={title} />}
+      {children}
+    </>
+  )
 }
 
 export default AboutPaneSection

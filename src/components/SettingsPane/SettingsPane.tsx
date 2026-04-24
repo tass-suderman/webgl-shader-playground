@@ -7,7 +7,6 @@ import SettingsSection from '../SettingsSection/SettingsSection'
 import SettingsCheckbox from '../SettingsCheckbox/SettingsCheckbox'
 import { shortcuts } from '../../utility/keyboardShortcuts'
 import { useAppStorage } from '../../hooks/useAppStorage'
-import PaneHeader from '../PaneHeader/PaneHeader'
 
 export default () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
@@ -18,15 +17,15 @@ export default () => {
     window.location.reload()
   }, [])
 
-const {
-vimMode, setVimMode,
-fontSize, setFontSize,
-warnOnOverwrite, setWarnOnOverwrite,
-warnOnLoadExample, setWarnOnLoadExample,
-warnOnLoadSaved, setWarnOnLoadSaved,
-strudelAutocomplete, setStrudelAutocomplete,
-glslAutocomplete, setGlslAutocomplete,
-} = useAppStorage()
+  const {
+    vimMode, setVimMode,
+    fontSize, setFontSize,
+    warnOnOverwrite, setWarnOnOverwrite,
+    warnOnLoadExample, setWarnOnLoadExample,
+    warnOnLoadSaved, setWarnOnLoadSaved,
+    strudelAutocomplete, setStrudelAutocomplete,
+    glslAutocomplete, setGlslAutocomplete,
+  } = useAppStorage()
 
   return (
     <Box
@@ -37,16 +36,14 @@ glslAutocomplete, setGlslAutocomplete,
         bgcolor: 'background.panel',
         color: 'textColor.primary',
         overflow: 'auto',
+        pt: '44px',
       }}
     >
-      {/* Header */}
-<PaneHeader title="Settings" />
-
       {/* Settings content */}
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
         {/* ---- Editor ---- */}
-<SettingsSection title="Editor">
+        <SettingsSection title="Editor">
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
             <SettingsCheckbox checked={vimMode} onChange={setVimMode} label="Vim keybindings" />
             <SettingsCheckbox checked={glslAutocomplete} onChange={setGlslAutocomplete} label="GLSL autocomplete" />
@@ -71,7 +68,7 @@ glslAutocomplete, setGlslAutocomplete,
                     sx: {
                       bgcolor: 'background.header',
                       color: 'textColor.primary',
-borderColor: 'border.default',
+                      borderColor: 'border.default',
                       border: '1px solid',
                     },
                   },
@@ -93,13 +90,13 @@ borderColor: 'border.default',
                 ))}
               </Select>
             </FormControl>
-</Box>
-</SettingsSection>
+          </Box>
+        </SettingsSection>
 
-<SettingsDivider />
+        <SettingsDivider />
 
         {/* ---- Keyboard shortcuts ---- */}
-<SettingsSection title="Keyboard Shortcuts">
+        <SettingsSection title="Keyboard Shortcuts">
           {shortcuts.map(({ keys, desc }) => (
             <Box key={keys} sx={{ display: 'flex', gap: 2, mb: 0.75, alignItems: 'center' }}>
               <Typography
@@ -111,32 +108,32 @@ borderColor: 'border.default',
                   py: 0.25,
                   borderRadius: 0.5,
                   border: '1px solid',
-borderColor: 'border.faint',
+                  borderColor: 'border.faint',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   minWidth: 110,
                   display: 'inline-block'
                 }}
-children={keys}
+                children={keys}
               />
               <Typography variant="caption" sx={{ color: 'textColor.muted' }} children={desc} />
             </Box>
           ))}
-</SettingsSection>
+        </SettingsSection>
 
-<SettingsDivider />
-<SettingsSection title="Saved Content">
+        <SettingsDivider />
+        <SettingsSection title="Saved Content">
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <SettingsCheckbox checked={warnOnOverwrite} onChange={setWarnOnOverwrite} label="Warn before overwriting a saved entry" />
             <SettingsCheckbox checked={warnOnLoadSaved} onChange={setWarnOnLoadSaved} label="Warn before loading saved content" />
             <SettingsCheckbox checked={warnOnLoadExample} onChange={setWarnOnLoadExample} label="Warn before loading an example" />
           </Box>
-</SettingsSection>
+        </SettingsSection>
 
-<SettingsDivider />
+        <SettingsDivider />
 
         {/* ---- Reset Data ---- */}
-<SettingsSection title="Data">
+        <SettingsSection title="Data">
           <Typography variant="caption" sx={{ color: 'textColor.muted', display: 'block', mb: 1 }} children="Remove all saved shaders, patterns, and preferences and restore the app to its default state." />
           <Button
             variant="outlined"
@@ -145,12 +142,12 @@ children={keys}
             startIcon={<DeleteForever />}
             onClick={() => setResetDialogOpen(true)}
             sx={{ textTransform: 'none' }}
-children="Reset data"
+            children="Reset data"
           />
-</SettingsSection>
+        </SettingsSection>
       </Box>
 
-<ResetConfirmationDialog open={resetDialogOpen} onCancel={() => setResetDialogOpen(false)} onConfirm={handleResetConfirm} />
+      <ResetConfirmationDialog open={resetDialogOpen} onCancel={() => setResetDialogOpen(false)} onConfirm={handleResetConfirm} />
     </Box>
   )
 }

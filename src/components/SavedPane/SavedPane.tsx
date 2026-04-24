@@ -1,14 +1,11 @@
 import { useState } from 'react'
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
-import { Download } from '@mui/icons-material'
-import { zipSync, strToU8 } from 'fflate'
+import { Box, Typography } from '@mui/material'
 import CombinedExamplesPanel from '../CombinedExamplesPanel/CombinedExamplesPanel'
 import { useSavedContent } from '../../hooks/useSavedContent'
 import DeleteItemDialog from '../DeleteItemDialog/DeleteItemDialog'
 import ConfirmationDialog from '../ConfirmationDialog/ConfirmationDialog'
 import SavedSection from './SavedSection'
 import SettingsDivider from '../SettingsDivider/SettingsDivider'
-import PaneHeader from '../PaneHeader/PaneHeader'
 import { useAppStorage } from '../../hooks/useAppStorage'
 
 interface SavedPaneProps {
@@ -29,16 +26,6 @@ interface PendingLoad {
   type: 'shader' | 'pattern'
 }
 
-function sanitizeFilename(title: string, fallback: string): string {
-  return (
-    title
-      .replace(/[^\w\s.-]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^[_\s]+|[_\s]+$/g, '')
-      .trim() || fallback
-  )
-}
-
 export default function SavedPane({
   onLoadShader,
   onLoadPattern,
@@ -53,10 +40,10 @@ export default function SavedPane({
 
   const { warnOnLoadSaved, setWarnOnLoadSaved } = useAppStorage()
 
-	const { 
-		savedShaders, deleteShader,
-		savedPatterns, deletePattern 
-	}= useSavedContent();
+  const { 
+    savedShaders, deleteShader,
+    savedPatterns, deletePattern 
+  }= useSavedContent();
 
   const hasSavedContent = savedShaders.length > 0 || savedPatterns.length > 0
 
@@ -111,45 +98,11 @@ export default function SavedPane({
     setPendingLoad(null)
   }
 
-  const handleExportAll = () => {
-    const files: Record<string, Uint8Array> = {}
-    for (const shader of savedShaders) {
-      const safeName = sanitizeFilename(shader.title, 'shader')
-      files[`shaders/${safeName}.glsl`] = strToU8(shader.content)
-    }
-    for (const pattern of savedPatterns) {
-      const safeName = sanitizeFilename(pattern.title, 'pattern')
-      files[`patterns/${safeName}.strudel`] = strToU8(pattern.content)
-    }
-    const zipped = zipSync(files)
-    const blob = new Blob([zipped], { type: 'application/zip' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'saved-content.zip'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.panel' }}>
-      {/* Header */}
-			<PaneHeader title="Saved">
-        {hasSavedContent && (
-          <Tooltip title="Export all saved content as zip">
-            <IconButton
-              size="small"
-              onClick={handleExportAll}
-              aria-label="Export all saved content"
-              sx={{ color: 'textColor.primary' }}
-            >
-              <Download fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </PaneHeader>
+      {/* Pill gap + optional export button */}
+      <Box sx={{ pt: '44px', display: 'flex', justifyContent: 'flex-end', px: 1, flexShrink: 0 }}>
+      </Box>
 
       {/* Scrollable content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
@@ -168,9 +121,9 @@ export default function SavedPane({
                   fontFamily: 'monospace',
                   fontSize: '0.75rem',
                   fontWeight: 700,
-									color: 'textColor.primary',
+                  color: 'textColor.primary',
                 }}
-								children="Saved Content"
+                children="Saved Content"
               />
             </Box>
             <SavedSection
@@ -188,7 +141,7 @@ export default function SavedPane({
               onDelete={(title) => handleDeleteRequest(title, 'pattern')}
             />
 
-						<SettingsDivider />
+            <SettingsDivider />
           </>
         )}
 
@@ -205,9 +158,9 @@ export default function SavedPane({
               fontFamily: 'monospace',
               fontSize: '0.75rem',
               fontWeight: 700,
-							color: 'textColor.primary',
+              color: 'textColor.primary',
             }}
-						children="Examples"
+            children="Examples"
           />
         </Box>
         <CombinedExamplesPanel
@@ -216,22 +169,22 @@ export default function SavedPane({
           onLoadStrudel={onLoadStrudelExample}
         />
       </Box>
-			<DeleteItemDialog
-				open={deleteDialogOpen}
-				title={pendingDelete?.type || 'shader'}
-				onConfirm={handleDeleteConfirm}
-				onCancel={handleDeleteCancel}
-			/>
-			<ConfirmationDialog
-				open={loadDialogOpen}
-				heading="Load saved content?"
-				body={<>Loading <strong style={{ color: 'accent' }}>{pendingLoad?.title}</strong> will replace your current {pendingLoad?.type === 'shader' ? 'shader' : 'pattern'}. Any unsaved progress will be lost.</>}
-				confirmLabel="Load"
-				onCancel={handleLoadCancel}
-				onConfirm={handleLoadConfirm}
-				dontShowAgain={dontShowAgain}
-				setDontShowAgain={setDontShowAgain}
-			/>
+      <DeleteItemDialog
+        open={deleteDialogOpen}
+        title={pendingDelete?.type || 'shader'}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+      <ConfirmationDialog
+        open={loadDialogOpen}
+        heading="Load saved content?"
+        body={<>Loading <strong style={{ color: 'accent' }}>{pendingLoad?.title}</strong> will replace your current {pendingLoad?.type === 'shader' ? 'shader' : 'pattern'}. Any unsaved progress will be lost.</>}
+        confirmLabel="Load"
+        onCancel={handleLoadCancel}
+        onConfirm={handleLoadConfirm}
+        dontShowAgain={dontShowAgain}
+        setDontShowAgain={setDontShowAgain}
+      />
     </Box>
   )
 }

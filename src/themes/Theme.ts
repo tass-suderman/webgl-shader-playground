@@ -8,5 +8,5 @@ export interface Theme {
 }
 
 export const themes: Theme[] = [
-	kanagawa,
+  kanagawa,
 ];

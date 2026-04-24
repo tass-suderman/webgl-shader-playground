@@ -6,14 +6,13 @@ import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import { bracketMatching, indentOnInput } from '@codemirror/language'
 import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
 import { vim } from '@replit/codemirror-vim'
-import ShaderHeader from '../EditorHeader/EditorHeader'
 import ShaderError from '../ShaderError/ShaderError'
 import UniformsPanel from '../UniformsPanel/UniformsPanel'
 import { glslLanguage, glslCompletions } from '../../utility/shader/glslCodemirror'
 import { getGlslThemeExtension } from '../../utility/shader/codemirrorThemes'
 import { saveGlslCode, saveGlslTitle, getInitialGlslCode, getInitialGlslTitle } from '../../hooks/useAppStorage'
 import { useGlslEditorSettings } from '../../hooks/useGlslEditorSettings'
-import { DEFAULT_SHADER_TITLE } from '../../constants/editorConstants'
+import { DEFAULT_SHADER_TITLE } from '../../utility/shader/defaults'
 
 interface EditorPaneProps {
   onRun: (code: string) => void
@@ -24,6 +23,12 @@ interface EditorPaneProps {
 export interface EditorPaneHandle {
   loadExample: (title: string, content: string) => void
   run: () => void
+  getTitle: () => string
+  setTitle: (title: string) => void
+  save: () => void
+  triggerImport: () => void
+  triggerExport: () => void
+  toggleUniforms: () => void
   closeUniforms: () => void
 }
 
@@ -140,6 +145,40 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
     run() {
       onRunRef.current(pendingSourceRef.current)
     },
+    getTitle() {
+      return shaderTitle
+    },
+    setTitle(title: string) {
+      setShaderTitle(title)
+      saveGlslTitle(title)
+    },
+    save() {
+      if (onSave) {
+        onSave(shaderTitle, pendingSourceRef.current)
+      }
+    },
+    triggerImport() {
+      fileInputRef.current?.click()
+    },
+    triggerExport() {
+      const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const safeName = shaderTitle
+        .replace(/[^\w\s.-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^[_\s]+|[_\s]+$/g, '')
+        .trim() || 'shader'
+      a.download = safeName + '.glsl'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    },
+    toggleUniforms() {
+      setUniformsOpen(v => !v)
+    },
     closeUniforms() {
       setUniformsOpen(false)
     },
@@ -148,41 +187,6 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
   // ---------------------------------------------------------------------------
   // Callbacks
   // ---------------------------------------------------------------------------
-  const handleRun = useCallback(() => {
-    onRunRef.current(pendingSourceRef.current)
-  }, [])
-
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setShaderTitle(e.target.value)
-    saveGlslTitle(e.target.value)
-  }, [])
-
-  const handleSave = useCallback(() => {
-    onSave(shaderTitle, pendingSourceRef.current)
-  }, [onSave, shaderTitle])
-
-  const handleExport = useCallback(() => {
-    const blob = new Blob([pendingSourceRef.current], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    // Sanitize title: replace invalid filename chars, collapse repeated underscores, trim edges
-    const safeName = shaderTitle
-      .replace(/[^\w\s.-]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^[_\s]+|[_\s]+$/g, '')
-      .trim() || 'shader'
-    a.download = safeName + '.glsl'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, [shaderTitle])
-
-  const handleImportClick = useCallback(() => {
-    fileInputRef.current?.click()
-  }, [])
-
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -237,24 +241,9 @@ export default forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane
         flexDirection: 'column',
         height: '100%',
         bgcolor: 'background.panel',
+        pt: '44px',
       }}
     >
-      <ShaderHeader
-        title={shaderTitle}
-        onTitleChange={handleTitleChange}
-        onImport={handleImportClick}
-        onExport={handleExport}
-        onSave={handleSave}
-        onRun={handleRun}
-        titleAriaLabel="Shader title"
-        importAriaLabel="Import shader from file"
-        exportAriaLabel="Export shader to file"
-        runLabel="Run Shader"
-        runColor="primary"
-        onShowUniforms={() => setUniformsOpen(v => !v)}
-        uniformsActive={uniformsOpen}
-      />
-
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}

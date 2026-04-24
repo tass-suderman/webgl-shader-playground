@@ -162,7 +162,7 @@ export function useWebGL(
       texture2Ref.current = null
       glRef.current = null
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Recompile when shader source changes

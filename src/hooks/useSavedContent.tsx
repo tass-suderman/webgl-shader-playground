@@ -87,26 +87,26 @@ export const SavedContentProvider = ({children}: {children: React.ReactNode}) =>
   }, [setSavedShaders, setSavedPatterns])
 
   return (
-		<SavedContentContext.Provider value={{
-    savedShaders,
-    savedPatterns,
-    saveShader,
-    savePattern,
-    deleteShader,
-    deletePattern,
-    hasExistingShader,
-    hasExistingPattern,
-    clearAll,
-		}}>
-			{children}
-		</SavedContentContext.Provider>
-	)
+    <SavedContentContext.Provider value={{
+      savedShaders,
+      savedPatterns,
+      saveShader,
+      savePattern,
+      deleteShader,
+      deletePattern,
+      hasExistingShader,
+      hasExistingPattern,
+      clearAll,
+    }}>
+      {children}
+    </SavedContentContext.Provider>
+  )
 }
 
 export function useSavedContent(): SavedContentStorageReturn {
-	const context = useContext(SavedContentContext)
-	if (!context) {
-		throw new Error('useSavedContent must be used within a SavedContentProvider')
-	}
-	return context
+  const context = useContext(SavedContentContext)
+  if (!context) {
+    throw new Error('useSavedContent must be used within a SavedContentProvider')
+  }
+  return context
 }

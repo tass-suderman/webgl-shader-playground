@@ -4,7 +4,6 @@ import { StrudelMirror } from '@strudel/codemirror'
 import { evalScope } from '@strudel/core'
 import { webaudioOutput, getAudioContext, initAudioOnFirstClick, getSuperdoughAudioController, registerSynthSounds, registerZZFXSounds, soundAlias } from '@strudel/webaudio'
 import { transpiler } from '@strudel/transpiler'
-import EditorHeader from '../EditorHeader/EditorHeader'
 import StrudelError from '../StrudelError/StrudelError'
 import SoundsPanel from '../SoundsPanel/SoundsPanel'
 import { registerInstruments } from '../../utility/strudel/instruments'
@@ -12,7 +11,7 @@ import { registerUserSampleSound, preloadUserSamples } from '../../utility/strud
 import { saveStrudelCode, saveStrudelTitle, getInitialStrudelCode, getInitialStrudelTitle, useAppStorage } from '../../hooks/useAppStorage'
 import { useStrudelSettings } from '../../hooks/useStrudelSettings'
 import { useTheme } from '../../hooks/useTheme'
-import { DEFAULT_STRUDEL_CODE, DEFAULT_STRUDEL_TITLE } from '../../constants/editorConstants'
+import { DEFAULT_STRUDEL_CODE, DEFAULT_STRUDEL_TITLE } from '../../utility/strudel/defaults'
 // @strudel/codemirror ships no TypeScript declarations; augment the methods we use
 type StrudelMirrorExt = StrudelMirror & {
   changeSetting: (key: string, value: unknown) => void
@@ -52,6 +51,12 @@ export interface StrudelPaneHandle {
   pause: () => void
   loadExample: (title: string, content: string) => void
   closeSounds: () => void
+  getTitle: () => string
+  setTitle: (title: string) => void
+  save: () => void
+  triggerImport: () => void
+  triggerExport: () => void
+  toggleSounds: () => void
 }
 
 interface StrudelPaneProps {
@@ -64,8 +69,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   { onAnalyserReady, onAudioStreamReady, onSave },
   ref,
 ) {
-	const { muted, volume, userSamples } = useAppStorage()
-	const { strudelTheme } = useTheme()
+  const { muted, volume, userSamples } = useAppStorage()
+  const { strudelTheme } = useTheme()
   const rootRef = useRef<HTMLDivElement>(null)
   const mirrorRef = useRef<StrudelMirrorExt | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
@@ -74,7 +79,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   const destinationGainRef = useRef<GainNode | null>(null)
   const isPlayingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [, setIsPlaying] = useState(false)
   const [strudelTitle, setStrudelTitle] = useState(
     () => getInitialStrudelTitle(DEFAULT_STRUDEL_TITLE),
   )
@@ -115,7 +120,41 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     closeSounds() {
       setSoundsOpen(false)
     },
-  }), [])
+    getTitle() {
+      return strudelTitle
+    },
+    setTitle(title: string) {
+      setStrudelTitle(title)
+      saveStrudelTitle(title)
+    },
+    save() {
+      const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
+      onSave(strudelTitle, code)
+    },
+    triggerImport() {
+      fileInputRef.current?.click()
+    },
+    triggerExport() {
+      const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
+      const blob = new Blob([code], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const safeName = strudelTitle
+        .replace(/[^\w\s.-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^[_\s]+|[_\s]+$/g, '')
+        .trim() || 'pattern'
+      a.download = safeName + '.strudel'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    },
+    toggleSounds() {
+      setSoundsOpen(v => !v)
+    },
+  }), [strudelTitle, onSave])
 
   useEffect(() => {
     if (!rootRef.current) return
@@ -269,43 +308,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     }
   }, [userSamples])
 
-  const handleRun = useCallback(() => {
-    saveCode()
-    mirrorRef.current?.evaluate().catch(console.error)
-  }, [saveCode])
-
-  const handleStop = useCallback(() => {
-    saveCode()
-    mirrorRef.current?.stop().catch(console.error)
-  }, [saveCode])
-
-  const handleSave = useCallback(() => {
-		const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
-		onSave(strudelTitle, code)
-  }, [onSave, strudelTitle])
-
-  const handleExport = useCallback(() => {
-    const code = mirrorRef.current?.code ?? DEFAULT_STRUDEL_CODE
-    const blob = new Blob([code], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const safeName = strudelTitle
-      .replace(/[^\w\s.-]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^[_\s]+|[_\s]+$/g, '')
-      .trim() || 'pattern'
-    a.download = safeName + '.strudel'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, [strudelTitle])
-
-  const handleImportClick = useCallback(() => {
-    fileInputRef.current?.click()
-  }, [])
-
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -324,12 +326,6 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
     e.target.value = ''
   }, [])
 
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setStrudelTitle(e.target.value)
-    saveStrudelTitle(e.target.value)
-  }, [])
-
-  /** Drag handler for the sounds-split divider (strudel-only mode) */
   const handleSoundsDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     const pane = soundsPaneRef.current
@@ -351,25 +347,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   }, [soundsSplitRatio])
 
   return (
-    <Box ref={soundsPaneRef} sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.panel' }}>
-      <EditorHeader
-        title={strudelTitle}
-        isPlaying={isPlaying}
-        onTitleChange={handleTitleChange}
-        onImport={handleImportClick}
-        onExport={handleExport}
-        onSave={handleSave}
-        onShowSounds={() => setSoundsOpen(v => !v)}
-        soundsActive={soundsOpen}
-        onRun={handleRun}
-        onStop={handleStop}
-        titleAriaLabel="Strudel pattern title"
-        importAriaLabel="Import pattern from file"
-        exportAriaLabel="Export pattern to file"
-        runLabel="Play Strudel"
-        runColor="success"
-      />
-
+    <Box ref={soundsPaneRef} sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.panel', pt: '44px' }}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}

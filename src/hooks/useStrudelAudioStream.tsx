@@ -8,28 +8,28 @@ type StrudelAudioStreamContextType = {
 const StrudelAudioStreamContext = createContext<StrudelAudioStreamContextType | null>(null)
 
 export const StrudelAudioStreamProvider = ({ children }: { children: React.ReactNode }) => {
-	const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
+  const [strudelAudioStream, setStrudelAudioStream] = useState<MediaStream | null>(null)
 	
-	return (
-		<StrudelAudioStreamContext.Provider value={{ strudelAudioStream, setStrudelAudioStream }}>
-			{children}
-		</StrudelAudioStreamContext.Provider>
-	);
+  return (
+    <StrudelAudioStreamContext.Provider value={{ strudelAudioStream, setStrudelAudioStream }}>
+      {children}
+    </StrudelAudioStreamContext.Provider>
+  );
 }
 
 export const useStrudelAudioStream = () => {
-	const context = useContext(StrudelAudioStreamContext)
+  const context = useContext(StrudelAudioStreamContext)
 
-	if(!context) {
-		throw new Error('useStrudelAudioStream must be used within a StrudelAudioStreamProvider')
-	}
+  if(!context) {
+    throw new Error('useStrudelAudioStream must be used within a StrudelAudioStreamProvider')
+  }
 	
-	const updateStrudelAudioStream = (stream: MediaStream | null) => {
-		context.setStrudelAudioStream(stream)
-	}
+  const updateStrudelAudioStream = (stream: MediaStream | null) => {
+    context.setStrudelAudioStream(stream)
+  }
 	
-	return {
-		strudelAudioStream: context.strudelAudioStream,
-		setStrudelAudioStream: updateStrudelAudioStream,
-	}
+  return {
+    strudelAudioStream: context.strudelAudioStream,
+    setStrudelAudioStream: updateStrudelAudioStream,
+  }
 }

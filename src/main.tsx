@@ -11,17 +11,17 @@ import { SavedContentProvider } from './hooks/useSavedContent'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-		<StrudelAnalyzerProvider>
-			<StrudelAudioStreamProvider>
-				<MediaStreamsProvider>
-					<SavedContentProvider>
-						<AppStorageProvider>	
-							<CssBaseline />
-							<App />
-						</AppStorageProvider>
-					</SavedContentProvider>
-				</MediaStreamsProvider>
-			</StrudelAudioStreamProvider>
-		</StrudelAnalyzerProvider>
+    <StrudelAnalyzerProvider>
+      <StrudelAudioStreamProvider>
+        <MediaStreamsProvider>
+          <SavedContentProvider>
+            <AppStorageProvider>	
+              <CssBaseline />
+              <App />
+            </AppStorageProvider>
+          </SavedContentProvider>
+        </MediaStreamsProvider>
+      </StrudelAudioStreamProvider>
+    </StrudelAnalyzerProvider>
   </React.StrictMode>,
 )

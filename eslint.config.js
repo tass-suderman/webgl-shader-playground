@@ -25,6 +25,8 @@ export default tseslint.config(
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
       }],
+			'no-mixed-spaces-and-tabs': 'error',
+			'indent': ["error", 2],
     },
   },
 )

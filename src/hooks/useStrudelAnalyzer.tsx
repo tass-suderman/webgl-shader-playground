@@ -8,28 +8,28 @@ type StrudelAnalyzerContextType = {
 const StrudelAnalyzerContext = createContext<StrudelAnalyzerContextType | null>(null)
 	
 export const StrudelAnalyzerProvider = ({ children }: { children: React.ReactNode }) => {
-	const [analyzer, setAnalyzer] = useState<AnalyserNode | null>(null)
+  const [analyzer, setAnalyzer] = useState<AnalyserNode | null>(null)
 
-	return (
-		<StrudelAnalyzerContext.Provider value={{ analyzer, setAnalyzer }}>
-			{children}
-		</StrudelAnalyzerContext.Provider>
-	);
+  return (
+    <StrudelAnalyzerContext.Provider value={{ analyzer, setAnalyzer }}>
+      {children}
+    </StrudelAnalyzerContext.Provider>
+  );
 };
 
 export const useStrudelAnalyzer = () => {
-	const context = useContext(StrudelAnalyzerContext)
+  const context = useContext(StrudelAnalyzerContext)
 	
-	if(!context) {
-		throw new Error('useStrudelAnalyzer must be used within a StrudelAnalyzerProvider')
-	}
+  if(!context) {
+    throw new Error('useStrudelAnalyzer must be used within a StrudelAnalyzerProvider')
+  }
 
-	const updateAnalyzer = (analyzer: AnalyserNode | null) => {
-		context.setAnalyzer(analyzer)
-	}
+  const updateAnalyzer = (analyzer: AnalyserNode | null) => {
+    context.setAnalyzer(analyzer)
+  }
 
-	return {
-		analyzer: context.analyzer,
-		setAnalyzer: updateAnalyzer,
-	};
+  return {
+    analyzer: context.analyzer,
+    setAnalyzer: updateAnalyzer,
+  };
 }

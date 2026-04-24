@@ -9,15 +9,15 @@ export interface DeleteItemDialogProps {
 }
 
 export default function DeleteItemDialog({ open, title, onCancel, onConfirm }: DeleteItemDialogProps) {
-	return (
-		<ConfirmationDialog
-			open={open}
-			heading="Delete entry?"
-			body={<>Delete <strong style={{ color: 'accent' }}>{title}</strong>? This action cannot be undone.</>}
-			confirmLabel="Delete"
-			confirmColor="error"
-			onCancel={onCancel}
-			onConfirm={onConfirm}
-		/>
-	)
+  return (
+    <ConfirmationDialog
+      open={open}
+      heading="Delete entry?"
+      body={<>Delete <strong style={{ color: 'accent' }}>{title}</strong>? This action cannot be undone.</>}
+      confirmLabel="Delete"
+      confirmColor="error"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    />
+  )
 }

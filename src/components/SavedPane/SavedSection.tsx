@@ -63,13 +63,13 @@ const SavedSection = ({
               <ListItemText
                 primary={entry.title}
                 slotProps={{
-									primary: {
-										sx: {
-											color: 'textColor.primary',
-											fontFamily: 'monospace',
-											fontSize: '0.875rem',
-										},
-									}
+                  primary: {
+                    sx: {
+                      color: 'textColor.primary',
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
+                    },
+                  }
                 }}
               />
             </ListItemButton>

@@ -4,11 +4,11 @@ import { useStrudelAnalyzer } from '../../hooks/useStrudelAnalyzer'
 import { useMediaStreams } from '../../hooks/useMediaStreams';
 
 export default () => {
-	const { analyzer } = useStrudelAnalyzer();
-	const { 
-		webcamEnabled,
-		micEnabled,
-	} = useMediaStreams()
+  const { analyzer } = useStrudelAnalyzer();
+  const { 
+    webcamEnabled,
+    micEnabled,
+  } = useMediaStreams()
 
   return (
     <Box sx={{ display: 'contents' }}>

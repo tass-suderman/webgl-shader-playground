@@ -37,16 +37,16 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
-	const { analyzer } = useStrudelAnalyzer()
-	const { strudelAudioStream } = useStrudelAudioStream()
-	const { webcamStream, audioStream } = useMediaStreams()
+  const { analyzer } = useStrudelAnalyzer()
+  const { strudelAudioStream } = useStrudelAudioStream()
+  const { webcamStream, audioStream } = useMediaStreams()
 
   useWebGL(canvasRef, {
     shaderSource,
     webcamStream,
     audioStream,
     isPlaying,
-		strudelAnalyser: analyzer,
+    strudelAnalyser: analyzer,
     onError: onShaderError,
   })
 
@@ -68,8 +68,8 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
     // Prefer Strudel audio; fall back to mic
     const audioTracks =
       strudelAudioStream && strudelAudioStream.getAudioTracks().length > 0
-        ? strudelAudioStream.getAudioTracks()
-        : (audioStream?.getAudioTracks() ?? [])
+      	? strudelAudioStream.getAudioTracks()
+      	: (audioStream?.getAudioTracks() ?? [])
 
     const recordStream = new MediaStream([
       ...canvasStream.getVideoTracks(),
@@ -104,19 +104,19 @@ export default forwardRef<ShaderPaneHandle, ShaderPaneProps>(function ShaderPane
       const winFSA = window as Window & { showSaveFilePicker?: ShowSaveFilePicker }
 
       if (typeof winFSA.showSaveFilePicker === 'function') {
-        try {
-          const handle = await winFSA.showSaveFilePicker({
-            suggestedName: filename,
-            types: [{ description: 'Video file', accept: { [(recorder.mimeType || mimeType)]: [`.${ext}`] } }],
-          })
-          const writable = await handle.createWritable()
-          await writable.write(blob)
-          await writable.close()
-          return
-        } catch (err) {
-          // AbortError means user cancelled – do nothing; anything else falls through to anchor download
-          if ((err as DOMException).name === 'AbortError') return
-        }
+      	try {
+      		const handle = await winFSA.showSaveFilePicker({
+      			suggestedName: filename,
+      			types: [{ description: 'Video file', accept: { [(recorder.mimeType || mimeType)]: [`.${ext}`] } }],
+      		})
+      		const writable = await handle.createWritable()
+      		await writable.write(blob)
+      		await writable.close()
+      		return
+      	} catch (err) {
+      		// AbortError means user cancelled – do nothing; anything else falls through to anchor download
+      		if ((err as DOMException).name === 'AbortError') return
+      	}
       }
 
       downloadBlob(blob, filename)

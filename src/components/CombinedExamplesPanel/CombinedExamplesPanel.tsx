@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-	Box,
-	CircularProgress,
-	List,
-	ListItem,
-	ListItemButton,
-	ListItemText,
-	Typography
-	}	from '@mui/material'
+  Box,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography
+}	from '@mui/material'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import LoadExampleDialog from '../LoadExampleDialog/LoadExampleDialog'
 import { useAppStorage } from '../../hooks/useAppStorage'
@@ -107,13 +107,13 @@ function ExampleSection({
                 <ListItemText
                   primary={ex.title}
                   slotProps={{
-										primary:{
-											sx: {
-												color: 'textColor.primary',
-												fontFamily: 'monospace',
-												fontSize: '0.875rem',
-											},
-										}
+                    primary:{
+                      sx: {
+                        color: 'textColor.primary',
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem',
+                      },
+                    }
                   }}
                 />
                 {ex.aiGenerated && (
@@ -196,7 +196,7 @@ export default function CombinedExamplesPanel({ onLoadGlsl, onLoadStrudel, embed
       <ExampleSection heading="Shaders" type="glsl" onSelect={handleSelect} />
       <ExampleSection heading="Patterns" type="strudel" onSelect={handleSelect} />
 
-			<LoadExampleDialog confirmOpen={confirmOpen} title={pending?.meta.title ?? ""} itemLabel={itemLabel} onConfirm={handleConfirm} onCancel={handleCancel} dontShowAgain={dontShowAgain} setDontShowAgain={setDontShowAgain} />
+      <LoadExampleDialog confirmOpen={confirmOpen} title={pending?.meta.title ?? ""} itemLabel={itemLabel} onConfirm={handleConfirm} onCancel={handleCancel} dontShowAgain={dontShowAgain} setDontShowAgain={setDontShowAgain} />
     </Box>
   )
 }

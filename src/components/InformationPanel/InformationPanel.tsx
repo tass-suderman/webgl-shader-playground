@@ -11,7 +11,7 @@ export interface InformationPanelProps {
 }
 
 export const InformationPanel = ({ renderer, items, header, footer}: InformationPanelProps) => {
-	return (
+  return (
     <Box
       sx={{
         flex: 1,
@@ -20,10 +20,10 @@ export const InformationPanel = ({ renderer, items, header, footer}: Information
         bgcolor: 'background.panel',
         color: 'textColor.primary',
       }}
-		>
-			{header}
-			{items.map(renderer)}
-			{footer}
+    >
+      {header}
+      {items.map(renderer)}
+      {footer}
     </Box>
-	)
+  )
 }
