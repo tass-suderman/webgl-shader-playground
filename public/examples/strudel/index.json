@@ -1,9 +1,5 @@
 [
   { "id": "default-pattern", "title": "Default Pattern", "aiGenerated": true },
-  { "id": "first-bass-drop", "title": "First Bass Drop", "aiGenerated": false },
-  { "id": "techno-beat", "title": "Techno Beat", "aiGenerated": true },
-  { "id": "melodic-arp", "title": "Melodic Arp", "aiGenerated": true },
-  { "id": "tr909-kit", "title": "TR-909 Drum Kit", "aiGenerated": true },
-  { "id": "tb303-acid", "title": "TB-303 Acid Bass", "aiGenerated": true },
-  { "id": "909-303-acid-rave", "title": "909 + 303 Acid Rave", "aiGenerated": true }
+	{ "id": "melodic-dnb", "title": "Melodic Drum n Bass", "aiGenerated": false },
+  { "id": "first-drop", "title": "First Drop", "aiGenerated": false }
 ]

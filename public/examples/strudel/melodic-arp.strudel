@@ -1,8 +1,0 @@
-// Melodic arpeggiated pattern with filter sweep
-note("<c3 e3 g3 b3>/2")
-  .sound("sawtooth")
-  .lpf(sine.slow(8).range(400, 2000))
-  .lpenv(2)
-  .gain(0.6)
-  .room(0.4)
-  .slow(0.75)
