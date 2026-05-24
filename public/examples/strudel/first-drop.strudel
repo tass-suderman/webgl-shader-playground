@@ -1,0 +1,21 @@
+stack(
+  // pulse
+  sound("bd*4").hpf(80),
+  // syncopation
+  sound("bd*4").hpf(600).delay(0.2).gain(2.3),
+  // kick
+  sound("bd*4")
+    .delay(0.125)
+    .room(0.8)
+    .size(1)
+    .lpf(110)
+    .distort(1.2)
+    .mask("1010")
+    .gain(1.2),
+  // lows
+  note("<[c2 d2*2 e2*3 ~] [g2*3 a3*4] [b3 c3*2 b3 a3] [g2 e2 d2*2 c2*3 g1]>").sound("z_square").gain(2).lpf(200),
+  note("~ e3*4 ~ c3").sound("z_triangle").gain(2).lpf(200),
+  note("~ ~ ~ a3*2").sound("square").gain(2).lpf(200).distort(.3),
+  // build-up
+  sound("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ bd bd*2 bd*4 bd*8 bd*16>").gain(1).room(0.3).distort(1.2).lpf(3000)
+).hpf("<-1000 -1000 -500 -200 -200 -200 -100 -100 -50 0 20 30 120 230 250 300 400 500 800 800 1000>")

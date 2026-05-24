@@ -1,5 +1,6 @@
 [
   { "id": "default-pattern", "title": "Default Pattern", "aiGenerated": true },
 	{ "id": "melodic-dnb", "title": "Melodic Drum n Bass", "aiGenerated": false },
+	{ "id": "spooky-castle", "title": "Spooky Castle", "aiGenerated": false },
   { "id": "first-drop", "title": "First Drop", "aiGenerated": false }
 ]
