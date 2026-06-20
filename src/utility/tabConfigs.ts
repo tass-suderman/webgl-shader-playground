@@ -1,4 +1,4 @@
-import { Folder, Info, MusicNote, Settings, SvgIconComponent, Tonality } from "@mui/icons-material"
+import { Folder, GraphicEq, Info, Settings, SvgIconComponent, Tonality } from "@mui/icons-material"
 
 export type ViewMode = 'glsl' | 'strudel' | 'saved' | 'settings' | 'about'
 
@@ -23,7 +23,7 @@ export const tabConfigs: TabConfig[] = [
     label: 'Strudel',
     title: 'Strudel',
     editableTitleLabel: 'Pattern title',
-    icon: MusicNote
+    icon: GraphicEq
   },
   { 
     value: 'saved',

@@ -34,6 +34,7 @@ export const ImmersiveView = () => {
   const [immersiveShaderPlaying, setImmersiveShaderPlaying] = useState(true)
   const [immersiveShaderRecording, setImmersiveShaderRecording] = useState(false)
   const [immersiveShaderFullscreen, setImmersiveShaderFullscreen] = useState(false)
+  const [strudelIsPlaying, setStrudelIsPlaying] = useState(false)
 
   const { immersiveOpacity, immersiveToggle } = useAppStorage()
   const { muiTheme } = useTheme()
@@ -139,6 +140,7 @@ export const ImmersiveView = () => {
                 setOverwriteDialogOpen={setOverwriteDialogOpen}
                 setDontShowAgain={setDontShowAgain}
                 commitSave={commitSave}
+                onStrudelPlayStateChange={setStrudelIsPlaying}
               />
             </ThemeProvider>
           </Box>
@@ -163,6 +165,7 @@ export const ImmersiveView = () => {
               setViewMode={setViewMode}
               strudelRef={strudelRef}
               editorRef={editorRef}
+              strudelIsPlaying={strudelIsPlaying}
             />
           </ThemeProvider>
         </Box>

@@ -22,6 +22,7 @@ export interface EditorContentProps {
 	setOverwriteDialogOpen: (open: boolean) => void
 	setViewMode: (mode: ViewMode) => void
 	commitSave: (title: string, content: string, type: 'shader' | 'pattern') => void
+	onStrudelPlayStateChange?: (isPlaying: boolean) => void
 }
 
 export const EditorContent = ({
@@ -35,6 +36,7 @@ export const EditorContent = ({
   setOverwriteDialogOpen,
   setViewMode,
   commitSave,
+  onStrudelPlayStateChange,
 }: EditorContentProps) => {
 
   const savedContent = useSavedContent()
@@ -145,6 +147,7 @@ export const EditorContent = ({
             onAnalyserReady={setAnalyzer}
             onAudioStreamReady={setStrudelAudioStream}
             onSave={handleSavePattern}
+            onPlayStateChange={onStrudelPlayStateChange}
           />
         </Box>
       </Box>

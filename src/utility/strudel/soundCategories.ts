@@ -30,9 +30,11 @@ export const SOUND_CATEGORIES: readonly SoundCategory[] = [
   {
     label: 'TR-909 drums (synthesised)',
     sounds: ['bd909', 'sd909', 'cp909', 'ch909', 'oh909', 'rd909', 'ht909', 'lt909'],
+    aliases: { kick: 'bd909', snare: 'sd909', clap: 'cp909', hat: 'ch909', ohat: 'oh909', ride: 'rd909', htom: 'ht909', ltom: 'lt909' },
   },
   {
     label: 'TB-303 acid bass (synthesised)',
     sounds: ['acid303'],
+    aliases: { acid: 'acid303' },
   },
 ] as const

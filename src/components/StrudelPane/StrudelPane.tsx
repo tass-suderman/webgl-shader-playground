@@ -30,6 +30,19 @@ const minimalPrebake = async (): Promise<void> => {
   // using the common 'bd' name work even without remote sample banks.
   soundAlias('sbd', 'bd')
 
+  // Short aliases for TR-909 drums
+  soundAlias('bd909', 'kick')
+  soundAlias('sd909', 'snare')
+  soundAlias('cp909', 'clap')
+  soundAlias('ch909', 'hat')
+  soundAlias('oh909', 'ohat')
+  soundAlias('rd909', 'ride')
+  soundAlias('ht909', 'htom')
+  soundAlias('lt909', 'ltom')
+
+  // Short alias for TB-303 acid bass
+  soundAlias('acid303', 'acid')
+
   // Load all evalScope modules so that Strudel pattern functions (note, sound,
   // slow, fast, lpf, …) are available as globals at evaluation time.
   // These are local JavaScript imports – no network requests for audio files.
@@ -63,10 +76,11 @@ interface StrudelPaneProps {
   onAnalyserReady: (analyser: AnalyserNode | null) => void
   onAudioStreamReady?: (stream: MediaStream | null) => void
   onSave: (title: string, content: string) => void
+  onPlayStateChange?: (isPlaying: boolean) => void
 }
 
 const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function StrudelPane(
-  { onAnalyserReady, onAudioStreamReady, onSave },
+  { onAnalyserReady, onAudioStreamReady, onSave, onPlayStateChange },
   ref,
 ) {
   const { muted, volume, userSamples } = useAppStorage()
@@ -94,6 +108,8 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
   onAnalyserReadyRef.current = onAnalyserReady
   const onAudioStreamReadyRef = useRef(onAudioStreamReady)
   onAudioStreamReadyRef.current = onAudioStreamReady
+  const onPlayStateChangeRef = useRef(onPlayStateChange)
+  onPlayStateChangeRef.current = onPlayStateChange
   const volumeRef = useRef(volume)
   volumeRef.current = volume
   const mutedRef = useRef(muted)
@@ -190,6 +206,7 @@ const StrudelPane = forwardRef<StrudelPaneHandle, StrudelPaneProps>(function Str
       onToggle: (started: boolean) => {
         isPlayingRef.current = started
         setIsPlaying(started)
+        onPlayStateChangeRef.current?.(started)
         if (started) {
           // Clear any previously shown eval error when playback starts successfully
           lastErrorRef.current = null

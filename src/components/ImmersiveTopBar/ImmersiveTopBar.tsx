@@ -23,6 +23,7 @@ interface ImmersiveTopBarProps {
 	setViewMode: (mode: ViewMode) => void
 	strudelRef: React.RefObject<StrudelPaneHandle>
 	editorRef: React.RefObject<EditorPaneHandle>
+	strudelIsPlaying?: boolean
 }
 
 interface PillActionButton {
@@ -31,15 +32,16 @@ interface PillActionButton {
 	onClick: () => void
 	icon: React.ReactNode
 	disabled?: boolean
+	active?: boolean
 }
 
 const mapActionsToButtons = (actions: PillActionButton[]) => {
-  return actions.map(({ title, ariaLabel, onClick, icon, disabled = false }, index) => (
+  return actions.map(({ title, ariaLabel, onClick, icon, disabled = false, active = false }, index) => (
     <Tooltip key={index} title={title} placement="bottom">
       <IconButton
         size="small"
         onClick={onClick}
-        sx={{ color: 'textColor.primary' }}
+        sx={{ color: active ? 'primary.light' : 'textColor.primary' }}
         aria-label={ariaLabel}
         disabled={disabled}
       >
@@ -54,6 +56,7 @@ export const ImmersiveTopBar = ({
   setViewMode,
   strudelRef,
   editorRef,
+  strudelIsPlaying = false,
 }: ImmersiveTopBarProps) => {
   const { immersiveOpacity } = useAppStorage()
   const theme = useTheme()
@@ -122,15 +125,17 @@ export const ImmersiveTopBar = ({
       title: 'Play Strudel',
       ariaLabel: 'Play Strudel',
       onClick: () => strudelRef.current?.play(),
-      icon: <PlayArrow fontSize="small" />
+      icon: <PlayArrow fontSize="small" />,
+      active: strudelIsPlaying,
     },
     {
       title: 'Stop Strudel',
       ariaLabel: 'Stop Strudel',
       onClick: () => strudelRef.current?.pause(),
       icon: <Stop fontSize="small" />,
+      disabled: !strudelIsPlaying,
     },
-  ], [strudelRef])
+  ], [strudelRef, strudelIsPlaying])
 
   const pillSx = useMemo(() => {
     const opacity = Math.min(1, Math.max(0, (immersiveOpacity ?? 50) / 100))
@@ -207,7 +212,7 @@ export const ImmersiveTopBar = ({
         {innerContent}
       </Box>
     ) : null
-  }, [viewMode, editorRef, strudelRef, immersiveOpacity])
+  }, [viewMode, editorRef, strudelRef, immersiveOpacity, strudelIsPlaying])
 
   const tabsPill = (
     <TabsPill
